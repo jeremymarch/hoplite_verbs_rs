@@ -1,17 +1,20 @@
 #![allow(dead_code)]
 
+#[derive(Eq, PartialEq, Debug)]
 enum HcPerson {
     First,
     Second,
     Third,
 }
 
+#[derive(Eq, PartialEq, Debug)]
 enum HcNumber {
     Singular,
     Dual,
     Plural,
 }
 
+#[derive(Eq, PartialEq, Debug)]
 enum HcTense {
     Present,
     Future,
@@ -21,12 +24,14 @@ enum HcTense {
     Pluperfect,
 }
 
+#[derive(Eq, PartialEq, Debug)]
 enum HcVoice {
     Active,
     Middle,
     Passive,
 }
 
+#[derive(Eq, PartialEq, Debug)]
 enum HcMood {
     Indicative,
     Subjunctive,
@@ -36,6 +41,7 @@ enum HcMood {
     Participle,
 }
 
+#[derive(Eq, PartialEq, Debug)]
 enum HcGender {
     Masculine,
     Feminine,
@@ -53,13 +59,20 @@ enum HcGreekPrincipalParts {
     Sixth = 6
 }
 
-
+#[derive(Eq, PartialEq, Debug)]
 struct HcGreekVerb {
     id: u32,
     pps: [String; 6],
     properties: String,
 }
 
+#[derive(Default)]
+struct Step {
+    form: String,
+    explanation: String,
+}
+
+#[derive(Eq, PartialEq, Debug)]
 struct HcGreekVerbForm<'a> {
     verb: &'a HcGreekVerb,
     person: HcPerson,
@@ -68,18 +81,28 @@ struct HcGreekVerbForm<'a> {
     voice: HcVoice,
     mood: HcMood,
     gender: Option<HcGender>,
+    //steps: Vec<Step>,
 }
 
 trait HcVerbForms {
-    fn get_form(&self) -> String;
+    fn get_form(&self) -> Vec<Step>;
     fn explain_form(&self) -> String;
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> String;
 }
 
 impl HcVerbForms for HcGreekVerbForm<'_> {
-    fn get_form(&self) -> String {
-        "a".to_string()
+    /*
+    fn new() -> HcGreekVerbForm {
+
+    }*/
+
+    fn get_form(&self) -> Vec<Step> {
+        let mut a = Vec::new();
+        let b = "blah".to_string();
+        let c = "blah2".to_string();
+        a.push(Step{form:b,explanation:c});
+        a
     }
 
     fn explain_form(&self) -> String {
@@ -87,7 +110,13 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 
     fn get_pp(&self) -> String {
-        self.verb.pps[self.get_pp_num() as usize - 1].to_string()
+        let num = self.get_pp_num() as usize;
+        if (1..=6).contains(&num) {
+            self.verb.pps[num - 1].to_string()
+        }
+        else {
+            "".to_string()
+        }
     }
 
     fn get_pp_num(&self) -> HcGreekPrincipalParts {
@@ -122,7 +151,6 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     HcVoice::Passive => HcGreekPrincipalParts::Sixth
                 }  
             }
-
         }
     }
 }
@@ -135,8 +163,9 @@ mod tests {
 
         let a = HcGreekVerb {id:1,pps:["λω".to_string(), "λσω".to_string(), "ἔλῡσα".to_string(), "λέλυκα".to_string(), "λέλυμαι".to_string(), "ἐλύθην".to_string()],properties:"blah".to_string()};
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
-        //let c = GreekVerbForm {verb:&a, person:GreekPerson::First, number:GreekNumber::Singular, tense:GreekTense::Aorist, voice:GreekVoice::Active, mood:GreekMood::Indicative};
-        assert_eq!(b.get_form(), "a");
+        let c = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
+        assert_eq!(b, c);
+        assert_eq!(b.get_form()[0].form, "blah");
         assert_eq!(b.get_pp_num(), HcGreekPrincipalParts::Third);
         assert_eq!(b.get_pp_num() as usize, 3);
         assert_eq!(b.verb.pps[b.get_pp_num() as usize - 1], "ἔλῡσα");
