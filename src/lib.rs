@@ -99,7 +99,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
     fn get_form(&self) -> Vec<Step> {
         let mut a = Vec::new();
-        let b = "blah".to_string();
+        let b = self.verb.pps;
         let c = "blah2".to_string();
         a.push(Step{form:b,explanation:c});
         a
