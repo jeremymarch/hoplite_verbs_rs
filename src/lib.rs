@@ -111,55 +111,41 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         match pp_num {
             1..=2 => {
                 if form.ends_with("ω") {
-                    form.strip_suffix("ω").unwrap().to_string()
+                    return form.strip_suffix("ω").unwrap().to_string();
                 }
                 else if form.ends_with("ομαι") {
-                    form.strip_suffix("ομαι").unwrap().to_string()
+                    return form.strip_suffix("ομαι").unwrap().to_string();
                 }
                 else if form.ends_with("μι") {
-                    form.strip_suffix("μι").unwrap().to_string()
-                }
-                else {
-                    "".to_string()
+                    return form.strip_suffix("μι").unwrap().to_string();
                 }
             },
             3 => {
                 if form.ends_with("αμην") {
-                    form.strip_suffix("αμην").unwrap().to_string()
+                    return form.strip_suffix("αμην").unwrap().to_string();
                 }
                 else if form.ends_with("α") {
-                    form.strip_suffix("α").unwrap().to_string()
-                }
-                else {
-                    "".to_string()
-                }                
+                    return form.strip_suffix("α").unwrap().to_string();
+                }              
             },
             4 => {
                 if form.ends_with("α") {
-                    form.strip_suffix("α").unwrap().to_string()
-                }
-                else {
-                    "".to_string()
-                }                
+                    return form.strip_suffix("α").unwrap().to_string();
+                }               
             },
             5 => {
                 if form.ends_with("μαι") {
-                    form.strip_suffix("μαι").unwrap().to_string()
-                }
-                else {
-                    "".to_string()
-                }                
+                    return form.strip_suffix("μαι").unwrap().to_string();
+                }               
             },
             6 => {
                 if form.ends_with("ην") {
-                    form.strip_suffix("ην").unwrap().to_string()
-                }
-                else {
-                    "".to_string()
-                }                
+                    return form.strip_suffix("ην").unwrap().to_string();
+                }               
             },
-            _ => { form.to_string() }   
+            _ => { return form.to_string(); }   
         }
+        "".to_string()
     }
 
     fn get_form(&self) -> Vec<Step> {
@@ -261,7 +247,15 @@ mod tests {
 
         let a = HcGreekVerb {id:1,pps:["βλάπτω".to_string(), "βλάψω".to_string(), "ἔβλαψα".to_string(), "βέβλαφα".to_string(), "βέβλαμμαι".to_string(), "ἐβλάβην / ἐβλάφθην".to_string()],properties:"blah".to_string()};
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None};
-        assert_eq!(b.get_form()[2].form, "ἐβλάβ / ἐβλάφθ");    
+        assert_eq!(b.get_form()[2].form, "ἐβλάβ / ἐβλάφθ"); 
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
+        assert_eq!(b.get_form()[2].form, "βλάπτ");
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
+        assert_eq!(b.get_form()[2].form, "βλάψ");
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
+        assert_eq!(b.get_form()[2].form, "βέβλαφ");
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None};
+        assert_eq!(b.get_form()[2].form, "βέβλαμ");
     }
 }
 
