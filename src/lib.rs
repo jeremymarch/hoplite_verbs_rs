@@ -196,7 +196,7 @@ trait HcVerbForms {
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> String;
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
-    fn add_ending(&self) -> Result<String, &str>;
+    fn add_ending(&self, stem:&String, ending:&str) -> Result<String, &str>;
     fn get_endings(&self) -> Vec<&str>;
 }
 /*
@@ -256,8 +256,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         Err("error stripping ending 2")
     }
 
-    fn add_ending(&self) -> Result<String, &str> {
-        Ok("".to_string())
+    fn add_ending(&self, stem:&String, ending:&str) -> Result<String, &str> {
+        let r = format!("{}{}", stem, ending);
+        Ok(r)
     }
 
     fn get_form(&self) -> Result<Vec<Step>, &str> {
@@ -290,13 +291,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let mut zz = Vec::new();
         for a in z {
             let endings_for_form = self.get_endings();
-            let y = self.add_ending();
-            if y.is_err() {
-                panic!("oops");
+            for e in endings_for_form {
+                let y = self.add_ending(&a, e);
+                if y.is_err() {
+                    panic!("oops");
+                }
+                zz.push(y.unwrap());
             }
-            zz.push(y.unwrap());
         }
-        let f = zz.join(" / ");
+        let f = zz.join(", ");
         let e = "Add ending".to_string();
         steps.push(Step{form:f, explanation:e});        
 
@@ -640,6 +643,7 @@ mod tests {
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_endings()[0], "ει");
         assert_eq!(b.get_endings()[1], "ῃ");
+        assert_eq!(b.get_form().unwrap()[3].form, "βλάπτει, βλάπτῃ");
 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[2].form, "βλάψ");
