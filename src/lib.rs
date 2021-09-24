@@ -1,4 +1,85 @@
 #![allow(dead_code)]
+#[allow(non_camel_case_types)]
+
+#[derive(Eq, PartialEq, Debug)]
+enum HcEndings {
+    PRESENT_ACTIVE_IND = 0,
+    IMPERFECT_ACTIVE_IND,
+    AORIST_ACTIVE_IND,
+    PERFECT_ACTIVE_IND,
+    PLUPERFECT_ACTIVE_IND,
+    FUTURE_ACTIVE_IND,
+    
+    PRESENT_ACTIVE_SUBJ,
+    AORIST_ACTIVE_SUBJ,
+    PRESENT_ACTIVE_OPT,
+    AORIST_ACTIVE_OPT,
+    PRESENT_MIDPASS_IND,
+    IMPERFECT_MIDPASS_IND,
+    AORIST_PASSIVE_IND,
+    AORIST_MID_IND,
+    AORIST_PASSIVE_SUBJ,
+    AORIST_PASSIVE_OPT,
+    
+    AORIST_MIDDLE_SUBJ,
+    AORIST_MIDDLE_OPT,
+    PERFECT_MIDPASS_IND,
+    PLUPERFECT_MIDPASS_IND,
+    PRESENT_MIDPASS_SUBJ,
+    PRESENT_MIDPASS_OPT,
+    
+    PRESENT_ACTIVE_IMPERATIVE,
+    PRESENT_MIDPASS_IMPERATIVE,
+    AORIST_ACTIVE_IMPERATIVE,
+    AORIST_MIDDLE_IMPERATIVE,
+    AORIST_PASSIVE_IMPERATIVE,
+    FUTURE_MIDPASS_IND,
+    
+    PRESENT_ACTIVE_INDIC_A_CONTRACTED,
+    PRESENT_MIDPASS_INDIC_A_CONTRACTED,
+    IMPERFECT_ACTIVE_INDIC_A_CONTRACTED,
+    IMPERFECT_MIDPASS_INDIC_A_CONTRACTED,
+    PRESENT_ACTIVE_SUBJ_A_CONTRACTED,
+    PRESENT_MIDPASS_SUBJ_A_CONTRACTED,
+    PRESENT_ACTIVE_OPT_A_CONTRACTED,
+    PRESENT_MIDPASS_OPT_A_CONTRACTED,
+    
+    PRESENT_ACTIVE_INDIC_E_CONTRACTED,
+    PRESENT_MIDPASS_INDIC_E_CONTRACTED,
+    IMPERFECT_ACTIVE_INDIC_E_CONTRACTED,
+    IMPERFECT_MIDPASS_INDIC_E_CONTRACTED,
+    PRESENT_ACTIVE_SUBJ_E_CONTRACTED,
+    PRESENT_MIDPASS_SUBJ_E_CONTRACTED,
+    PRESENT_ACTIVE_OPT_E_CONTRACTED,
+    PRESENT_MIDPASS_OPT_E_CONTRACTED,
+    
+    PRESENT_ACTIVE_INDIC_O_CONTRACTED,
+    PRESENT_MIDPASS_INDIC_O_CONTRACTED,
+    IMPERFECT_ACTIVE_INDIC_O_CONTRACTED,
+    IMPERFECT_MIDPASS_INDIC_O_CONTRACTED,
+    PRESENT_ACTIVE_SUBJ_O_CONTRACTED,
+    PRESENT_MIDPASS_SUBJ_O_CONTRACTED,
+    PRESENT_ACTIVE_OPT_O_CONTRACTED,
+    PRESENT_MIDPASS_OPT_O_CONTRACTED,
+    PRESENT_ACTIVE_IMPERATIVE_A_CONTRACTED,
+    PRESENT_MIDPASS_IMPERATIVE_A_CONTRACTED,
+    PRESENT_ACTIVE_IMPERATIVE_E_CONTRACTED,
+    PRESENT_MIDPASS_IMPERATIVE_E_CONTRACTED,
+    PRESENT_ACTIVE_IMPERATIVE_O_CONTRACTED,
+    PRESENT_MIDPASS_IMPERATIVE_O_CONTRACTED,
+    
+    PRESENT_ACTIVE_INDICATIVE_MI,
+    PRESENT_ACTIVE_OPTATIVE_CONTRACTED_NOT_PRECONTRACTED,
+    AORIST_ACTIVE_IMPERATIVES_MI,
+    AORIST_ACTIVE_IMPERATIVES_MI_ROOT,
+    AORIST_MIDDLE_IMPERATIVES_MI,
+    AORIST_ACTIVE_INDICATIVE_MI_ROOT,
+    SECOND_AORIST_MIDDLE_IMPERATIVE,
+    PRESENT_MIDPASS_OPT_TITHHMI,
+    IMPERFECT_ACTIVE_CONTRACTED_DECOMPOSED,
+    NOT_IMPLEMENTED,
+    NUM_ENDINGS
+}
 
 #[derive(Eq, PartialEq, Debug)]
 enum HcPerson {
@@ -77,7 +158,7 @@ pub struct HcGreekVerb {
 
 impl HcGreekVerb {
     fn from_string(id:u32, pps:&str, properties:&str) -> Option<HcGreekVerb> {
-        let x:Vec<String> = pps.split(',').map(|s| s.trim().to_owned()).collect();
+        let x: Vec<String> = pps.split(',').map(|s| s.trim().to_owned()).collect();
         if x.len() == 6 {
             Some(HcGreekVerb {
                 id: id,
@@ -116,7 +197,7 @@ trait HcVerbForms {
     fn get_pp(&self) -> String;
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
     fn add_ending(&self) -> Result<String, &str>;
-    fn get_endings(&self) -> Vec<String>;
+    fn get_endings(&self) -> Vec<&str>;
 }
 /*
 //https://stackoverflow.com/questions/59330671/how-do-i-remove-a-single-trailing-string-from-another-string-in-rust
@@ -177,10 +258,6 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
     fn add_ending(&self) -> Result<String, &str> {
         Ok("".to_string())
-    }
-
-    fn get_endings(&self) -> Vec<String> {
-        Vec::new()
     }
 
     fn get_form(&self) -> Result<Vec<Step>, &str> {
@@ -274,87 +351,240 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
         }
     }
+    fn get_endings(&self) -> Vec<&str> {
+        let ending:usize = match self.tense {
+            HcTense::Present => {
+                match self.voice {
+                    HcVoice::Active => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_ACTIVE_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_ACTIVE_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_ACTIVE_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_ACTIVE_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    },
+                    HcVoice::Middle | HcVoice::Passive => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_MIDPASS_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_MIDPASS_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_MIDPASS_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_MIDPASS_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    }
+                }
+            },
+            HcTense::Imperfect => {
+                match self.voice {
+                    HcVoice::Active => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_ACTIVE_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_ACTIVE_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_ACTIVE_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_ACTIVE_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    },
+                    HcVoice::Middle | HcVoice::Passive => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_MIDPASS_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_MIDPASS_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_MIDPASS_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_MIDPASS_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    }
+                }
+            },
+            HcTense::Future => {
+                match self.voice {
+                    HcVoice::Active => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_ACTIVE_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_ACTIVE_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_ACTIVE_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_ACTIVE_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    },
+                    HcVoice::Middle | HcVoice::Passive => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_MIDPASS_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_MIDPASS_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_MIDPASS_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_MIDPASS_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    }
+                }
+            },
+            HcTense::Aorist => {
+                match self.voice {
+                    HcVoice::Active => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_ACTIVE_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_ACTIVE_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_ACTIVE_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_ACTIVE_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    },
+                    HcVoice::Middle | HcVoice::Passive => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_MIDPASS_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_MIDPASS_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_MIDPASS_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_MIDPASS_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    }
+                }
+            },
+            HcTense::Perfect => {
+                match self.voice {
+                    HcVoice::Active => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_ACTIVE_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_ACTIVE_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_ACTIVE_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_ACTIVE_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    },
+                    HcVoice::Middle | HcVoice::Passive => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_MIDPASS_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_MIDPASS_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_MIDPASS_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_MIDPASS_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    }
+                }
+            },
+            HcTense::Pluperfect => {
+                match self.voice {
+                    HcVoice::Active => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_ACTIVE_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_ACTIVE_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_ACTIVE_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_ACTIVE_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    },
+                    HcVoice::Middle | HcVoice::Passive => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::PRESENT_MIDPASS_IND,
+                            HcMood::Subjunctive => HcEndings::PRESENT_MIDPASS_SUBJ,
+                            HcMood::Optative => HcEndings::PRESENT_MIDPASS_OPT,
+                            HcMood::Imperative => HcEndings::PRESENT_MIDPASS_IMPERATIVE,
+                            HcMood::Infinitive => HcEndings::NOT_IMPLEMENTED,
+                            HcMood::Participle => HcEndings::NOT_IMPLEMENTED,
+                        }
+                    }
+                }
+            },
+        } as usize;
+
+        let person_number:usize = match self.person {
+            HcPerson::First => 0,
+            _ => 1
+        };
+
+        ENDINGS[ending][person_number].split(',').collect()
+    }
 }
 
-static ENDINGS: &[[&str; 6]; 2] = &[["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
-    ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"]];//, "Imperfect Active Indicative" },
+static ENDINGS: &[[&str; 6]; 67] = &[["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
+    ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"],//, "Imperfect Active Indicative" },
+    ["α", "ας", "ε(ν)", "αμεν", "ατε", "αν"],//, "Aorist Active Indicative" },
+    ["α", "ας", "ε(ν)", "αμεν", "ατε", "ᾱσι(ν)"],//, "Perfect Active Indicative" },
+    ["η", "ης", "ει(ν)", "εμεν", "ετε", "εσαν"],//, "Pluperfect Active Indicative" },
+    ["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Future Active Indicative" },
+    ["ω", "ῃς", "ῃ", "ωμεν", "ητε", "ωσι(ν)"],//, "Present Active Subjunctive" },
+    ["ω", "ῃς", "ῃ", "ωμεν", "ητε", "ωσι(ν)"],//, "Aorist Active Subjunctive" },
+    ["οιμι", "οις", "οι", "οιμεν", "οιτε", "οιεν"],//, "Present Active Optative" },
+    ["αιμι", "αις, ειας", "αι, ειε(ν)", "αιμεν", "αιτε", "αιεν, ειαν"],//, "Aorist Active Optative" },
+    ["ομαι", "ει, ῃ", "εται", "ομεθα", "εσθε", "ονται"],//, "Present Middle/Passive Indicative" },
+    ["ομην", "ου", "ετο", "ομεθα", "εσθε", "οντο"],//, "Imperfect Middle/Passive Indicative" },
+    ["ην", "ης", "η", "ημεν", "ητε", "ησαν"],//, "Aorist Passive Indicative" },
+    ["αμην", "ω", "ατο", "αμεθα", "ασθε", "αντο"],//, "Aorist Middle Indicative" },
+    ["ῶ", "ῇς", "ῇ", "ῶμεν", "ῆτε", "ῶσι(ν)"],//, "Aorist Passive Subjunctive" },
+    ["ειην", "ειης", "ειη", "εῖμεν, ειημεν", "εῖτε, ειητε", "εῖεν, ειησαν"],//, "Aorist Passive Optative" },
+    ["ωμαι", "ῃ", "ηται", "ωμεθα", "ησθε", "ωνται"],//, "Aorist Middle Subjunctive" },
+    ["αιμην", "αιο", "αιτο", "αιμεθα", "αισθε", "αιντο"],//, "Aorist Middle Optative" },
+    ["μαι", "σαι", "ται", "μεθα", "σθε", "νται"],//, "Perfect Middle/Passive Indicative" },
+    ["μην", "σο", "το", "μεθα", "σθε", "ντο"],//, "Pluperfect Middle/Passive Indicative" },
+    ["ωμαι", "ῃ", "ηται", "ωμεθα", "ησθε", "ωνται"],//, "Present Middle/Passive Subjunctive" },
+    ["οιμην", "οιο", "οιτο", "οιμεθα", "οισθε", "οιντο"],//, "Present Middle/Passive Optative" },
+    ["", "ε", "ετω",   "", "ετε", "οντων"],//, "Present Active Imperative" },
+    ["", "ου", "εσθω", "", "εσθε", "εσθων"],//, "Present Middle/Passive Imperative" },
+    ["", "ον", "ατω",  "", "ατε", "αντων"],//, "Aorist Active Imperative" },
+    ["", "αι", "ασθω", "", "ασθε", "ασθων"],//, "Aorist Middle Imperative" },
+    ["", "ητι, ηθι", "ητω", "", "ητε", "εντων"],//, "Aorist Passive Imperative" },
+    ["ομαι", "ει, ῃ", "εται", "ομεθα", "εσθε", "ονται"],//, "Future Middle/Passive Indicative" },
+    
+    ["ῶ", "ᾷς", "ᾷ", "ῶμεν", "ᾶτε", "ῶσι(ν)"],//, ""],// },         //pres active indic a
+    ["ῶμαι", "ᾷ", "ᾶται", "ώμεθα", "ᾶσθε", "ῶνται"],//, "" },   //pres mid/pass indic a
+    ["ων", "ᾱς", "ᾱ", "ῶμεν", "ᾶτε", "ων"],//, "" },            //impf active indic a
+    ["ώμην", "ῶ", "ᾶτο", "ώμεθα", "ᾶσθε", "ῶντο"],//, "" },     //impf mid/pass indic a
+    ["ῶ", "ᾷς", "ᾷ", "ῶμεν", "ᾶτε", "ῶσι(ν)"],//, "" },         //pres active subj a
+    ["ῶμαι", "ᾷ", "ᾶται", "ώμεθα", "ᾶσθε", "ῶνται"],//, "" },   //pres mid/pass subj a
+    ["ῷμι, ῴην", "ῷς, ῴης", "ῷ, ῴη", "ῷμεν, ῴημεν", "ῷτε, ῴητε", "ῷεν, ῴησαν"],//, "" }, //pres active opt a
+    ["ῴμην", "ῷο", "ῷτο", "ῴμεθα", "ῷσθε", "ῷντο"],//, "" },   //pres mid/pass opt a
+    
+    ["ῶ", "εῖς", "εῖ", "οῦμεν", "εῖτε", "οῦσι(ν)"],//, "" },         //pres active indic e
+    ["οῦμαι", "εῖ, ῇ", "εῖται", "ουμεθα", "εῖσθε", "οῦνται"],//, "" },   //pres mid/pass indic e
+    ["ουν", "εις", "ει", "οῦμεν", "εῖτε", "ουν"],//, "" },            //impf active indic e
+    ["ούμην", "οῦ", "εῖτο", "ούμεθα", "εῖσθε", "οῦντο"],//, "" },     //impf mid/pass indic e
+    ["ῶ", "ῇς", "ῇ", "ῶμεν", "ῆτε", "ῶσι(ν)"],//, "" },         //pres active subj e
+    ["ῶμαι", "ῇ", "ῆται", "ώμεθα", "ῆσθε", "ῶνται"],//, "" },   //pres mid/pass subj e
+    ["οῖμι, οίην", "οῖς, οίης", "οῖ, οίη", "οῖμεν, οίημεν", "οῖτε, οίητε", "οῖεν, οίησαν"],//, "" },//pres act opt e
+    ["οίμην", "οῖο", "οῖτο", "οίμεθα", "οῖσθε", "οῖντο"],//, "" },   //pres mid/ass opt e
+    
+    ["ῶ", "οῖς", "οῖ", "οῦμεν", "οῦτε", "οῦσι(ν)"],//, "" },         //pres active indic o
+    ["οῦμαι", "οῖ", "οῦται", "ουμεθα", "οῦσθε", "οῦνται"],//, "" },   //pres mid/pass indic o
+    ["ουν", "ους", "ου", "οῦμεν", "οῦτε", "ουν"],//, "" },            //impf active indic o
+    ["ούμην", "οῦ", "οῦτο", "ούμεθα", "οῦσθε", "οῦντο"],//, "" },     //impf mid/pass indic o
+    ["ῶ", "οῖς", "οῖ", "ῶμεν", "ῶτε", "ῶσι(ν)"],//, "" },         //pres active subj o
+    ["ῶμαι", "οῖ", "ῶται", "ώμεθα", "ῶσθε", "ῶνται"],//, "" },   //pres mid/pass subj o
+    ["οῖμι, οίην", "οῖς, οίης", "οῖ, οίη", "οῖμεν, οίημεν", "οῖτε, οίητε", "οῖεν, οίησαν"],//, "" },//pres act opt o
+    ["οίμην", "οῖο", "οῖτο", "οίμεθα", "οῖσθε", "οῖντο"],//, "" },   //pres mid/ass opt o
+    
+    ["", "ᾱ", "ᾱ́τω",   "", "ᾶτε", "ώντων"],//, "Present Active Imperative" }, //pres. active imper a
+    ["", "ῶ", "ᾱ́σθω", "", "ᾶσθε", "ᾱ́σθων"],//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper a
+    ["", "ει", "είτω",   "", "εῖτε", "ούντων"],//, "Present Active Imperative" }, //pres. active imper e
+    ["", "οῦ", "είσθω", "", "εῖσθε", "είσθων"],//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper e
+    ["", "ου", "ούτω",   "", "οῦτε", "ούντων"],//, "Present Active Imperative" }, //pres. active imper o
+    ["", "οῦ", "ούσθω", "", "οῦσθε", "ούσθων"],//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper o
+    
+    ["μι", "ς", "σι(ν)", "μεν", "τε", "ᾱσι(ν)"],//, "" },   //mi
+    
+    ["οιμι, οιην", "οις, οιης", "οι, οιη", "οιμεν, οιημεν", "οιτε, οιητε", "οιεν, οιησαν"],//, "" },//pres act opt o
+    ["", "ς", "τω", "", "τε", "ντων"],//, "" },//mi aorist active imperatives
+    ["", "θι", "τω", "", "τε", "ντων"],//", "" },//mi root aorist active imperatives
+    
+    ["", "ο", "σθω", "", "σθε", "σθων"],//, "Root Aorist Middle Imperative" },//mi root aorist middle imperatives
+    ["ν", "ς", "", "μεν", "τε", "σαν"],//, "Root Aorist Indicative" },//mi root aorist indicative
+    
+    ["", "οῦ", "εσθω", "", "εσθε", "εσθων"],//, "Present Middle/Passive Imperative" }, //second aorist middle/passive imperatives
+    ["ειμην", "εῖο", "εῖτο, οῖτο", "ειμεθα, οιμεθα", "εῖσθε, οῖσθε", "εῖντο, οῖντο"],//, "Present Middle/Passive Optative Tithemi" }, //Exception: H&Q page 347
+    ["ον", "ες", "ε", "ομεν", "ετε", "ον"],//, "Imperfect Active Indicative" } //this is only for contracted verbs when decomposed so the nu moveable doesn't show up
+];
 
-    /*
-    "α", "ας", "ε(ν)", "αμεν", "ατε", "αν"];//, "Aorist Active Indicative" },
-    "α", "ας", "ε(ν)", "αμεν", "ατε", "ᾱσι(ν)"];//, "Perfect Active Indicative" },
-    "η", "ης", "ει(ν)", "εμεν", "ετε", "εσαν"];//, "Pluperfect Active Indicative" },
-    "ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"];//, "Future Active Indicative" },
-    "ω", "ῃς", "ῃ", "ωμεν", "ητε", "ωσι(ν)"];//, "Present Active Subjunctive" },
-    "ω", "ῃς", "ῃ", "ωμεν", "ητε", "ωσι(ν)"];//, "Aorist Active Subjunctive" },
-    "οιμι", "οις", "οι", "οιμεν", "οιτε", "οιεν"];//, "Present Active Optative" },
-    "αιμι", "αις, ειας", "αι, ειε(ν)", "αιμεν", "αιτε", "αιεν, ειαν"];//, "Aorist Active Optative" },
-    "ομαι", "ει, ῃ", "εται", "ομεθα", "εσθε", "ονται"];//, "Present Middle/Passive Indicative" },
-    "ομην", "ου", "ετο", "ομεθα", "εσθε", "οντο"];//, "Imperfect Middle/Passive Indicative" },
-    "ην", "ης", "η", "ημεν", "ητε", "ησαν"];//, "Aorist Passive Indicative" },
-    "αμην", "ω", "ατο", "αμεθα", "ασθε", "αντο"];//, "Aorist Middle Indicative" },
-    "ῶ", "ῇς", "ῇ", "ῶμεν", "ῆτε", "ῶσι(ν)"];//, "Aorist Passive Subjunctive" },
-    "ειην", "ειης", "ειη", "εῖμεν, ειημεν", "εῖτε, ειητε", "εῖεν, ειησαν"];//, "Aorist Passive Optative" },
-    "ωμαι", "ῃ", "ηται", "ωμεθα", "ησθε", "ωνται"];//, "Aorist Middle Subjunctive" },
-    "αιμην", "αιο", "αιτο", "αιμεθα", "αισθε", "αιντο"];//, "Aorist Middle Optative" },
-    "μαι", "σαι", "ται", "μεθα", "σθε", "νται"];//, "Perfect Middle/Passive Indicative" },
-    "μην", "σο", "το", "μεθα", "σθε", "ντο"];//, "Pluperfect Middle/Passive Indicative" },
-    "ωμαι", "ῃ", "ηται", "ωμεθα", "ησθε", "ωνται"];//, "Present Middle/Passive Subjunctive" },
-    "οιμην", "οιο", "οιτο", "οιμεθα", "οισθε", "οιντο"];//, "Present Middle/Passive Optative" },
-    "", "ε", "ετω",   "", "ετε", "οντων"];//, "Present Active Imperative" },
-    "", "ου", "εσθω", "", "εσθε", "εσθων"];//, "Present Middle/Passive Imperative" },
-    "", "ον", "ατω",  "", "ατε", "αντων"];//, "Aorist Active Imperative" },
-    "", "αι", "ασθω", "", "ασθε", "ασθων"];//, "Aorist Middle Imperative" },
-    "", "ητι, ηθι", "ητω", "", "ητε", "εντων"];//, "Aorist Passive Imperative" },
-    "ομαι", "ει, ῃ", "εται", "ομεθα", "εσθε", "ονται"];//, "Future Middle/Passive Indicative" },
-    
-    "ῶ", "ᾷς", "ᾷ", "ῶμεν", "ᾶτε", "ῶσι(ν)"];//, ""];// },         //pres active indic a
-    "ῶμαι", "ᾷ", "ᾶται", "ώμεθα", "ᾶσθε", "ῶνται"];//, "" },   //pres mid/pass indic a
-    "ων", "ᾱς", "ᾱ", "ῶμεν", "ᾶτε", "ων"];//, "" },            //impf active indic a
-    "ώμην", "ῶ", "ᾶτο", "ώμεθα", "ᾶσθε", "ῶντο"];//, "" },     //impf mid/pass indic a
-    "ῶ", "ᾷς", "ᾷ", "ῶμεν", "ᾶτε", "ῶσι(ν)"];//, "" },         //pres active subj a
-    "ῶμαι", "ᾷ", "ᾶται", "ώμεθα", "ᾶσθε", "ῶνται"];//, "" },   //pres mid/pass subj a
-    "ῷμι, ῴην", "ῷς, ῴης", "ῷ, ῴη", "ῷμεν, ῴημεν", "ῷτε, ῴητε", "ῷεν, ῴησαν"];//, "" }, //pres active opt a
-    "ῴμην", "ῷο", "ῷτο", "ῴμεθα", "ῷσθε", "ῷντο"];//, "" },   //pres mid/pass opt a
-    
-    "ῶ", "εῖς", "εῖ", "οῦμεν", "εῖτε", "οῦσι(ν)"];//, "" },         //pres active indic e
-    "οῦμαι", "εῖ, ῇ", "εῖται", "ουμεθα", "εῖσθε", "οῦνται"];//, "" },   //pres mid/pass indic e
-    "ουν", "εις", "ει", "οῦμεν", "εῖτε", "ουν"];//, "" },            //impf active indic e
-    "ούμην", "οῦ", "εῖτο", "ούμεθα", "εῖσθε", "οῦντο"];//, "" },     //impf mid/pass indic e
-    "ῶ", "ῇς", "ῇ", "ῶμεν", "ῆτε", "ῶσι(ν)"];//, "" },         //pres active subj e
-    "ῶμαι", "ῇ", "ῆται", "ώμεθα", "ῆσθε", "ῶνται"];//, "" },   //pres mid/pass subj e
-    "οῖμι, οίην", "οῖς, οίης", "οῖ, οίη", "οῖμεν, οίημεν", "οῖτε, οίητε", "οῖεν, οίησαν"];//, "" },//pres act opt e
-    "οίμην", "οῖο", "οῖτο", "οίμεθα", "οῖσθε", "οῖντο"];//, "" },   //pres mid/ass opt e
-    
-    "ῶ", "οῖς", "οῖ", "οῦμεν", "οῦτε", "οῦσι(ν)"];//, "" },         //pres active indic o
-    "οῦμαι", "οῖ", "οῦται", "ουμεθα", "οῦσθε", "οῦνται"];//, "" },   //pres mid/pass indic o
-    "ουν", "ους", "ου", "οῦμεν", "οῦτε", "ουν"];//, "" },            //impf active indic o
-    "ούμην", "οῦ", "οῦτο", "ούμεθα", "οῦσθε", "οῦντο"];//, "" },     //impf mid/pass indic o
-    "ῶ", "οῖς", "οῖ", "ῶμεν", "ῶτε", "ῶσι(ν)"];//, "" },         //pres active subj o
-    "ῶμαι", "οῖ", "ῶται", "ώμεθα", "ῶσθε", "ῶνται"];//, "" },   //pres mid/pass subj o
-    "οῖμι, οίην", "οῖς, οίης", "οῖ, οίη", "οῖμεν, οίημεν", "οῖτε, οίητε", "οῖεν, οίησαν"];//, "" },//pres act opt o
-    "οίμην", "οῖο", "οῖτο", "οίμεθα", "οῖσθε", "οῖντο"];//, "" },   //pres mid/ass opt o
-    
-    "", "ᾱ", "ᾱ́τω",   "", "ᾶτε", "ώντων"];//, "Present Active Imperative" }, //pres. active imper a
-    "", "ῶ", "ᾱ́σθω", "", "ᾶσθε", "ᾱ́σθων"];//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper a
-    "", "ει", "είτω",   "", "εῖτε", "ούντων"];//, "Present Active Imperative" }, //pres. active imper e
-    "", "οῦ", "είσθω", "", "εῖσθε", "είσθων"];//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper e
-    "", "ου", "ούτω",   "", "οῦτε", "ούντων"];//, "Present Active Imperative" }, //pres. active imper o
-    "", "οῦ", "ούσθω", "", "οῦσθε", "ούσθων"];//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper o
-    
-    "μι", "ς", "σι(ν)", "μεν", "τε", "ᾱσι(ν)"];//, "" },   //mi
-    
-    "οιμι, οιην", "οις, οιης", "οι, οιη", "οιμεν, οιημεν", "οιτε, οιητε", "οιεν, οιησαν"];//, "" },//pres act opt o
-    "", "ς", "τω", "", "τε", "ντων"];//, "" },//mi aorist active imperatives
-    "", "θι", "τω", "", "τε", "ντων];//", "" },//mi root aorist active imperatives
-    
-    "", "ο", "σθω", "", "σθε", "σθων"];//, "Root Aorist Middle Imperative" },//mi root aorist middle imperatives
-    "ν", "ς", "", "μεν", "τε", "σαν"];//, "Root Aorist Indicative" },//mi root aorist indicative
-    
-    "", "οῦ", "εσθω", "", "εσθε", "εσθων"];//, "Present Middle/Passive Imperative" }, //second aorist middle/passive imperatives
-    "ειμην", "εῖο", "εῖτο, οῖτο", "ειμεθα, οιμεθα", "εῖσθε, οῖσθε", "εῖντο, οῖντο"];//, "Present Middle/Passive Optative Tithemi" }, //Exception: H&Q page 347
-    "ον", "ες", "ε", "ομεν", "ετε", "ον"];//, "Imperfect Active Indicative" } //this is only for contracted verbs when decomposed so the nu moveable doesn't show up
-};
-*/
 
 
 #[cfg(test)]
