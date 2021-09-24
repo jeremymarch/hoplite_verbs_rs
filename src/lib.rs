@@ -161,7 +161,7 @@ impl HcGreekVerb {
         let x: Vec<String> = pps.split(',').map(|s| s.trim().to_owned()).collect();
         if x.len() == 6 {
             Some(HcGreekVerb {
-                id: id,
+                id,
                 pps: x,
                 properties: properties.to_string()
             })
@@ -196,7 +196,7 @@ trait HcVerbForms {
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> String;
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
-    fn add_ending(&self, stem:&String, ending:&str) -> Result<String, &str>;
+    fn add_ending(&self, stem:&str, ending:&str) -> Result<String, &str>;
     fn get_endings(&self) -> Vec<&str>;
 }
 /*
@@ -256,7 +256,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         Err("error stripping ending 2")
     }
 
-    fn add_ending(&self, stem:&String, ending:&str) -> Result<String, &str> {
+    fn add_ending(&self, stem:&str, ending:&str) -> Result<String, &str> {
         let r = format!("{}{}", stem, ending);
         Ok(r)
     }
@@ -614,8 +614,10 @@ mod tests {
     use super::*;
     #[test]
     fn it_works() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let blaptw = "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην";
 
-        let a = HcGreekVerb::from_string(1, "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην", "").unwrap();
+        let a = HcGreekVerb::from_string(1, luw, "").unwrap();
         let a1 = HcGreekVerb {id:1,pps:vec!["λω".to_string(), "λσω".to_string(), "ἔλῡσα".to_string(), "λέλυκα".to_string(), "λέλυμαι".to_string(), "ἐλύθην".to_string()],properties:"".to_string()};
         assert_eq!(a, a1);
         
@@ -623,7 +625,7 @@ mod tests {
         let c = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b, c);
         
-        assert_eq!(b.get_form().unwrap()[0].form, "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην");
+        assert_eq!(b.get_form().unwrap()[0].form, luw);
         assert_eq!(b.get_form().unwrap()[1].form, "ἔλῡσα");
         
         assert_eq!(b.get_form().unwrap()[2].form, "ἔλῡσ");
@@ -633,7 +635,7 @@ mod tests {
         assert_eq!(b.verb.pps[b.get_pp_num() as usize - 1], "ἔλῡσα");
         assert_eq!(b.get_pp(), "ἔλῡσα");
 
-        let a = HcGreekVerb::from_string(1, "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην", "").unwrap();
+        let a = HcGreekVerb::from_string(1, blaptw, "").unwrap();
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[2].form, "ἐβλάβ / ἐβλάφθ"); 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
