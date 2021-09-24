@@ -85,11 +85,11 @@ struct HcGreekVerbForm<'a> {
 }
 
 trait HcVerbForms {
-    fn get_form(&self) -> Vec<Step>;
+    fn get_form(&self) -> Result<Vec<Step>, &str>;
     fn explain_form(&self) -> String;
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> String;
-    fn strip_ending(&self, pp_num:usize, form:String) -> String;
+    fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
 }
 /*
 //https://stackoverflow.com/questions/59330671/how-do-i-remove-a-single-trailing-string-from-another-string-in-rust
@@ -107,48 +107,48 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
     }*/
 
-    fn strip_ending(&self, pp_num:usize, form:String) -> String {
+    fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str> {
         match pp_num {
             1..=2 => {
                 if form.ends_with("ω") {
-                    return form.strip_suffix("ω").unwrap().to_string();
+                    return Ok(form.strip_suffix("ω").unwrap().to_string());
                 }
                 else if form.ends_with("ομαι") {
-                    return form.strip_suffix("ομαι").unwrap().to_string();
+                    return Ok(form.strip_suffix("ομαι").unwrap().to_string());
                 }
                 else if form.ends_with("μι") {
-                    return form.strip_suffix("μι").unwrap().to_string();
+                    return Ok(form.strip_suffix("μι").unwrap().to_string());
                 }
             },
             3 => {
                 if form.ends_with("αμην") {
-                    return form.strip_suffix("αμην").unwrap().to_string();
+                    return Ok(form.strip_suffix("αμην").unwrap().to_string());
                 }
                 else if form.ends_with("α") {
-                    return form.strip_suffix("α").unwrap().to_string();
+                    return Ok(form.strip_suffix("α").unwrap().to_string());
                 }              
             },
             4 => {
                 if form.ends_with("α") {
-                    return form.strip_suffix("α").unwrap().to_string();
+                    return Ok(form.strip_suffix("α").unwrap().to_string());
                 }               
             },
             5 => {
                 if form.ends_with("μαι") {
-                    return form.strip_suffix("μαι").unwrap().to_string();
+                    return Ok(form.strip_suffix("μαι").unwrap().to_string());
                 }               
             },
             6 => {
                 if form.ends_with("ην") {
-                    return form.strip_suffix("ην").unwrap().to_string();
+                    return Ok(form.strip_suffix("ην").unwrap().to_string());
                 }               
             },
-            _ => { return form.to_string(); }   
+            _ => { return Err("oops"); }   
         }
-        "".to_string()
+        Err("oops")
     }
 
-    fn get_form(&self) -> Vec<Step> {
+    fn get_form(&self) -> Result<Vec<Step>, &str> {
         let mut steps = Vec::new();
         let f = self.verb.pps.join(", ");
         let e = "Principal Parts".to_string();
@@ -164,14 +164,22 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let mut z = Vec::new();
         let each_alt = f.split(" / ");
         for x in each_alt {
-            z.push(self.strip_ending(pp_num, x.to_string()))
+            let y = self.strip_ending(pp_num, x.to_string());
+            if y.is_err() {
+                panic!("error stripping ending");
+            }
+            z.push(y.unwrap());
         }
 
         let f = z.join(" / ");
         let e = "Remove ending from Principal Part".to_string();
         steps.push(Step{form:f, explanation:e});
 
-        steps
+        if self.voice == HcVoice::Middle {
+            return Err("oops");
+        }
+
+        Ok(steps)
     }
 
     fn explain_form(&self) -> String {
@@ -235,10 +243,10 @@ mod tests {
         let c = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
         assert_eq!(b, c);
         
-        assert_eq!(b.get_form()[0].form, "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην");
-        assert_eq!(b.get_form()[1].form, "ἔλῡσα");
+        assert_eq!(b.get_form().unwrap()[0].form, "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην");
+        assert_eq!(b.get_form().unwrap()[1].form, "ἔλῡσα");
         
-        assert_eq!(b.get_form()[2].form, "ἔλῡσ");
+        assert_eq!(b.get_form().unwrap()[2].form, "ἔλῡσ");
         
         assert_eq!(b.get_pp_num(), HcGreekPrincipalParts::Third);
         assert_eq!(b.get_pp_num() as usize, 3);
@@ -247,15 +255,15 @@ mod tests {
 
         let a = HcGreekVerb {id:1,pps:["βλάπτω".to_string(), "βλάψω".to_string(), "ἔβλαψα".to_string(), "βέβλαφα".to_string(), "βέβλαμμαι".to_string(), "ἐβλάβην / ἐβλάφθην".to_string()],properties:"blah".to_string()};
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None};
-        assert_eq!(b.get_form()[2].form, "ἐβλάβ / ἐβλάφθ"); 
+        assert_eq!(b.get_form().unwrap()[2].form, "ἐβλάβ / ἐβλάφθ"); 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
-        assert_eq!(b.get_form()[2].form, "βλάπτ");
+        assert_eq!(b.get_form().unwrap()[2].form, "βλάπτ");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
-        assert_eq!(b.get_form()[2].form, "βλάψ");
+        assert_eq!(b.get_form().unwrap()[2].form, "βλάψ");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
-        assert_eq!(b.get_form()[2].form, "βέβλαφ");
-        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None};
-        assert_eq!(b.get_form()[2].form, "βέβλαμ");
+        assert_eq!(b.get_form().unwrap()[2].form, "βέβλαφ");
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None};
+        assert_eq!(b.get_form().unwrap()[2].form, "βέβλαμ");
     }
 }
 
