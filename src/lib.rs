@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-use std::convert::TryInto;
 
 #[derive(Eq, PartialEq, Debug)]
 enum HcPerson {
@@ -63,27 +62,21 @@ enum HcGreekPrincipalParts {
 #[derive(Eq, PartialEq, Debug)]
 pub struct HcGreekVerb {
     id: u32,
-    pps: [String; 6],
+    pps: Vec<String>,
     properties: String,
 }
 
-fn demo<T, const N: usize>(v: Vec<T>) -> [T; N] {
-    v.try_into()
-        .unwrap_or_else(|v: Vec<T>| panic!("Expected a Vec of length {} but it was {}", N, v.len()))
-}
-/*
 impl HcGreekVerb {
-    fn from_string(s:String) -> HcGreekVerb {
+    fn from_string(id:u32, pps:&str, properties:&str) -> HcGreekVerb {
 
-        let mut a = s.split(", ");
         HcGreekVerb {
-            id:1,
-            pps: s.split(", ").try_into(),
-            properties:"".to_string()
+            id: id,
+            pps: pps.split(',').map(|s| s.trim().to_owned()).collect(),
+            properties: properties.to_string()
         }
     }
 }
-*/
+
 #[derive(Default)]
 struct Step {
     form: String,
@@ -269,7 +262,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 }
 
-static ENDINGS: &'static [[&str; 6]; 2] = &[["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
+static ENDINGS: &[[&str; 6]; 2] = &[["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
     ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"]];//, "Imperfect Active Indicative" },
 
     /*
@@ -356,9 +349,10 @@ mod tests {
     #[test]
     fn it_works() {
 
-        //let a = HcGreekVerb::from_string("λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην".to_string());
-
-        let a = HcGreekVerb {id:1,pps:["λω".to_string(), "λσω".to_string(), "ἔλῡσα".to_string(), "λέλυκα".to_string(), "λέλυμαι".to_string(), "ἐλύθην".to_string()],properties:"blah".to_string()};
+        let a = HcGreekVerb::from_string(1, "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην", "");
+        let a1 = HcGreekVerb {id:1,pps:vec!["λω".to_string(), "λσω".to_string(), "ἔλῡσα".to_string(), "λέλυκα".to_string(), "λέλυμαι".to_string(), "ἐλύθην".to_string()],properties:"".to_string()};
+        assert_eq!(a, a1);
+        
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
         let c = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
         assert_eq!(b, c);
@@ -373,7 +367,7 @@ mod tests {
         assert_eq!(b.verb.pps[b.get_pp_num() as usize - 1], "ἔλῡσα");
         assert_eq!(b.get_pp(), "ἔλῡσα");
 
-        let a = HcGreekVerb {id:1,pps:["βλάπτω".to_string(), "βλάψω".to_string(), "ἔβλαψα".to_string(), "βέβλαφα".to_string(), "βέβλαμμαι".to_string(), "ἐβλάβην / ἐβλάφθην".to_string()],properties:"blah".to_string()};
+        let a = HcGreekVerb {id:1,pps:vec!["βλάπτω".to_string(), "βλάψω".to_string(), "ἔβλαψα".to_string(), "βέβλαφα".to_string(), "βέβλαμμαι".to_string(), "ἐβλάβην / ἐβλάφθην".to_string()],properties:"blah".to_string()};
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None};
         assert_eq!(b.get_form().unwrap()[2].form, "ἐβλάβ / ἐβλάφθ"); 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
