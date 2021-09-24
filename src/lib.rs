@@ -175,10 +175,6 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let e = "Remove ending from Principal Part".to_string();
         steps.push(Step{form:f, explanation:e});
 
-        if self.voice == HcVoice::Middle {
-            return Err("oops");
-        }
-
         Ok(steps)
     }
 
