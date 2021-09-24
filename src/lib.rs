@@ -537,7 +537,7 @@ static ENDINGS: &[[&str; 6]; 67] = &[["ω", "εις", "ει", "ομεν", "ετ�
     ["ω", "ῃς", "ῃ", "ωμεν", "ητε", "ωσι(ν)"],//, "Aorist Active Subjunctive" },
     ["οιμι", "οις", "οι", "οιμεν", "οιτε", "οιεν"],//, "Present Active Optative" },
     ["αιμι", "αις, ειας", "αι, ειε(ν)", "αιμεν", "αιτε", "αιεν, ειαν"],//, "Aorist Active Optative" },
-    ["ομαι", "ει, ῃ", "εται", "ομεθα", "εσθε", "ονται"],//, "Present Middle/Passive Indicative" },
+    ["ομαι", "ει,ῃ", "εται", "ομεθα", "εσθε", "ονται"],//, "Present Middle/Passive Indicative" },
     ["ομην", "ου", "ετο", "ομεθα", "εσθε", "οντο"],//, "Imperfect Middle/Passive Indicative" },
     ["ην", "ης", "η", "ημεν", "ητε", "ησαν"],//, "Aorist Passive Indicative" },
     ["αμην", "ω", "ατο", "αμεθα", "ασθε", "αντο"],//, "Aorist Middle Indicative" },
@@ -554,7 +554,7 @@ static ENDINGS: &[[&str; 6]; 67] = &[["ω", "εις", "ει", "ομεν", "ετ�
     ["", "ον", "ατω",  "", "ατε", "αντων"],//, "Aorist Active Imperative" },
     ["", "αι", "ασθω", "", "ασθε", "ασθων"],//, "Aorist Middle Imperative" },
     ["", "ητι, ηθι", "ητω", "", "ητε", "εντων"],//, "Aorist Passive Imperative" },
-    ["ομαι", "ει, ῃ", "εται", "ομεθα", "εσθε", "ονται"],//, "Future Middle/Passive Indicative" },
+    ["ομαι", "ει,ῃ", "εται", "ομεθα", "εσθε", "ονται"],//, "Future Middle/Passive Indicative" },
     
     ["ῶ", "ᾷς", "ᾷ", "ῶμεν", "ᾶτε", "ῶσι(ν)"],//, ""],// },         //pres active indic a
     ["ῶμαι", "ᾷ", "ᾶται", "ώμεθα", "ᾶσθε", "ῶνται"],//, "" },   //pres mid/pass indic a
@@ -635,6 +635,12 @@ mod tests {
         assert_eq!(b.get_form().unwrap()[2].form, "ἐβλάβ / ἐβλάφθ"); 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[2].form, "βλάπτ");
+        assert_eq!(b.get_endings()[0], "ω");
+
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
+        assert_eq!(b.get_endings()[0], "ει");
+        assert_eq!(b.get_endings()[1], "ῃ");
+
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[2].form, "βλάψ");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
