@@ -500,8 +500,27 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         } as usize;
 
         let person_number:usize = match self.person {
-            HcPerson::First => 0,
-            _ => 1
+            HcPerson::First => {
+                match self.number {
+                    HcNumber::Singular => 0,
+                    HcNumber::Dual => 0,
+                    HcNumber::Plural => 3,
+                }    
+            },
+            HcPerson::Second => {
+                match self.number {
+                    HcNumber::Singular => 1,
+                    HcNumber::Dual => 0,
+                    HcNumber::Plural => 4,
+                }    
+            },
+            HcPerson::Third => {
+                match self.number {
+                    HcNumber::Singular => 2,
+                    HcNumber::Dual => 0,
+                    HcNumber::Plural => 5,
+                }    
+            }, 
         };
 
         ENDINGS[ending][person_number].split(',').collect()
