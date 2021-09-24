@@ -49,6 +49,15 @@ enum HcGender {
 
 }
 
+#[derive(Eq, PartialEq, Debug)]
+enum HcCase {
+    Nominative,
+    Genitive,
+    Dative,
+    Accusative,
+    Vocative,
+}
+
 #[derive(PartialEq, Debug)]
 enum HcGreekPrincipalParts {
     First = 1,
@@ -67,12 +76,17 @@ pub struct HcGreekVerb {
 }
 
 impl HcGreekVerb {
-    fn from_string(id:u32, pps:&str, properties:&str) -> HcGreekVerb {
-
-        HcGreekVerb {
-            id: id,
-            pps: pps.split(',').map(|s| s.trim().to_owned()).collect(),
-            properties: properties.to_string()
+    fn from_string(id:u32, pps:&str, properties:&str) -> Option<HcGreekVerb> {
+        let x:Vec<String> = pps.split(',').map(|s| s.trim().to_owned()).collect();
+        if x.len() == 6 {
+            Some(HcGreekVerb {
+                id: id,
+                pps: x,
+                properties: properties.to_string()
+            })
+        }
+        else {
+            None
         }
     }
 }
@@ -92,7 +106,7 @@ pub struct HcGreekVerbForm<'a> {
     voice: HcVoice,
     mood: HcMood,
     gender: Option<HcGender>,
-    //steps: Vec<Step>,
+    case: Option<HcCase>,
 }
 
 trait HcVerbForms {
@@ -222,7 +236,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             self.verb.pps[num - 1].to_string()
         }
         else {
-            "".to_string()
+            panic!("no pp???");
         }
     }
 
@@ -349,12 +363,12 @@ mod tests {
     #[test]
     fn it_works() {
 
-        let a = HcGreekVerb::from_string(1, "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην", "");
+        let a = HcGreekVerb::from_string(1, "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην", "").unwrap();
         let a1 = HcGreekVerb {id:1,pps:vec!["λω".to_string(), "λσω".to_string(), "ἔλῡσα".to_string(), "λέλυκα".to_string(), "λέλυμαι".to_string(), "ἐλύθην".to_string()],properties:"".to_string()};
         assert_eq!(a, a1);
         
-        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
-        let c = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
+        let c = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b, c);
         
         assert_eq!(b.get_form().unwrap()[0].form, "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην");
@@ -367,16 +381,16 @@ mod tests {
         assert_eq!(b.verb.pps[b.get_pp_num() as usize - 1], "ἔλῡσα");
         assert_eq!(b.get_pp(), "ἔλῡσα");
 
-        let a = HcGreekVerb {id:1,pps:vec!["βλάπτω".to_string(), "βλάψω".to_string(), "ἔβλαψα".to_string(), "βέβλαφα".to_string(), "βέβλαμμαι".to_string(), "ἐβλάβην / ἐβλάφθην".to_string()],properties:"blah".to_string()};
-        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None};
+        let a = HcGreekVerb::from_string(1, "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην", "").unwrap();
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[2].form, "ἐβλάβ / ἐβλάφθ"); 
-        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[2].form, "βλάπτ");
-        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[2].form, "βλάψ");
-        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None};
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[2].form, "βέβλαφ");
-        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None};
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[2].form, "βέβλαμ");
     }
 }
