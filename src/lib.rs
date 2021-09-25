@@ -1,6 +1,13 @@
 #![allow(dead_code)]
 #[allow(non_camel_case_types)]
 
+extern crate rustunicodetests;
+use rustunicodetests::*;
+use rustunicodetests::hgk_toggle_diacritic_str;
+use rustunicodetests::hgk_strip_diacritics;
+use rustunicodetests::hgk_transliterate;
+use rustunicodetests::hgk_convert;
+
 #[derive(Eq, PartialEq, Debug)]
 enum HcEndings {
     PRESENT_ACTIVE_IND = 0,
@@ -192,13 +199,13 @@ pub struct HcGreekVerbForm<'a> {
 
 trait HcVerbForms {
     fn get_form(&self) -> Result<Vec<Step>, &str>;
-    fn explain_form(&self) -> String;
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> String;
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
     fn add_ending(&self, stem:&str, ending:&str) -> Result<String, &str>;
     fn get_endings(&self) -> Vec<&str>;
 }
+
 /*
 //https://stackoverflow.com/questions/59330671/how-do-i-remove-a-single-trailing-string-from-another-string-in-rust
 fn remove_suffix<'a>(s: &'a str, p: &str) -> &'a str {
@@ -273,8 +280,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         steps.push(Step{form:f.to_string(), explanation:e});
 
         //internally (not as a step) strip accent
-
+        
         let mut z = Vec::new();
+        let f = hgk_strip_diacritics(f, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
         let each_alt = f.split(" / ");
         for x in each_alt {
             let y = self.strip_ending(pp_num, x.to_string());
@@ -304,10 +312,6 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         steps.push(Step{form:f, explanation:e});        
 
         Ok(steps)
-    }
-
-    fn explain_form(&self) -> String {
-        "a".to_string()
     }
 
     fn get_pp(&self) -> String {
@@ -628,7 +632,7 @@ mod tests {
         assert_eq!(b.get_form().unwrap()[0].form, luw);
         assert_eq!(b.get_form().unwrap()[1].form, "ἔλῡσα");
         
-        assert_eq!(b.get_form().unwrap()[2].form, "ἔλῡσ");
+        assert_eq!(b.get_form().unwrap()[2].form, "ἐλῡσ");
         
         assert_eq!(b.get_pp_num(), HcGreekPrincipalParts::Third);
         assert_eq!(b.get_pp_num() as usize, 3);
@@ -637,22 +641,32 @@ mod tests {
 
         let a = HcGreekVerb::from_string(1, blaptw, "").unwrap();
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[2].form, "ἐβλάβ / ἐβλάφθ"); 
+        assert_eq!(b.get_form().unwrap()[2].form, "ἐβλαβ / ἐβλαφθ"); 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[2].form, "βλάπτ");
+        assert_eq!(b.get_form().unwrap()[2].form, "βλαπτ");
         assert_eq!(b.get_endings()[0], "ω");
 
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
+        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτομαι");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_endings()[0], "ει");
         assert_eq!(b.get_endings()[1], "ῃ");
-        assert_eq!(b.get_form().unwrap()[3].form, "βλάπτει, βλάπτῃ");
+        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτει, βλαπτῃ");
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::Third, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
+        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτεται");
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Plural, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
+        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτομεθα");
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::Second, number:HcNumber::Plural, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
+        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτεσθε");
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::Third, number:HcNumber::Plural, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
+        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτονται");
 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[2].form, "βλάψ");
+        assert_eq!(b.get_form().unwrap()[2].form, "βλαψ");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[2].form, "βέβλαφ");
+        assert_eq!(b.get_form().unwrap()[2].form, "βεβλαφ");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[2].form, "βέβλαμ");
+        assert_eq!(b.get_form().unwrap()[2].form, "βεβλαμ");
     }
 }
 
