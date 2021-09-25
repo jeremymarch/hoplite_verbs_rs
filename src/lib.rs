@@ -192,6 +192,7 @@ trait HcVerbForms {
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
     fn add_ending(&self, stem:&str, ending:&str) -> Result<String, &str>;
     fn get_endings(&self) -> Option<Vec<&str>>;
+    fn accent_verb(&self) -> String;
 }
 
 /*
@@ -303,6 +304,13 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         steps.push(Step{form:f, explanation:e});        
 
         Ok(steps)
+    }
+
+    fn accent_verb(&self) -> String {
+
+        let mut syllables:[bool; 3] = [false,false,false];
+
+        "".to_string()
     }
 
     fn get_pp(&self) -> String {
@@ -539,7 +547,8 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 }
 
-static ENDINGS: &[[&str; 6]; 63] = &[["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
+static ENDINGS: &[[&str; 6]; 63] = &[
+    ["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
     ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"],//, "Imperfect Active Indicative" },
     ["α", "ας", "ε(ν)", "αμεν", "ατε", "αν"],//, "Aorist Active Indicative" },
     ["α", "ας", "ε(ν)", "αμεν", "ατε", "ᾱσι(ν)"],//, "Perfect Active Indicative" },
@@ -599,6 +608,7 @@ static ENDINGS: &[[&str; 6]; 63] = &[["ω", "εις", "ει", "ομεν", "ετ�
     ["", "ου", "ούτω",   "", "οῦτε", "ούντων"],//, "Present Active Imperative" }, //pres. active imper o
     ["", "οῦ", "ούσθω", "", "οῦσθε", "ούσθων"],//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper o
     
+
 
     ["μι", "ς", "σι(ν)", "μεν", "τε", "ᾱσι(ν)"],//, "" },   //mi
     
@@ -670,6 +680,9 @@ mod tests {
         assert_eq!(b.get_form().unwrap()[2].form, "βεβλαφ");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[2].form, "βεβλαμ");
+
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
+        assert_eq!(b.get_form().unwrap()[3].form, "βεβλαμμην"); //for now
     }
 }
 
