@@ -191,7 +191,7 @@ trait HcVerbForms {
     fn get_pp(&self) -> String;
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
     fn add_ending(&self, stem:&str, ending:&str) -> Result<String, &str>;
-    fn get_endings(&self) -> Vec<&str>;
+    fn get_endings(&self) -> Option<Vec<&str>>;
 }
 
 /*
@@ -287,7 +287,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let mut zz = Vec::new();
         for a in z {
             let endings_for_form = self.get_endings();
-            for e in endings_for_form {
+            if endings_for_form == None {
+                return Err("Illegal form ending");
+            }
+            for e in endings_for_form.unwrap() {
                 let y = self.add_ending(&a, e);
                 if y.is_err() {
                     panic!("oops");
@@ -346,8 +349,8 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
         }
     }
-    fn get_endings(&self) -> Vec<&str> {
-        let ending:usize = match self.tense {
+    fn get_endings(&self) -> Option<Vec<&str>> {
+        let ending = match self.tense {
             HcTense::Present => {
                 match self.voice {
                     HcVoice::Active => {
@@ -502,7 +505,11 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     }
                 }
             },
-        } as usize;
+        };
+
+        if ending == HcEndings::NotImplemented {
+            return None;
+        }
 
         let person_number:usize = match self.person {
             HcPerson::First => {
@@ -528,7 +535,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }, 
         };
 
-        ENDINGS[ending][person_number].split(',').collect()
+        Some(ENDINGS[ending as usize][person_number].split(',').collect())
     }
 }
 
@@ -640,13 +647,13 @@ mod tests {
         assert_eq!(b.get_form().unwrap()[2].form, "ἐβλαβ / ἐβλαφθ"); 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[2].form, "βλαπτ");
-        assert_eq!(b.get_endings()[0], "ω");
+        assert_eq!(b.get_endings().unwrap()[0], "ω");
 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[3].form, "βλαπτομαι");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_endings()[0], "ει");
-        assert_eq!(b.get_endings()[1], "ῃ");
+        assert_eq!(b.get_endings().unwrap()[0], "ει");
+        assert_eq!(b.get_endings().unwrap()[1], "ῃ");
         assert_eq!(b.get_form().unwrap()[3].form, "βλαπτει, βλαπτῃ");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::Third, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form().unwrap()[3].form, "βλαπτεται");
