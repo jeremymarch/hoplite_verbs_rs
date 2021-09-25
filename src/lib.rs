@@ -9,75 +9,71 @@ use rustunicodetests::hgk_strip_diacritics;
 
 #[derive(Eq, PartialEq, Debug)]
 enum HcEndings {
-PresentActiveInd = 0,
-ImperfectActiveInd,
-AoristActiveInd,
-PerfectActiveInd,
-PluperfectActiveInd,
-FutureActiveInd,
-PresentActiveSubj,
-AoristActiveSubj,
-PresentActiveOpt,
-AoristActiveOpt,
-PresentMidpassInd,
-ImperfectMidpassInd,
-AoristPassiveInd,
-AoristMidInd,
-AoristPassiveSubj,
-AoristPassiveOpt,
-AoristMiddleSubj,
-AoristMiddleOpt,
-PerfectMidpassInd,
-PluperfectMidpassInd,
-PresentMidpassSubj,
-PresentMidpassOpt,
-PresentActiveImperative,
-PresentMidpassImperative,
-AoristActiveImperative,
-AoristMiddleImperative,
-AoristPassiveImperative,
-FutureMidpassInd,
-PresentActiveIndicAContracted,
-PresentMidpassIndicAContracted,
-ImperfectActiveIndicAContracted,
-ImperfectMidpassIndicAContracted,
-PresentActiveSubjAContracted,
-PresentMidpassSubjAContracted,
-PresentActiveOptAContracted,
-PresentMidpassOptAContracted,
-PresentActiveIndicEContracted,
-PresentMidpassIndicEContracted,
-ImperfectActiveIndicEContracted,
-ImperfectMidpassIndicEContracted,
-PresentActiveSubjEContracted,
-PresentMidpassSubjEContracted,
-PresentActiveOptEContracted,
-PresentMidpassOptEContracted,
-PresentActiveIndicOContracted,
-PresentMidpassIndicOContracted,
-ImperfectActiveIndicOContracted,
-ImperfectMidpassIndicOContracted,
-PresentActiveSubjOContracted,
-PresentMidpassSubjOContracted,
-PresentActiveOptOContracted,
-PresentMidpassOptOContracted,
-PresentActiveImperativeAContracted,
-PresentMidpassImperativeAContracted,
-PresentActiveImperativeEContracted,
-PresentMidpassImperativeEContracted,
-PresentActiveImperativeOContracted,
-PresentMidpassImperativeOContracted,
-PresentActiveIndicativeMi,
-PresentActiveOptativeContractedNotPrecontracted,
-AoristActiveImperativesMi,
-AoristActiveImperativesMiRoot,
-AoristMiddleImperativesMi,
-AoristActiveIndicativeMiRoot,
-SecondAoristMiddleImperative,
-PresentMidpassOptTithhmi,
-ImperfectActiveContractedDecomposed,
-NotImplemented,
-NumEndings,
+    PresentActiveInd,
+    ImperfectActiveInd,
+    AoristActiveInd,
+    PerfectActiveInd,
+    PluperfectActiveInd,
+    PresentActiveSubj,
+    PresentActiveOpt,
+    AoristActiveOpt,
+    PresentMidpassInd,
+    ImperfectMidpassInd,
+    AoristPassiveInd,
+    AoristMidInd,
+    AoristPassiveSubj,
+    AoristPassiveOpt,
+    AoristMiddleOpt,
+    PerfectMidpassInd,
+    PluperfectMidpassInd,
+    PresentMidpassSubj,
+    PresentMidpassOpt,
+    PresentActiveImperative,
+    PresentMidpassImperative,
+    AoristActiveImperative,
+    AoristMiddleImperative,
+    AoristPassiveImperative,
+    PresentActiveIndicAContracted,
+    PresentMidpassIndicAContracted,
+    ImperfectActiveIndicAContracted,
+    ImperfectMidpassIndicAContracted,
+    PresentActiveSubjAContracted,
+    PresentMidpassSubjAContracted,
+    PresentActiveOptAContracted,
+    PresentMidpassOptAContracted,
+    PresentActiveIndicEContracted,
+    PresentMidpassIndicEContracted,
+    ImperfectActiveIndicEContracted,
+    ImperfectMidpassIndicEContracted,
+    PresentActiveSubjEContracted,
+    PresentMidpassSubjEContracted,
+    PresentActiveOptEContracted,
+    PresentMidpassOptEContracted,
+    PresentActiveIndicOContracted,
+    PresentMidpassIndicOContracted,
+    ImperfectActiveIndicOContracted,
+    ImperfectMidpassIndicOContracted,
+    PresentActiveSubjOContracted,
+    PresentMidpassSubjOContracted,
+    PresentActiveOptOContracted,
+    PresentMidpassOptOContracted,
+    PresentActiveImperativeAContracted,
+    PresentMidpassImperativeAContracted,
+    PresentActiveImperativeEContracted,
+    PresentMidpassImperativeEContracted,
+    PresentActiveImperativeOContracted,
+    PresentMidpassImperativeOContracted,
+    PresentActiveIndicativeMi,
+    PresentActiveOptativeContractedNotPrecontracted,
+    AoristActiveImperativesMi,
+    AoristActiveImperativesMiRoot,
+    AoristMiddleImperativesMi,
+    AoristActiveIndicativeMiRoot,
+    SecondAoristMiddleImperative,
+    PresentMidpassOptTithhmi,
+    ImperfectActiveContractedDecomposed,
+    NotImplemented,
+    NumEndings,
 }
 
 #[derive(Eq, PartialEq, Debug)]
@@ -380,20 +376,20 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 match self.voice {
                     HcVoice::Active => {
                         match self.mood {
-                            HcMood::Indicative => HcEndings::PresentActiveInd,
-                            HcMood::Subjunctive => HcEndings::PresentActiveSubj,
-                            HcMood::Optative => HcEndings::PresentActiveOpt,
-                            HcMood::Imperative => HcEndings::PresentActiveImperative,
+                            HcMood::Indicative => HcEndings::ImperfectActiveInd,
+                            HcMood::Subjunctive => HcEndings::NotImplemented,
+                            HcMood::Optative => HcEndings::NotImplemented,
+                            HcMood::Imperative => HcEndings::NotImplemented,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
                     },
                     HcVoice::Middle | HcVoice::Passive => {
                         match self.mood {
-                            HcMood::Indicative => HcEndings::PresentMidpassInd,
-                            HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
-                            HcMood::Optative => HcEndings::PresentMidpassOpt,
-                            HcMood::Imperative => HcEndings::PresentMidpassImperative,
+                            HcMood::Indicative => HcEndings::ImperfectMidpassInd,
+                            HcMood::Subjunctive => HcEndings::NotImplemented,
+                            HcMood::Optative => HcEndings::NotImplemented,
+                            HcMood::Imperative => HcEndings::NotImplemented,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
@@ -405,9 +401,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     HcVoice::Active => {
                         match self.mood {
                             HcMood::Indicative => HcEndings::PresentActiveInd,
-                            HcMood::Subjunctive => HcEndings::PresentActiveSubj,
+                            HcMood::Subjunctive => HcEndings::NotImplemented,
                             HcMood::Optative => HcEndings::PresentActiveOpt,
-                            HcMood::Imperative => HcEndings::PresentActiveImperative,
+                            HcMood::Imperative => HcEndings::NotImplemented,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
@@ -415,9 +411,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     HcVoice::Middle | HcVoice::Passive => {
                         match self.mood {
                             HcMood::Indicative => HcEndings::PresentMidpassInd,
-                            HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
+                            HcMood::Subjunctive => HcEndings::NotImplemented,
                             HcMood::Optative => HcEndings::PresentMidpassOpt,
-                            HcMood::Imperative => HcEndings::PresentMidpassImperative,
+                            HcMood::Imperative => HcEndings::NotImplemented,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
@@ -428,20 +424,30 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 match self.voice {
                     HcVoice::Active => {
                         match self.mood {
-                            HcMood::Indicative => HcEndings::PresentActiveInd,
+                            HcMood::Indicative => HcEndings::AoristActiveInd,
                             HcMood::Subjunctive => HcEndings::PresentActiveSubj,
-                            HcMood::Optative => HcEndings::PresentActiveOpt,
-                            HcMood::Imperative => HcEndings::PresentActiveImperative,
+                            HcMood::Optative => HcEndings::AoristActiveOpt,
+                            HcMood::Imperative => HcEndings::AoristActiveImperative,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
                     },
-                    HcVoice::Middle | HcVoice::Passive => {
+                    HcVoice::Middle => {
                         match self.mood {
-                            HcMood::Indicative => HcEndings::PresentMidpassInd,
+                            HcMood::Indicative => HcEndings::AoristMidInd,
                             HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
-                            HcMood::Optative => HcEndings::PresentMidpassOpt,
-                            HcMood::Imperative => HcEndings::PresentMidpassImperative,
+                            HcMood::Optative => HcEndings::AoristMiddleOpt,
+                            HcMood::Imperative => HcEndings::AoristMiddleImperative,
+                            HcMood::Infinitive => HcEndings::NotImplemented,
+                            HcMood::Participle => HcEndings::NotImplemented,
+                        }
+                    },
+                    HcVoice::Passive => {
+                        match self.mood {
+                            HcMood::Indicative => HcEndings::AoristPassiveInd,
+                            HcMood::Subjunctive => HcEndings::AoristPassiveSubj,
+                            HcMood::Optative => HcEndings::AoristPassiveOpt,
+                            HcMood::Imperative => HcEndings::AoristPassiveImperative,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
@@ -452,20 +458,20 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 match self.voice {
                     HcVoice::Active => {
                         match self.mood {
-                            HcMood::Indicative => HcEndings::PresentActiveInd,
-                            HcMood::Subjunctive => HcEndings::PresentActiveSubj,
-                            HcMood::Optative => HcEndings::PresentActiveOpt,
-                            HcMood::Imperative => HcEndings::PresentActiveImperative,
+                            HcMood::Indicative => HcEndings::PerfectActiveInd,
+                            HcMood::Subjunctive => HcEndings::NotImplemented,
+                            HcMood::Optative => HcEndings::NotImplemented,
+                            HcMood::Imperative => HcEndings::NotImplemented,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
                     },
                     HcVoice::Middle | HcVoice::Passive => {
                         match self.mood {
-                            HcMood::Indicative => HcEndings::PresentMidpassInd,
-                            HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
-                            HcMood::Optative => HcEndings::PresentMidpassOpt,
-                            HcMood::Imperative => HcEndings::PresentMidpassImperative,
+                            HcMood::Indicative => HcEndings::PerfectMidpassInd,
+                            HcMood::Subjunctive => HcEndings::NotImplemented,
+                            HcMood::Optative => HcEndings::NotImplemented,
+                            HcMood::Imperative => HcEndings::NotImplemented,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
@@ -476,20 +482,20 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 match self.voice {
                     HcVoice::Active => {
                         match self.mood {
-                            HcMood::Indicative => HcEndings::PresentActiveInd,
-                            HcMood::Subjunctive => HcEndings::PresentActiveSubj,
-                            HcMood::Optative => HcEndings::PresentActiveOpt,
-                            HcMood::Imperative => HcEndings::PresentActiveImperative,
+                            HcMood::Indicative => HcEndings::PluperfectActiveInd,
+                            HcMood::Subjunctive => HcEndings::NotImplemented,
+                            HcMood::Optative => HcEndings::NotImplemented,
+                            HcMood::Imperative => HcEndings::NotImplemented,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
                     },
                     HcVoice::Middle | HcVoice::Passive => {
                         match self.mood {
-                            HcMood::Indicative => HcEndings::PresentMidpassInd,
-                            HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
-                            HcMood::Optative => HcEndings::PresentMidpassOpt,
-                            HcMood::Imperative => HcEndings::PresentMidpassImperative,
+                            HcMood::Indicative => HcEndings::PluperfectMidpassInd,
+                            HcMood::Subjunctive => HcEndings::NotImplemented,
+                            HcMood::Optative => HcEndings::NotImplemented,
+                            HcMood::Imperative => HcEndings::NotImplemented,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
@@ -526,23 +532,20 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 }
 
-static ENDINGS: &[[&str; 6]; 67] = &[["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
+static ENDINGS: &[[&str; 6]; 63] = &[["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
     ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"],//, "Imperfect Active Indicative" },
     ["α", "ας", "ε(ν)", "αμεν", "ατε", "αν"],//, "Aorist Active Indicative" },
     ["α", "ας", "ε(ν)", "αμεν", "ατε", "ᾱσι(ν)"],//, "Perfect Active Indicative" },
     ["η", "ης", "ει(ν)", "εμεν", "ετε", "εσαν"],//, "Pluperfect Active Indicative" },
-    ["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Future Active Indicative" },
     ["ω", "ῃς", "ῃ", "ωμεν", "ητε", "ωσι(ν)"],//, "Present Active Subjunctive" },
-    ["ω", "ῃς", "ῃ", "ωμεν", "ητε", "ωσι(ν)"],//, "Aorist Active Subjunctive" },
     ["οιμι", "οις", "οι", "οιμεν", "οιτε", "οιεν"],//, "Present Active Optative" },
     ["αιμι", "αις, ειας", "αι, ειε(ν)", "αιμεν", "αιτε", "αιεν, ειαν"],//, "Aorist Active Optative" },
     ["ομαι", "ει,ῃ", "εται", "ομεθα", "εσθε", "ονται"],//, "Present Middle/Passive Indicative" },
     ["ομην", "ου", "ετο", "ομεθα", "εσθε", "οντο"],//, "Imperfect Middle/Passive Indicative" },
     ["ην", "ης", "η", "ημεν", "ητε", "ησαν"],//, "Aorist Passive Indicative" },
     ["αμην", "ω", "ατο", "αμεθα", "ασθε", "αντο"],//, "Aorist Middle Indicative" },
-    ["ῶ", "ῇς", "ῇ", "ῶμεν", "ῆτε", "ῶσι(ν)"],//, "Aorist Passive Subjunctive" },
+    ["ῶ", "ῇς", "ῇ", "ῶμεν", "ῆτε", "ῶσι(ν)"],//***, "Aorist Passive Subjunctive" },
     ["ειην", "ειης", "ειη", "εῖμεν, ειημεν", "εῖτε, ειητε", "εῖεν, ειησαν"],//, "Aorist Passive Optative" },
-    ["ωμαι", "ῃ", "ηται", "ωμεθα", "ησθε", "ωνται"],//, "Aorist Middle Subjunctive" },
     ["αιμην", "αιο", "αιτο", "αιμεθα", "αισθε", "αιντο"],//, "Aorist Middle Optative" },
     ["μαι", "σαι", "ται", "μεθα", "σθε", "νται"],//, "Perfect Middle/Passive Indicative" },
     ["μην", "σο", "το", "μεθα", "σθε", "ντο"],//, "Pluperfect Middle/Passive Indicative" },
@@ -553,8 +556,8 @@ static ENDINGS: &[[&str; 6]; 67] = &[["ω", "εις", "ει", "ομεν", "ετ�
     ["", "ον", "ατω",  "", "ατε", "αντων"],//, "Aorist Active Imperative" },
     ["", "αι", "ασθω", "", "ασθε", "ασθων"],//, "Aorist Middle Imperative" },
     ["", "ητι, ηθι", "ητω", "", "ητε", "εντων"],//, "Aorist Passive Imperative" },
-    ["ομαι", "ει,ῃ", "εται", "ομεθα", "εσθε", "ονται"],//, "Future Middle/Passive Indicative" },
     
+
     ["ῶ", "ᾷς", "ᾷ", "ῶμεν", "ᾶτε", "ῶσι(ν)"],//, ""],// },         //pres active indic a
     ["ῶμαι", "ᾷ", "ᾶται", "ώμεθα", "ᾶσθε", "ῶνται"],//, "" },   //pres mid/pass indic a
     ["ων", "ᾱς", "ᾱ", "ῶμεν", "ᾶτε", "ων"],//, "" },            //impf active indic a
@@ -589,6 +592,7 @@ static ENDINGS: &[[&str; 6]; 67] = &[["ω", "εις", "ει", "ομεν", "ετ�
     ["", "ου", "ούτω",   "", "οῦτε", "ούντων"],//, "Present Active Imperative" }, //pres. active imper o
     ["", "οῦ", "ούσθω", "", "οῦσθε", "ούσθων"],//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper o
     
+
     ["μι", "ς", "σι(ν)", "μεν", "τε", "ᾱσι(ν)"],//, "" },   //mi
     
     ["οιμι, οιην", "οις, οιης", "οι, οιη", "οιμεν, οιημεν", "οιτε, οιητε", "οιεν, οιησαν"],//, "" },//pres act opt o
@@ -600,7 +604,7 @@ static ENDINGS: &[[&str; 6]; 67] = &[["ω", "εις", "ει", "ομεν", "ετ�
     
     ["", "οῦ", "εσθω", "", "εσθε", "εσθων"],//, "Present Middle/Passive Imperative" }, //second aorist middle/passive imperatives
     ["ειμην", "εῖο", "εῖτο, οῖτο", "ειμεθα, οιμεθα", "εῖσθε, οῖσθε", "εῖντο, οῖντο"],//, "Present Middle/Passive Optative Tithemi" }, //Exception: H&Q page 347
-    ["ον", "ες", "ε", "ομεν", "ετε", "ον"],//, "Imperfect Active Indicative" } //this is only for contracted verbs when decomposed so the nu moveable doesn't show up
+    ["ον", "ες", "ε", "ομεν", "ετε", "ον"],//***, "Imperfect Active Indicative" } //this is only for contracted verbs when decomposed so the nu moveable doesn't show up
 ];
 
 
