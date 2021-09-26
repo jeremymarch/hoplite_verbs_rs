@@ -192,7 +192,7 @@ trait HcVerbForms {
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
     fn add_ending(&self, stem:&str, ending:&str) -> Result<String, &str>;
     fn get_endings(&self) -> Option<Vec<&str>>;
-    fn accent_verb(&self) -> String;
+    fn accent_verb(&self, form:&str) -> String;
 }
 
 /*
@@ -297,6 +297,11 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     panic!("oops");
                 }
                 zz.push(y.unwrap());
+
+                //imperfect/pluperfect: add augment
+                //aorist subj/opt/imper/inf/ptc: remove augment
+                //contract contracted verbs
+                //accent
             }
         }
         let f = zz.join(", ");
@@ -306,10 +311,67 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         Ok(steps)
     }
 
-    fn accent_verb(&self) -> String {
+    fn accent_verb(&self, form:&str) -> String {
 
-        let mut syllables:[bool; 3] = [false,false,false];
-
+        let mut syllables:[Option<bool>; 3] = [None,None,None];
+        let mut syl = 0;
+        let mut can_be_second_half_of_diphthong = false;
+        let mut letter_num = 0;
+        let mut letters = form.gkletters();
+        loop {
+            match letters.next_back() {
+                Some(x) => { 
+                    //println!("letter: {:?}", x);
+                    match x.letter_type() {
+                        HgkLetterType::HgkLongVowel => {
+                            syllables[syl] = Some(true);
+                            syl += 1;
+                            can_be_second_half_of_diphthong = false;
+                        },
+                        HgkLetterType::HgkShortVowel => {
+                            if x.letter == 'υ' || x.letter == 'ι' && (x.diacritics & HGK_DIAERESIS) != HGK_DIAERESIS {
+                                can_be_second_half_of_diphthong = true;
+                                syllables[syl] = Some(false); //might be changed
+                                syl += 1;
+                            }
+                            else {
+                                if can_be_second_half_of_diphthong && (x.letter == 'ε' || x.letter == 'α' || x.letter == 'ο') && letter_num > 1{
+                                    syllables[syl - 1] = Some(true);
+                                }
+                                else {
+                                    syllables[syl] = Some(false);
+                                    syl += 1;
+                                }
+                                can_be_second_half_of_diphthong = false;
+                            }
+                        },
+                        _ => {
+                            //println!("letter2 {:?}", x);
+                            can_be_second_half_of_diphthong = false;
+                        }
+                    }
+                    if syl > 2 {
+                        break;
+                    }
+                    //println!("{:?} {:?}", x, x.letter.is_long_or_short() );
+                    letter_num += 1;
+                },
+                None => {
+                    //selfref.next = Some(Box::new(Node::new(value)));
+                    break;
+                },
+            }
+        }
+        //println!("result: {:?} {:?} {:?} {:?}", syllables[0], syllables[1], syllables[2], syl );
+        if syllables[2] != None && syllables[0] == Some(false) {
+            println!("antepenult");
+        }
+        else if syllables[1] == Some(true) && syllables[0] == Some(false) {
+            println!("circumflex on penult");
+        }
+        else {
+            println!("acute on penult");
+        }
         "".to_string()
     }
 
@@ -629,6 +691,18 @@ static ENDINGS: &[[&str; 6]; 63] = &[
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn accent_tests() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";     
+        let a = HcGreekVerb::from_string(1, luw, "").unwrap();
+        let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
+        //assert_eq!(b.get_form().unwrap()[1].form, "ἔλῡσα");
+        b.accent_verb("λέλυμαι");
+        b.accent_verb("λυ\u{0304}ε");
+        b.accent_verb("λ\u{1FE1}ε");
+    }
+
     #[test]
     fn it_works() {
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
