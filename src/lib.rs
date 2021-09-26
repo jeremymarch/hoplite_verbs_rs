@@ -568,27 +568,22 @@ fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool)> {
     let mut letter_num = 0;
     let mut last_letter = '\u{0000}';
     let mut res = Vec::new();
-    //let mut syllables:Vec<bool> = Vec::new();
     loop {
         match letters.next_back() {
             Some(x) => { 
                 //println!("letter: {:?}", x);
                 match x.letter_type() {
                     HgkLetterType::HgkLongVowel => {
-                        //syllables.push(true);
                         last_letter = '\u{0000}';
                         res.push((x.to_string(HgkUnicodeMode::Precomposed), true));
                     },
                     HgkLetterType::HgkShortVowel => {
                         if x.letter == 'υ' || x.letter == 'ι' && (x.diacritics & HGK_DIAERESIS) != HGK_DIAERESIS {
                             last_letter = x.letter;
-                            //syllables.push(false);
                             res.push((x.letter.to_string(), false));//add short, might be replaced by diphthong
                         }
                         else {
                             if last_letter != '\u{0000}' && (x.letter == 'ε' || x.letter == 'α' || x.letter == 'ο') {
-                                //syllables.pop();
-                                //syllables.push(true);
                                 res.pop();
                                 let mut s = String::from(x.letter);
                                 s.push(last_letter);
@@ -597,7 +592,6 @@ fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool)> {
                                 res.push((s, is_long));
                             }
                             else {
-                                //syllables.push(false);
                                 res.push((x.letter.to_string(), false));
                             }
                             last_letter = '\u{0000}';
@@ -607,19 +601,17 @@ fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool)> {
                         last_letter = '\u{0000}';
                     }
                 }
-                if res.len() > 2 { //syl > 2 {
+                if res.len() > 2 {
                     break;
                 }
-                //println!("{:?} {:?}", x, x.letter.is_long_or_short() );
                 letter_num += 1;
             },
             None => {
-                //selfref.next = Some(Box::new(Node::new(value)));
                 break;
             },
         }
     }
-    res.reverse();//.to_string()
+    res.reverse();
     res
 }
 
