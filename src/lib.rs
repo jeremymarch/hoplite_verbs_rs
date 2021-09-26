@@ -311,67 +311,20 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         Ok(steps)
     }
 
-    fn accent_verb(&self, form:&str) -> String {
+    fn accent_verb(&self, word:&str) -> String {
+        let syl = analyze_syllable_quantities(word);
+        println!("result: {:?}", syl);
 
-        let mut syllables:[Option<bool>; 3] = [None,None,None];
-        let mut syl = 0;
-        let mut can_be_second_half_of_diphthong = false;
-        let mut letter_num = 0;
-        let mut letters = form.gkletters();
-        loop {
-            match letters.next_back() {
-                Some(x) => { 
-                    //println!("letter: {:?}", x);
-                    match x.letter_type() {
-                        HgkLetterType::HgkLongVowel => {
-                            syllables[syl] = Some(true);
-                            syl += 1;
-                            can_be_second_half_of_diphthong = false;
-                        },
-                        HgkLetterType::HgkShortVowel => {
-                            if x.letter == 'υ' || x.letter == 'ι' && (x.diacritics & HGK_DIAERESIS) != HGK_DIAERESIS {
-                                can_be_second_half_of_diphthong = true;
-                                syllables[syl] = Some(false); //might be changed
-                                syl += 1;
-                            }
-                            else {
-                                if can_be_second_half_of_diphthong && (x.letter == 'ε' || x.letter == 'α' || x.letter == 'ο') && letter_num > 1{
-                                    syllables[syl - 1] = Some(true);
-                                }
-                                else {
-                                    syllables[syl] = Some(false);
-                                    syl += 1;
-                                }
-                                can_be_second_half_of_diphthong = false;
-                            }
-                        },
-                        _ => {
-                            //println!("letter2 {:?}", x);
-                            can_be_second_half_of_diphthong = false;
-                        }
-                    }
-                    if syl > 2 {
-                        break;
-                    }
-                    //println!("{:?} {:?}", x, x.letter.is_long_or_short() );
-                    letter_num += 1;
-                },
-                None => {
-                    //selfref.next = Some(Box::new(Node::new(value)));
-                    break;
-                },
-            }
-        }
-        //println!("result: {:?} {:?} {:?} {:?}", syllables[0], syllables[1], syllables[2], syl );
-        if syllables[2] != None && syllables[0] == Some(false) {
+        if syl.len() > 2 && syl[0].1 == false {
             println!("antepenult");
         }
-        else if syllables[1] == Some(true) && syllables[0] == Some(false) {
+        else if syl.len() == 2 && syl[0].1 == true && syl[1].1 == false {
             println!("circumflex on penult");
         }
         else {
             println!("acute on penult");
         }
+
         "".to_string()
     }
 
@@ -607,6 +560,67 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
         Some(ENDINGS[ending as usize][person_number].split(',').collect())
     }
+}
+
+fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool)> {
+    let mut letters = word.gkletters();
+
+    let mut letter_num = 0;
+    let mut last_letter = '\u{0000}';
+    let mut res = Vec::new();
+    //let mut syllables:Vec<bool> = Vec::new();
+    loop {
+        match letters.next_back() {
+            Some(x) => { 
+                //println!("letter: {:?}", x);
+                match x.letter_type() {
+                    HgkLetterType::HgkLongVowel => {
+                        //syllables.push(true);
+                        last_letter = '\u{0000}';
+                        res.push((x.to_string(HgkUnicodeMode::Precomposed), true));
+                    },
+                    HgkLetterType::HgkShortVowel => {
+                        if x.letter == 'υ' || x.letter == 'ι' && (x.diacritics & HGK_DIAERESIS) != HGK_DIAERESIS {
+                            last_letter = x.letter;
+                            //syllables.push(false);
+                            res.push((x.letter.to_string(), false));//add short, might be replaced by diphthong
+                        }
+                        else {
+                            if last_letter != '\u{0000}' && (x.letter == 'ε' || x.letter == 'α' || x.letter == 'ο') {
+                                //syllables.pop();
+                                //syllables.push(true);
+                                res.pop();
+                                let mut s = String::from(x.letter);
+                                s.push(last_letter);
+
+                                let is_long = letter_num > 1;//final diphthongs short accent
+                                res.push((s, is_long));
+                            }
+                            else {
+                                //syllables.push(false);
+                                res.push((x.letter.to_string(), false));
+                            }
+                            last_letter = '\u{0000}';
+                        }
+                    },
+                    _ => {
+                        last_letter = '\u{0000}';
+                    }
+                }
+                if res.len() > 2 { //syl > 2 {
+                    break;
+                }
+                //println!("{:?} {:?}", x, x.letter.is_long_or_short() );
+                letter_num += 1;
+            },
+            None => {
+                //selfref.next = Some(Box::new(Node::new(value)));
+                break;
+            },
+        }
+    }
+    res.reverse();//.to_string()
+    res
 }
 
 static ENDINGS: &[[&str; 6]; 63] = &[
