@@ -193,6 +193,7 @@ trait HcVerbForms {
     fn add_ending(&self, stem:&str, ending:&str) -> Result<String, &str>;
     fn get_endings(&self) -> Option<Vec<&str>>;
     fn accent_verb(&self, form:&str) -> String;
+    fn accent_syllable(&self, word:&str, syllable:u8, accent:u32) -> String;
 }
 
 /*
@@ -267,10 +268,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let f = &self.verb.pps[pp_num - 1];
         let e = "Choose Principal Part".to_string();
         steps.push(Step{form:f.to_string(), explanation:e});
-
-        //internally (not as a step) strip accent
         
         let mut z = Vec::new();
+        //internally (not as a step) strip accent
         let f = hgk_strip_diacritics(f, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
         let each_alt = f.split(" / ");
         for x in each_alt {
@@ -313,19 +313,79 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
     fn accent_verb(&self, word:&str) -> String {
         let syl = analyze_syllable_quantities(word);
-        println!("result: {:?}", syl);
+        //println!("result: {:?}", syl);
 
+        let syllable;
+        let accent;
+        let letter_index;
         if syl.len() > 2 && syl[0].1 == false {
-            println!("antepenult");
+            syllable = 3;
+            accent = HGK_ACUTE;
+            letter_index = syl[0].2;
         }
         else if syl.len() == 2 && syl[0].1 == true && syl[1].1 == false {
-            println!("circumflex on penult");
+            syllable = 2;
+            accent = HGK_CIRCUMFLEX;
+            letter_index = syl[0].2;
         }
         else {
-            println!("acute on penult");
+            syllable = 2;
+            accent = HGK_ACUTE;
+            letter_index = syl[0].2;
         }
 
-        "".to_string()
+        self.accent_syllable(word, letter_index, accent)
+    }
+
+    fn accent_syllable(&self, word:&str, letter_index_from_end:u8, accent:u32) -> String {
+/*        
+        let mut v = word.gkletters().rev().enumerate().map(|(x, mut a)| { 
+        if x == letter_index as usize {
+            a.diacritics |= accent;
+        } 
+        return a.to_string(HgkUnicodeMode::Precomposed)}).reverse().collect::<Vec<String>>();
+        //v.reverse();
+        let s = "".to_string();//v.iter().rev().collect::<String>();
+        println!("b: {:?}", v);
+*/
+        let v = word.gkletters().rev().enumerate().map(|(x, mut a)| { 
+            if x == letter_index_from_end as usize {
+                //a.diacritics |= accent;
+                a.toggle_diacritic(accent, true);
+                //println!("abc {:?} {:?} {:?}", a.letter, accent, letter_index_from_end);
+            } 
+            return a}).collect::<Vec<HGKLetter>>();
+
+            let s = v.iter().rev().map(|a|{ a.to_string(HgkUnicodeMode::Precomposed)}).collect::<String>();
+            
+            //.reverse().collect::<Vec<String>>();
+            //v.reverse();
+            //let s = "".to_string();//v.iter().rev().collect::<String>();
+            //println!("b: {:?}", y);
+        
+        /*
+        let mut s = String::from("");
+        let mut letters = word.gkletters();
+        
+        loop {
+            match letters.next_back() {
+                Some(mut x) => { 
+                    
+                    //x.diacritics = 0;
+                    s.push_str(&x.to_string(HgkUnicodeMode::Precomposed));
+                },
+                _ => {break;}
+            }
+        }
+        s = s.chars().rev().collect();
+        */
+        /*
+        let x = letters.nth(1).unwrap();
+        x.diacritics |= HGK_ACUTE;
+        s = letters.collect().to_string();
+        */
+        //println!("letter: {:?}", s);
+        s
     }
 
     fn get_pp(&self) -> String {
@@ -562,7 +622,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 }
 
-fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool)> {
+fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool, u8)> {
     let mut letters = word.gkletters();
 
     let mut letter_num = 0;
@@ -575,12 +635,12 @@ fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool)> {
                 match x.letter_type() {
                     HgkLetterType::HgkLongVowel => {
                         last_letter = '\u{0000}';
-                        res.push((x.to_string(HgkUnicodeMode::Precomposed), true));
+                        res.push((x.to_string(HgkUnicodeMode::Precomposed), true, letter_num));
                     },
                     HgkLetterType::HgkShortVowel => {
                         if x.letter == 'υ' || x.letter == 'ι' && (x.diacritics & HGK_DIAERESIS) != HGK_DIAERESIS {
                             last_letter = x.letter;
-                            res.push((x.letter.to_string(), false));//add short, might be replaced by diphthong
+                            res.push((x.letter.to_string(), false, letter_num));//add short, might be replaced by diphthong
                         }
                         else {
                             if last_letter != '\u{0000}' && (x.letter == 'ε' || x.letter == 'α' || x.letter == 'ο') {
@@ -589,10 +649,10 @@ fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool)> {
                                 s.push(last_letter);
 
                                 let is_long = letter_num > 1;//final diphthongs short accent
-                                res.push((s, is_long));
+                                res.push((s, is_long, letter_num - 1));
                             }
                             else {
-                                res.push((x.letter.to_string(), false));
+                                res.push((x.letter.to_string(), false, letter_num));
                             }
                             last_letter = '\u{0000}';
                         }
@@ -704,9 +764,9 @@ mod tests {
         let a = HcGreekVerb::from_string(1, luw, "").unwrap();
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         //assert_eq!(b.get_form().unwrap()[1].form, "ἔλῡσα");
-        b.accent_verb("λέλυμαι");
-        b.accent_verb("λυ\u{0304}ε");
-        b.accent_verb("λ\u{1FE1}ε");
+        assert_eq!(b.accent_verb("λελυμαι"), "λέλυμαι");
+        assert_eq!(b.accent_verb("λυ\u{0304}ε"), "λῦε");
+        assert_eq!(b.accent_verb("λ\u{1FE1}ε"), "λῦε");
     }
 
     #[test]
