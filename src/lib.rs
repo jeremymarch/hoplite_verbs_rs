@@ -269,35 +269,38 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let e = "Choose Principal Part".to_string();
         steps.push(Step{form:f.to_string(), explanation:e});
         
-        let mut z = Vec::new();
-        //internally (not as a step) strip accent
+        let mut pps_without_ending = Vec::new();
+        //strip accent: internally (not as a step) 
         let f = hgk_strip_diacritics(f, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
-        let each_alt = f.split(" / ");
-        for x in each_alt {
-            let y = self.strip_ending(pp_num, x.to_string());
+        let alt_pps = f.split(" / ");
+        for alt_pp in alt_pps {
+            let y = self.strip_ending(pp_num, alt_pp.to_string());
             if y.is_err() {
                 panic!("error stripping ending");
             }
-            z.push(y.unwrap());
+            pps_without_ending.push(y.unwrap());
         }
 
-        let f = z.join(" / ");
+        let f = pps_without_ending.join(" / ");
         let e = "Remove ending from Principal Part".to_string();
         steps.push(Step{form:f, explanation:e});
 
         let mut zz = Vec::new();
-        for a in z {
+        let mut zzz = Vec::new();
+        for a in pps_without_ending {
             let endings_for_form = self.get_endings();
             if endings_for_form == None {
                 return Err("Illegal form ending");
             }
             for e in endings_for_form.unwrap() {
                 let y = self.add_ending(&a, e);
-                if y.is_err() {
-                    panic!("oops");
-                }
-                zz.push(y.unwrap());
-
+                let y = match y {
+                    Ok(y) => y,
+                    _ => panic!("oops")
+                };
+                zz.push(y.to_string());
+                zzz.push(self.accent_verb(&y));
+                //println!("z1 {:?}", z1);
                 //imperfect/pluperfect: add augment
                 //aorist subj/opt/imper/inf/ptc: remove augment
                 //contract contracted verbs
@@ -306,19 +309,23 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
         let f = zz.join(", ");
         let e = "Add ending".to_string();
-        steps.push(Step{form:f, explanation:e});        
+        steps.push(Step{form:f, explanation:e});   
+        
+        let f = zzz.join(", ");
+        let e = "Accent verb".to_string();
+        steps.push(Step{form:f, explanation:e});   
 
         Ok(steps)
     }
 
     fn accent_verb(&self, word:&str) -> String {
         let syl = analyze_syllable_quantities(word);
-        //println!("result: {:?}", syl);
+        println!("result: {:?}", syl);
 
         let syllable;
         let accent;
         let letter_index;
-        if syl.len() > 2 && syl[0].1 == false {
+        if syl.len() > 2 && syl[syl.len() - 1].1 == false {
             syllable = 3;
             accent = HGK_ACUTE;
             letter_index = syl[0].2;
@@ -331,7 +338,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         else {
             syllable = 2;
             accent = HGK_ACUTE;
-            letter_index = syl[0].2;
+            letter_index = syl[syl.len() - 2].2;
         }
 
         self.accent_syllable(word, letter_index, accent)
@@ -767,6 +774,7 @@ mod tests {
         assert_eq!(b.accent_verb("λελυμαι"), "λέλυμαι");
         assert_eq!(b.accent_verb("λυ\u{0304}ε"), "λῦε");
         assert_eq!(b.accent_verb("λ\u{1FE1}ε"), "λῦε");
+        assert_eq!(b.accent_verb("ἐβλαβην"), "ἐβλάβην");
     }
 
     #[test]
@@ -786,6 +794,7 @@ mod tests {
         assert_eq!(b.get_form().unwrap()[1].form, "ἔλῡσα");
         
         assert_eq!(b.get_form().unwrap()[2].form, "ἐλῡσ");
+        assert_eq!(b.get_form().unwrap().last().unwrap().form, "ἔλῡσα");
         
         assert_eq!(b.get_pp_num(), HcGreekPrincipalParts::Third);
         assert_eq!(b.get_pp_num() as usize, 3);
