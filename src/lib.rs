@@ -640,7 +640,7 @@ fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool, u8)> {
                                 let mut s = String::from(x.letter);
                                 s.push(last_letter);
 
-                                let is_short = letter_num == 1 && (x.letter == 'α' || x.letter == 'ο');//final diphthongs short accent
+                                let is_short = letter_num == 1 && (x.letter == 'α' || x.letter == 'ο') && last_letter == 'ι';//final diphthongs short accent
                                 res.push((s, !is_short, letter_num - 1));
                             }
                             else {
@@ -816,24 +816,28 @@ mod tests {
         assert_eq!(b.get_form().unwrap()[2].form, "βεβλαμ");
 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[3].form, "ἐβεβλαμμην"); //for now
+        assert_eq!(b.get_form().unwrap().last().unwrap().form, "ἐβεβλάμμην");
 
         for v in [HcVoice::Active,HcVoice::Middle,HcVoice::Passive] {
             for x in [HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect] {    
-                for m in [HcMood::Indicative, HcMood::Optative] {
-                    if m == HcMood::Optative && (x == HcTense::Imperfect || x == HcTense::Perfect || x == HcTense::Pluperfect) {
+                for m in [HcMood::Indicative, HcMood::Subjunctive,HcMood::Optative,HcMood::Imperative] {
+                    if ((m == HcMood::Subjunctive || m == HcMood::Optative || m == HcMood::Imperative) && (x == HcTense::Imperfect || x == HcTense::Perfect || x == HcTense::Pluperfect)) || x == HcTense::Future && (m == HcMood::Subjunctive || m == HcMood::Imperative) {
                         continue;
                     }
-                let mut line = Vec::new();     
-                for z in [HcNumber::Singular, HcNumber::Plural] {
-                    for y in [HcPerson::First, HcPerson::Second, HcPerson::Third] {
-                        let b = HcGreekVerbForm {verb:&luwverb, person:y, number:z, tense:x, voice:v, mood:m, gender:None, case:None};
-                        line.push(b.get_form().unwrap().last().unwrap().form.to_string());
+                    let mut line = Vec::new();     
+                    for z in [HcNumber::Singular, HcNumber::Plural] {
+                        for y in [HcPerson::First, HcPerson::Second, HcPerson::Third] {
+                            if m == HcMood::Imperative && y == HcPerson::First {
+                                line.push("---".to_string());
+                                continue;
+                            }
+                            let b = HcGreekVerbForm {verb:&luwverb, person:y, number:z, tense:x, voice:v, mood:m, gender:None, case:None};
+                            line.push(b.get_form().unwrap().last().unwrap().form.to_string());
+                        }
                     }
+                    println!("{}", line.join(", "));
                 }
-                println!("{}", line.join(", "));
             }
-        }
         }
     }
 }
