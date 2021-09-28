@@ -285,6 +285,21 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let e = "Remove ending from Principal Part".to_string();
         steps.push(Step{form:f, explanation:e});
 
+        let mut pps_add_augment = Vec::new();
+        //add augment
+        if self.tense == HcTense::Imperfect || self.tense == HcTense::Pluperfect {
+            //let mut add_augment_collector = Vec::new();
+            for a in &pps_without_ending {
+                pps_add_augment.push(format!("ἐ{}",a));
+            }
+            pps_without_ending = pps_add_augment;
+        }
+
+        //remove augment
+        if self.tense == HcTense::Aorist && self.mood != HcMood::Indicative {
+
+        }
+
         let mut add_ending_collector = Vec::new();
         let mut add_accent_collector = Vec::new();
         for a in pps_without_ending {
@@ -325,12 +340,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         //let syllable;
         let accent;
         let letter_index;
-        if syl.len() > 2 && syl[syl.len() - 1].1 == false {
+        if syl.len() > 2 && !syl[syl.len() - 1].1 {
             //syllable = 3;
             accent = HGK_ACUTE;
             letter_index = syl[0].2;
         }
-        else if syl.len() == 2 && syl[0].1 == true && syl[1].1 == false {
+        else if syl.len() == 2 && syl[0].1 && !syl[1].1 {
             //syllable = 2;
             accent = HGK_CIRCUMFLEX;
             letter_index = syl[0].2;
@@ -350,7 +365,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 a.toggle_diacritic(accent, true);
                 //println!("abc {:?} {:?} {:?}", a.letter, accent, letter_index_from_end);
             } 
-            return a}).collect::<Vec<HGKLetter>>();
+            a}).collect::<Vec<HGKLetter>>();
 
             let s = v.iter().rev().map(|a|{ a.to_string(HgkUnicodeMode::Precomposed)}).collect::<String>();
         s
@@ -792,7 +807,7 @@ mod tests {
         assert_eq!(b.get_form().unwrap()[2].form, "βεβλαμ");
 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[3].form, "βεβλαμμην"); //for now
+        assert_eq!(b.get_form().unwrap()[3].form, "ἐβεβλαμμην"); //for now
 
         for v in [HcVoice::Active,HcVoice::Middle,HcVoice::Passive] {
             for x in [HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect] {    
