@@ -350,8 +350,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
         else if syl.len() == 2 && syl[0].1 && !syl[1].1 {
             //syllable = 2;
-            accent = HGK_CIRCUMFLEX;
-            letter_index = syl[0].2;
+            if syl[1].0 == "αι" && self.mood == HcMood::Optative {
+                accent = HGK_ACUTE;
+            }
+            else {
+                accent = HGK_CIRCUMFLEX;
+            }
+                letter_index = syl[0].2;
+            
         }
         else {
             //syllable = 2;
@@ -669,13 +675,13 @@ static ENDINGS: &[[&str; 6]; /*63*/33] = &[
     ["η", "ης", "ει(ν)", "εμεν", "ετε", "εσαν"],//, "Pluperfect Active Indicative" },
     ["ω", "ῃς", "ῃ", "ωμεν", "ητε", "ωσι(ν)"],//, "Present Active Subjunctive" },
     ["οιμι", "οις", "οι", "οιμεν", "οιτε", "οιεν"],//, "Present Active Optative" },
-    ["αιμι", "αις, ειας", "αι, ειε(ν)", "αιμεν", "αιτε", "αιεν, ειαν"],//, "Aorist Active Optative" },
+    ["αιμι", "αις,ειας", "αι,ειε(ν)", "αιμεν", "αιτε", "αιεν,ειαν"],//, "Aorist Active Optative" },
     ["ομαι", "ει,ῃ", "εται", "ομεθα", "εσθε", "ονται"],//, "Present Middle/Passive Indicative" },
     ["ομην", "ου", "ετο", "ομεθα", "εσθε", "οντο"],//, "Imperfect Middle/Passive Indicative" },
     ["ην", "ης", "η", "ημεν", "ητε", "ησαν"],//, "Aorist Passive Indicative" },
     ["αμην", "ω", "ατο", "αμεθα", "ασθε", "αντο"],//, "Aorist Middle Indicative" },
     ["ῶ", "ῇς", "ῇ", "ῶμεν", "ῆτε", "ῶσι(ν)"],//***, "Aorist Passive Subjunctive" },
-    ["ειην", "ειης", "ειη", "εῖμεν, ειημεν", "εῖτε, ειητε", "εῖεν, ειησαν"],//, "Aorist Passive Optative" },
+    ["ειην", "ειης", "ειη", "εῖμεν,ειημεν", "εῖτε,ειητε", "εῖεν,ειησαν"],//, "Aorist Passive Optative" },
     ["αιμην", "αιο", "αιτο", "αιμεθα", "αισθε", "αιντο"],//, "Aorist Middle Optative" },
     ["μαι", "σαι", "ται", "μεθα", "σθε", "νται"],//, "Perfect Middle/Passive Indicative" },
     ["μην", "σο", "το", "μεθα", "σθε", "ντο"],//, "Pluperfect Middle/Passive Indicative" },
@@ -685,7 +691,7 @@ static ENDINGS: &[[&str; 6]; /*63*/33] = &[
     ["", "ου", "εσθω", "", "εσθε", "εσθων"],//, "Present Middle/Passive Imperative" },
     ["", "ον", "ατω",  "", "ατε", "αντων"],//, "Aorist Active Imperative" },
     ["", "αι", "ασθω", "", "ασθε", "ασθων"],//, "Aorist Middle Imperative" },
-    ["", "ητι, ηθι", "ητω", "", "ητε", "εντων"],//, "Aorist Passive Imperative" },
+    ["", "ητι,ηθι", "ητω", "", "ητε", "εντων"],//, "Aorist Passive Imperative" },
     
 /*
     ["ῶ", "ᾷς", "ᾷ", "ῶμεν", "ᾶτε", "ῶσι(ν)"],//, ""],// },         //pres active indic a
@@ -726,7 +732,7 @@ static ENDINGS: &[[&str; 6]; /*63*/33] = &[
 
     ["μι", "ς", "σι(ν)", "μεν", "τε", "ᾱσι(ν)"],//, "" },   //mi
     
-    ["οιμι, οιην", "οις, οιης", "οι, οιη", "οιμεν, οιημεν", "οιτε, οιητε", "οιεν, οιησαν"],//, "" },//pres act opt o
+    ["οιμι,οιην", "οις,οιης", "οι,οιη", "οιμεν,οιημεν", "οιτε,οιητε", "οιεν,οιησαν"],//, "" },//pres act opt o
     ["", "ς", "τω", "", "τε", "ντων"],//, "" },//mi aorist active imperatives
     ["", "θι", "τω", "", "τε", "ντων"],//", "" },//mi root aorist active imperatives
     
@@ -734,7 +740,7 @@ static ENDINGS: &[[&str; 6]; /*63*/33] = &[
     ["ν", "ς", "", "μεν", "τε", "σαν"],//, "Root Aorist Indicative" },//mi root aorist indicative
     
     ["", "οῦ", "εσθω", "", "εσθε", "εσθων"],//, "Present Middle/Passive Imperative" }, //second aorist middle/passive imperatives
-    ["ειμην", "εῖο", "εῖτο, οῖτο", "ειμεθα, οιμεθα", "εῖσθε, οῖσθε", "εῖντο, οῖντο"],//, "Present Middle/Passive Optative Tithemi" }, //Exception: H&Q page 347
+    ["ειμην", "εῖο", "εῖτο,οῖτο", "ειμεθα,οιμεθα", "εῖσθε,οῖσθε", "εῖντο,οῖντο"],//, "Present Middle/Passive Optative Tithemi" }, //Exception: H&Q page 347
     ["ον", "ες", "ε", "ομεν", "ετε", "ον"],//***, "Imperfect Active Indicative" } //this is only for contracted verbs when decomposed so the nu moveable doesn't show up
 ];
 
@@ -814,15 +820,20 @@ mod tests {
 
         for v in [HcVoice::Active,HcVoice::Middle,HcVoice::Passive] {
             for x in [HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect] {    
+                for m in [HcMood::Indicative, HcMood::Optative] {
+                    if m == HcMood::Optative && (x == HcTense::Imperfect || x == HcTense::Perfect || x == HcTense::Pluperfect) {
+                        continue;
+                    }
                 let mut line = Vec::new();     
                 for z in [HcNumber::Singular, HcNumber::Plural] {
                     for y in [HcPerson::First, HcPerson::Second, HcPerson::Third] {
-                        let b = HcGreekVerbForm {verb:&luwverb, person:y, number:z, tense:x, voice:v, mood:HcMood::Indicative, gender:None, case:None};
+                        let b = HcGreekVerbForm {verb:&luwverb, person:y, number:z, tense:x, voice:v, mood:m, gender:None, case:None};
                         line.push(b.get_form().unwrap().last().unwrap().form.to_string());
                     }
                 }
                 println!("{}", line.join(", "));
             }
+        }
         }
     }
 }
