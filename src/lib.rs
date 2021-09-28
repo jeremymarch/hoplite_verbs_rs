@@ -285,8 +285,8 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let e = "Remove ending from Principal Part".to_string();
         steps.push(Step{form:f, explanation:e});
 
-        let mut zz = Vec::new();
-        let mut zzz = Vec::new();
+        let mut add_ending_collector = Vec::new();
+        let mut add_accent_collector = Vec::new();
         for a in pps_without_ending {
             let endings_for_form = self.get_endings();
             if endings_for_form == None {
@@ -296,10 +296,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 let y = self.add_ending(&a, e);
                 let y = match y {
                     Ok(y) => y,
-                    _ => panic!("oops")
+                    _ => return Err("Error adding ending")
                 };
-                zz.push(y.to_string());
-                zzz.push(self.accent_verb(&y));
+                add_ending_collector.push(y.to_string());
+                add_accent_collector.push(self.accent_verb(&y));
                 //println!("z1 {:?}", z1);
                 //imperfect/pluperfect: add augment
                 //aorist subj/opt/imper/inf/ptc: remove augment
@@ -307,11 +307,11 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 //accent
             }
         }
-        let f = zz.join(" / ");
+        let f = add_ending_collector.join(" / ");
         let e = "Add ending".to_string();
         steps.push(Step{form:f, explanation:e});   
         
-        let f = zzz.join(" / ");
+        let f = add_accent_collector.join(" / ");
         let e = "Accent verb".to_string();
         steps.push(Step{form:f, explanation:e});   
 
@@ -322,21 +322,21 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let syl = analyze_syllable_quantities(word);
         //println!("result: {:?}", syl);
 
-        let syllable;
+        //let syllable;
         let accent;
         let letter_index;
         if syl.len() > 2 && syl[syl.len() - 1].1 == false {
-            syllable = 3;
+            //syllable = 3;
             accent = HGK_ACUTE;
             letter_index = syl[0].2;
         }
         else if syl.len() == 2 && syl[0].1 == true && syl[1].1 == false {
-            syllable = 2;
+            //syllable = 2;
             accent = HGK_CIRCUMFLEX;
             letter_index = syl[0].2;
         }
         else {
-            syllable = 2;
+            //syllable = 2;
             accent = HGK_ACUTE;
             letter_index = syl[syl.len() - 2].2;
         }
@@ -345,53 +345,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 
     fn accent_syllable(&self, word:&str, letter_index_from_end:u8, accent:u32) -> String {
-/*        
-        let mut v = word.gkletters().rev().enumerate().map(|(x, mut a)| { 
-        if x == letter_index as usize {
-            a.diacritics |= accent;
-        } 
-        return a.to_string(HgkUnicodeMode::Precomposed)}).reverse().collect::<Vec<String>>();
-        //v.reverse();
-        let s = "".to_string();//v.iter().rev().collect::<String>();
-        println!("b: {:?}", v);
-*/
         let v = word.gkletters().rev().enumerate().map(|(x, mut a)| { 
             if x == letter_index_from_end as usize {
-                //a.diacritics |= accent;
                 a.toggle_diacritic(accent, true);
                 //println!("abc {:?} {:?} {:?}", a.letter, accent, letter_index_from_end);
             } 
             return a}).collect::<Vec<HGKLetter>>();
 
             let s = v.iter().rev().map(|a|{ a.to_string(HgkUnicodeMode::Precomposed)}).collect::<String>();
-            
-            //.reverse().collect::<Vec<String>>();
-            //v.reverse();
-            //let s = "".to_string();//v.iter().rev().collect::<String>();
-            //println!("b: {:?}", y);
-        
-        /*
-        let mut s = String::from("");
-        let mut letters = word.gkletters();
-        
-        loop {
-            match letters.next_back() {
-                Some(mut x) => { 
-                    
-                    //x.diacritics = 0;
-                    s.push_str(&x.to_string(HgkUnicodeMode::Precomposed));
-                },
-                _ => {break;}
-            }
-        }
-        s = s.chars().rev().collect();
-        */
-        /*
-        let x = letters.nth(1).unwrap();
-        x.diacritics |= HGK_ACUTE;
-        s = letters.collect().to_string();
-        */
-        //println!("letter: {:?}", s);
         s
     }
 
