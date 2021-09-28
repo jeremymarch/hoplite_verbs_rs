@@ -350,7 +350,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
         else if syl.len() == 2 && syl[0].1 && !syl[1].1 {
             //syllable = 2;
-            if syl[1].0 == "αι" && self.mood == HcMood::Optative {
+            if (syl[1].0 == "αι" || syl[1].0 == "οι") && self.mood == HcMood::Optative {
                 accent = HGK_ACUTE;
             }
             else {
