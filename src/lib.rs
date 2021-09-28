@@ -634,8 +634,8 @@ fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool, u8)> {
                                 let mut s = String::from(x.letter);
                                 s.push(last_letter);
 
-                                let is_long = letter_num > 1;//final diphthongs short accent
-                                res.push((s, is_long, letter_num - 1));
+                                let is_short = letter_num == 1 && (x.letter == 'α' || x.letter == 'ο');//final diphthongs short accent
+                                res.push((s, !is_short, letter_num - 1));
                             }
                             else {
                                 res.push((x.letter.to_string(), false, letter_num));
