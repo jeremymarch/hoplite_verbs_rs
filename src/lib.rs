@@ -178,7 +178,6 @@ enum HcGender {
     Masculine,
     Feminine,
     Neuter,
-
 }
 
 #[derive(Eq, PartialEq, Debug)]
@@ -242,14 +241,15 @@ pub struct HcGreekVerbForm<'a> {
 }
 
 trait HcVerbForms {
-    fn get_form(&self) -> Result<Vec<Step>, &str>;
+    fn get_form(&self, decomposed:bool) -> Result<Vec<Step>, &str>;
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> String;
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
-    fn add_ending(&self, stem:&str, ending:&str) -> Result<String, &str>;
+    fn add_ending(&self, stem:&str, ending:&str, decomposed:bool) -> Result<String, &str>;
     fn get_endings(&self) -> Option<Vec<&str>>;
     fn accent_verb(&self, form:&str) -> String;
     fn accent_syllable(&self, word:&str, syllable:u8, accent:u32) -> String;
+    fn get_label(&self) -> String;
 }
 
 /*
@@ -262,11 +262,35 @@ fn remove_suffix<'a>(s: &'a str, p: &str) -> &'a str {
     }
 }
 */
+
+fn get_voice_label(t:HcTense, v:HcVoice, m:HcMood) -> String {
+        
+    if v == HcVoice::Middle && m == HcMood::Imperative {
+        "Middle".to_string()
+    }
+    else if v == HcVoice::Passive && m == HcMood::Imperative {
+        "Passive".to_string()
+    }
+    else if t != HcTense::Future && t != HcTense::Aorist && v == HcVoice::Middle {
+        "Middle (Middle/Passive)".to_string()
+    }
+    else if t != HcTense::Future && t != HcTense::Aorist && v == HcVoice::Passive {
+        "Passive (Middle/Passive)".to_string()
+    }
+    else {
+        v.value().to_string()
+    }
+}
+
 impl HcVerbForms for HcGreekVerbForm<'_> {
     /*
     fn new() -> HcGreekVerbForm {
 
     }*/
+
+    fn get_label(&self) -> String {
+        "".to_string()
+    }
 
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str> {
         match pp_num {
@@ -309,13 +333,32 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         Err("error stripping ending 2")
     }
 
-    fn add_ending(&self, stem:&str, ending:&str) -> Result<String, &str> {
-        let r = format!("{}{}", stem, ending);
-        Ok(r)
+    fn add_ending(&self, stem:&str, ending:&str, decomposed:bool) -> Result<String, &str> {
+        if decomposed {
+            if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
+                Ok(format!("{} ‐ ησ ‐ {}", stem, ending))        
+            }
+            else {
+                Ok(format!("{} ‐ {}", stem, ending))
+            }
+        }
+        else {
+            if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
+                Ok(format!("{}ησ{}", stem, ending))
+            }
+            else {
+                Ok(format!("{}{}", stem, ending))
+            }
+        }
     }
 
-    fn get_form(&self) -> Result<Vec<Step>, &str> {
+    fn get_form(&self, decomposed:bool) -> Result<Vec<Step>, &str> {
         let mut steps = Vec::new();
+        if self.mood == HcMood::Imperative && self.person == HcPerson::First {
+            steps.push(Step{form:"".to_string(), explanation:"".to_string()});
+            return Ok(steps);
+        }
+
         let f = self.verb.pps.join(", ");
         let e = "Principal Parts".to_string();
         steps.push(Step{form:f, explanation:e});
@@ -326,7 +369,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         steps.push(Step{form:f.to_string(), explanation:e});
         
         let mut pps_without_ending = Vec::new();
-        //strip accent: internally (not as a step) 
+        //strip accent: internally (not as a step)
         let f = hgk_strip_diacritics(f, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
         let alt_pps = f.split(" / ");
         for alt_pp in alt_pps {
@@ -345,7 +388,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         //add augment
         if self.tense == HcTense::Imperfect || self.tense == HcTense::Pluperfect {
             for a in &pps_without_ending {
-                pps_add_augment.push(format!("ἐ{}",a));
+                if decomposed {
+                    pps_add_augment.push(format!("ε ‐ {}",a));
+                }
+                else {
+                    pps_add_augment.push(format!("ἐ{}",a));
+                }
             }
             pps_without_ending = pps_add_augment;
         }
@@ -367,13 +415,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 return Err("Illegal form ending");
             }
             for e in endings_for_form.unwrap() {
-                let y = self.add_ending(&a, e);
+                let y = self.add_ending(&a, e, decomposed);
                 let y = match y {
                     Ok(y) => y,
                     _ => return Err("Error adding ending")
                 };
                 add_ending_collector.push(y.to_string());
-                add_accent_collector.push(self.accent_verb(&y));
+                if !decomposed {
+                    add_accent_collector.push(self.accent_verb(&y));
+                }
                 //println!("z1 {:?}", z1);
                 //imperfect/pluperfect: add augment
                 //aorist subj/opt/imper/inf/ptc: remove augment
@@ -385,15 +435,17 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let e = "Add ending".to_string();
         steps.push(Step{form:f, explanation:e});   
         
-        let f = add_accent_collector.join(" / ");
-        let e = "Accent verb".to_string();
-        steps.push(Step{form:f, explanation:e});   
+        if !decomposed {
+            let f = add_accent_collector.join(" / ");
+            let e = "Accent verb".to_string();
+            steps.push(Step{form:f, explanation:e});   
+        }
 
         Ok(steps)
     }
 
     fn accent_verb(&self, word:&str) -> String {
-        let syl = analyze_syllable_quantities(word);
+        let syl = analyze_syllable_quantities(word, self.person, self.number, self.mood);
         //println!("result: {:?}", syl);
 
         //let syllable;
@@ -670,7 +722,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 }
 
-fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool, u8)> {
+fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, m:HcMood) -> Vec<(String, bool, u8)> {
     let mut letters = word.gkletters();
 
     let mut letter_num = 0;
@@ -688,7 +740,7 @@ fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool, u8)> {
                     HgkLetterType::HgkShortVowel => {
                         if x.letter == 'υ' || x.letter == 'ι' && (x.diacritics & HGK_DIAERESIS) != HGK_DIAERESIS {
                             last_letter = x.letter;
-                            res.push((x.letter.to_string(), false, letter_num));//add short, might be replaced by diphthong
+                            res.push((x.letter.to_string(), false, letter_num)); //add short, might be replaced by diphthong
                         }
                         else {
                             if last_letter != '\u{0000}' && (x.letter == 'ε' || x.letter == 'α' || x.letter == 'ο') {
@@ -697,7 +749,12 @@ fn analyze_syllable_quantities(word:&str) -> Vec<(String, bool, u8)> {
                                 s.push(last_letter);
 
                                 let is_short = letter_num == 1 && (x.letter == 'α' || x.letter == 'ο') && last_letter == 'ι';//final diphthongs short accent
-                                res.push((s, !is_short, letter_num - 1));
+                                if is_short && p == HcPerson::Third && n == HcNumber::Singular && m == HcMood::Optative {
+                                    res.push((s, true, letter_num - 1));
+                                }
+                                else {
+                                    res.push((s, !is_short, letter_num - 1));
+                                }
                             }
                             else {
                                 res.push((x.letter.to_string(), false, letter_num));
@@ -814,7 +871,7 @@ mod tests {
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
         let a = HcGreekVerb::from_string(1, luw, "").unwrap();
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[1].form, "ἔλῡσα");
+        assert_eq!(b.get_form(false).unwrap()[1].form, "ἔλῡσα");
         assert_eq!(b.accent_verb("λελυμαι"), "λέλυμαι");
         assert_eq!(b.accent_verb("λυ\u{0304}ε"), "λῦε");
         assert_eq!(b.accent_verb("λ\u{1FE1}ε"), "λῦε");
@@ -834,11 +891,11 @@ mod tests {
         let c = HcGreekVerbForm {verb:&luwverb, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b, c);
         
-        assert_eq!(b.get_form().unwrap()[0].form, luw);
-        assert_eq!(b.get_form().unwrap()[1].form, "ἔλῡσα");
+        assert_eq!(b.get_form(false).unwrap()[0].form, luw);
+        assert_eq!(b.get_form(false).unwrap()[1].form, "ἔλῡσα");
         
-        assert_eq!(b.get_form().unwrap()[2].form, "ἐλῡσ");
-        assert_eq!(b.get_form().unwrap().last().unwrap().form, "ἔλῡσα");
+        assert_eq!(b.get_form(false).unwrap()[2].form, "ἐλῡσ");
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "ἔλῡσα");
         
         assert_eq!(b.get_pp_num(), HcGreekPrincipalParts::Third);
         assert_eq!(b.get_pp_num() as usize, 3);
@@ -847,35 +904,35 @@ mod tests {
 
         let a = HcGreekVerb::from_string(1, blaptw, "").unwrap();
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[2].form, "ἐβλαβ / ἐβλαφθ"); 
+        assert_eq!(b.get_form(false).unwrap()[2].form, "ἐβλαβ / ἐβλαφθ"); 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[2].form, "βλαπτ");
+        assert_eq!(b.get_form(false).unwrap()[2].form, "βλαπτ");
         assert_eq!(b.get_endings().unwrap()[0], "ω");
 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτομαι");
+        assert_eq!(b.get_form(false).unwrap()[3].form, "βλαπτομαι");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_endings().unwrap()[0], "ει");
         assert_eq!(b.get_endings().unwrap()[1], "ῃ");
-        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτει / βλαπτῃ");
+        assert_eq!(b.get_form(false).unwrap()[3].form, "βλαπτει / βλαπτῃ");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::Third, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτεται");
+        assert_eq!(b.get_form(false).unwrap()[3].form, "βλαπτεται");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Plural, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτομεθα");
+        assert_eq!(b.get_form(false).unwrap()[3].form, "βλαπτομεθα");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::Second, number:HcNumber::Plural, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτεσθε");
+        assert_eq!(b.get_form(false).unwrap()[3].form, "βλαπτεσθε");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::Third, number:HcNumber::Plural, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[3].form, "βλαπτονται");
+        assert_eq!(b.get_form(false).unwrap()[3].form, "βλαπτονται");
 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[2].form, "βλαψ");
+        assert_eq!(b.get_form(false).unwrap()[2].form, "βλαψ");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[2].form, "βεβλαφ");
+        assert_eq!(b.get_form(false).unwrap()[2].form, "βεβλαφ");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap()[2].form, "βεβλαμ");
+        assert_eq!(b.get_form(false).unwrap()[2].form, "βεβλαμ");
 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_form().unwrap().last().unwrap().form, "ἐβεβλάμμην");
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "ἐβεβλάμμην");
 
         for v in [HcVoice::Active,HcVoice::Middle,HcVoice::Passive] {
             for x in [HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect] {    
@@ -891,7 +948,7 @@ mod tests {
                                 continue;
                             }
                             let b = HcGreekVerbForm {verb:&luwverb, person:y, number:z, tense:x, voice:v, mood:m, gender:None, case:None};
-                            line.push(b.get_form().unwrap().last().unwrap().form.to_string());
+                            line.push(b.get_form(false).unwrap().last().unwrap().form.to_string());
                         }
                     }
                     println!("{}", line.join(", "));
@@ -902,54 +959,67 @@ mod tests {
 
     #[test]
     fn check_forms() { 
-
-        //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
-        //let blaptw = "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην";
-        //let luwverb = HcGreekVerb::from_string(1, luw, "").unwrap();
-
         let mut paradigm_line = String::new();
         if let Ok(pp_file) = File::open("testdata/pp.txt") {
             if let Ok(paradigm_file) = File::open("testdata/new.txt") {
                 let pp_reader = BufReader::new(pp_file);
-                let paradigm_reader = BufReader::new(paradigm_file);
+                let mut paradigm_reader = BufReader::new(paradigm_file);
 
                 for (idx, pp_line) in pp_reader.lines().enumerate() {
-                    let verb = HcGreekVerb::from_string(1, &pp_line.as_ref().unwrap(), "").unwrap();
+                    let verb = HcGreekVerb::from_string(1, &pp_line.unwrap(), "").unwrap();
 
-                    println!("\nVerb {}. {}", idx, verb.pps[0]);
+                    if paradigm_reader.read_line(&mut paradigm_line).unwrap() == 0 { return; }
+                    paradigm_line.clear();
 
-                    for v in [HcVoice::Active,HcVoice::Middle,HcVoice::Passive] {
-                        for x in [HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect] {    
+                    let verb_section = format!("Verb {}. {}", idx, verb.pps[0]);
+                    println!("\n{}", verb_section);
+                    if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
+                        assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
+                    }
+                    paradigm_line.clear();
+
+                        for x in [HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect] {   
+                            for v in [HcVoice::Active,HcVoice::Middle,HcVoice::Passive] { 
                             for m in [HcMood::Indicative, HcMood::Subjunctive,HcMood::Optative,HcMood::Imperative] {
+                                
                                 if ((m == HcMood::Subjunctive || m == HcMood::Optative || m == HcMood::Imperative) && (x == HcTense::Imperfect || x == HcTense::Perfect || x == HcTense::Pluperfect)) || x == HcTense::Future && (m == HcMood::Subjunctive || m == HcMood::Imperative) {
                                     continue;
                                 }
 
-                                println!("\n{} {} {}", x.value(), v.value(), m.value());
+                                if paradigm_reader.read_line(&mut paradigm_line).unwrap() == 0 { return; }
+                                paradigm_line.clear();
 
-                                let mut line = Vec::new();     
+                                let section = format!("{} {} {}", x.value(), get_voice_label(x, v, m), m.value());
+                                println!("\n{}", section);
+                                if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
+                                    assert_eq!(paradigm_line[0..paradigm_line.len() - 1], section);
+                                }
+                                paradigm_line.clear();
+
                                 for z in [HcNumber::Singular, HcNumber::Plural] {
                                     for y in [HcPerson::First, HcPerson::Second, HcPerson::Third] {
-                                        if m == HcMood::Imperative && y == HcPerson::First {
-                                            line.push("---".to_string());
-                                            continue;
-                                        }
 
-                                        let b = HcGreekVerbForm {verb:&verb, person:y, number:z, tense:x, voice:v, mood:m, gender:None, case:None};
-                                        println!("{}{}: {} ; {}", y.value(), z.value(), 
-                                            str::replace(&b.get_form().unwrap().last().unwrap().form.to_string(), " /", ","),
-                                            str::replace(&b.get_form().unwrap().last().unwrap().form.to_string(), " /", ","));
-                                        //line.push(b.get_form().unwrap().last().unwrap().form.to_string());
+                                        let form = HcGreekVerbForm {verb:&verb, person:y, number:z, tense:x, voice:v, mood:m, gender:None, case:None};
+                                        let r = if form.get_form(false).unwrap().last().unwrap().form == "" { "NF".to_string() } else { form.get_form(false).unwrap().last().unwrap().form.to_string() };
+                                        let r_d = if form.get_form(true).unwrap().last().unwrap().form == "" { "NDF".to_string() } else { form.get_form(true).unwrap().last().unwrap().form.to_string() };
+
+                                        let mut form_line = format!("{}{}: {} ; {}", y.value(), z.value(), 
+                                            str::replace(&r, " /", ","),
+                                            str::replace(&r_d, " /", ","));
+
+                                        println!("{}", form_line);
+
+                                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
+                                            assert_eq!(paradigm_line[0..paradigm_line.len() - 1], form_line);
+                                        }
+                                        paradigm_line.clear();
                                     }
                                 }
-                                //println!("{}", line.join(", "));
                             }
                         }
                     }
-
-            }
-
-            /* 
+                }
+                /* 
                 for pp_line in pp_reader.lines() {
                     //println!("{}", line.unwrap());
                     let verb = HcGreekVerb::from_string(1, &pp_line.as_ref().unwrap(), "").unwrap();
@@ -964,4 +1034,3 @@ mod tests {
         }
     }
 }
-
