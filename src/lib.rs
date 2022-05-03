@@ -83,11 +83,31 @@ enum HcPerson {
     Third,
 }
 
+impl HcPerson {
+    fn value(&self) -> &str {
+        match *self {
+            HcPerson::First => "1",
+            HcPerson::Second => "2",
+            HcPerson::Third => "3",
+        }
+    }
+}
+
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 enum HcNumber {
     Singular,
     Dual,
     Plural,
+}
+
+impl HcNumber {
+    fn value(&self) -> &str {
+        match *self {
+            HcNumber::Singular => "s",
+            HcNumber::Dual => "d",
+            HcNumber::Plural => "p",
+        }
+    }
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
@@ -100,11 +120,34 @@ enum HcTense {
     Pluperfect,
 }
 
+impl HcTense {
+    fn value(&self) -> &str {
+        match *self {
+            HcTense::Present => "Present",
+            HcTense::Future => "Future",
+            HcTense::Imperfect => "Imperfect",
+            HcTense::Aorist => "Aorist",
+            HcTense::Perfect => "Perfect",
+            HcTense::Pluperfect => "Pluperfect",
+        }
+    }
+}
+
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 enum HcVoice {
     Active,
     Middle,
     Passive,
+}
+
+impl HcVoice {
+    fn value(&self) -> &str {
+        match *self {
+            HcVoice::Active => "Active",
+            HcVoice::Middle => "Middle",
+            HcVoice::Passive => "Passive",
+        }
+    }
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
@@ -115,6 +158,19 @@ enum HcMood {
     Imperative,
     Infinitive,
     Participle,
+}
+
+impl HcMood {
+    fn value(&self) -> &str {
+        match *self {
+            HcMood::Indicative => "Indicative",
+            HcMood::Subjunctive => "Subjunctive",
+            HcMood::Optative => "Optative",
+            HcMood::Imperative => "Imperative",
+            HcMood::Infinitive => "Infinitive",
+            HcMood::Participle => "Participle",
+        }
+    }
 }
 
 #[derive(Eq, PartialEq, Debug)]
@@ -749,6 +805,9 @@ static ENDINGS: &[[&str; 6]; /*63*/33] = &[
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs::File;
+    use std::io::BufRead;
+    use std::io::BufReader;
 
     #[test]
     fn accent_tests() {
@@ -837,6 +896,70 @@ mod tests {
                     }
                     println!("{}", line.join(", "));
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn check_forms() { 
+
+        //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        //let blaptw = "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην";
+        //let luwverb = HcGreekVerb::from_string(1, luw, "").unwrap();
+
+        let mut paradigm_line = String::new();
+        if let Ok(pp_file) = File::open("testdata/pp.txt") {
+            if let Ok(paradigm_file) = File::open("testdata/new.txt") {
+                let pp_reader = BufReader::new(pp_file);
+                let paradigm_reader = BufReader::new(paradigm_file);
+
+                for (idx, pp_line) in pp_reader.lines().enumerate() {
+                    let verb = HcGreekVerb::from_string(1, &pp_line.as_ref().unwrap(), "").unwrap();
+
+                    println!("\nVerb {}. {}", idx, verb.pps[0]);
+
+                    for v in [HcVoice::Active,HcVoice::Middle,HcVoice::Passive] {
+                        for x in [HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect] {    
+                            for m in [HcMood::Indicative, HcMood::Subjunctive,HcMood::Optative,HcMood::Imperative] {
+                                if ((m == HcMood::Subjunctive || m == HcMood::Optative || m == HcMood::Imperative) && (x == HcTense::Imperfect || x == HcTense::Perfect || x == HcTense::Pluperfect)) || x == HcTense::Future && (m == HcMood::Subjunctive || m == HcMood::Imperative) {
+                                    continue;
+                                }
+
+                                println!("\n{} {} {}", x.value(), v.value(), m.value());
+
+                                let mut line = Vec::new();     
+                                for z in [HcNumber::Singular, HcNumber::Plural] {
+                                    for y in [HcPerson::First, HcPerson::Second, HcPerson::Third] {
+                                        if m == HcMood::Imperative && y == HcPerson::First {
+                                            line.push("---".to_string());
+                                            continue;
+                                        }
+
+                                        let b = HcGreekVerbForm {verb:&verb, person:y, number:z, tense:x, voice:v, mood:m, gender:None, case:None};
+                                        println!("{}{}: {} ; {}", y.value(), z.value(), 
+                                            str::replace(&b.get_form().unwrap().last().unwrap().form.to_string(), " /", ","),
+                                            str::replace(&b.get_form().unwrap().last().unwrap().form.to_string(), " /", ","));
+                                        //line.push(b.get_form().unwrap().last().unwrap().form.to_string());
+                                    }
+                                }
+                                //println!("{}", line.join(", "));
+                            }
+                        }
+                    }
+
+            }
+
+            /* 
+                for pp_line in pp_reader.lines() {
+                    //println!("{}", line.unwrap());
+                    let verb = HcGreekVerb::from_string(1, &pp_line.as_ref().unwrap(), "").unwrap();
+
+                    let a1 = HcGreekVerb {id:1,pps:vec!["λω".to_string(), "λσω".to_string(), "ἔλῡσα".to_string(), "λέλυκα".to_string(), "λέλυμαι".to_string(), "ἐλύθην".to_string()],properties:"".to_string()};
+                    println!("yay");
+                    assert_eq!(verb, a1);
+                    println!("yay2");
+                }
+                */
             }
         }
     }
