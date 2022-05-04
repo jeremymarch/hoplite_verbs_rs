@@ -286,17 +286,6 @@ fn get_voice_label(t:HcTense, v:HcVoice, m:HcMood) -> String {
     }
 }
 
-fn crop_letters(s: &mut String, pos: usize) {
-    match s.char_indices().nth(pos) {
-        Some((pos, _)) => {
-            s.drain(..pos);
-        }
-        None => {
-            s.clear();
-        }
-    }
-}
-
 impl HcVerbForms for HcGreekVerbForm<'_> {
     /*
     fn new() -> HcGreekVerbForm {
@@ -357,18 +346,64 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 return Ok(String::from(BLANK));
             }
             else if decomposed {
-                local_stem = format!("{}π", stem);
+                local_stem = format!("{}π", local_stem);
             }
             else if local_ending.starts_with("σθ") {
-                crop_letters(&mut local_ending, 1);
+                local_ending.remove(0);
                 local_ending = format!("φ{}", local_ending);
             }
             else if local_ending.starts_with("σ") {
-                crop_letters(&mut local_ending, 1);
+                local_ending.remove(0);
                 local_ending = format!("ψ{}", local_ending);
             }
             else if local_ending.starts_with("τ") {
                 local_ending = format!("π{}", local_ending);
+            }
+        }
+        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with("μ") {
+            if local_ending.starts_with("ντ") {
+                return Ok(String::from(BLANK));
+            }
+            else if decomposed {
+                local_stem.pop();
+                local_stem = format!("{}φ", local_stem);
+            }
+            else if local_ending.starts_with("σθ") {
+                local_ending.remove(0);
+                local_stem.pop();
+                local_ending = format!("φ{}", local_ending);
+            }
+            else if local_ending.starts_with("σ") {
+                local_stem.pop();
+                local_ending.remove(0);
+                local_ending = format!("ψ{}", local_ending);
+            }
+            else if local_ending.starts_with("τ") {
+                local_stem.pop();
+                local_ending = format!("π{}", local_ending);
+            }
+        }
+        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with("γ") {
+            if local_ending.starts_with("ντ") {
+                return Ok(String::from(BLANK));
+            }
+            else if decomposed {
+                local_stem.pop();
+                local_stem = format!("{}κ", local_stem);
+            }
+            else if local_ending.starts_with("σθ") {
+                local_ending.remove(0);
+                local_stem.pop();
+                local_ending = format!("χ{}", local_ending);
+            }
+            else if local_ending.starts_with("σ") {
+                local_stem.pop();
+                local_ending.remove(0);
+                local_ending = format!("ξ{}", local_ending);
+            }
+            else if local_ending.starts_with("τ") {
+                local_stem.pop();
+                local_ending = format!("κ{}", local_ending);
             }
         }
         else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with("σ") {
@@ -376,7 +411,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 return Ok(String::from(BLANK));
             }
             else if local_ending.starts_with("σ") && !decomposed {
-                crop_letters(&mut local_ending, 1);
+                local_ending.remove(0);
             }
         }
 

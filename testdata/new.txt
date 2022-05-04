@@ -1255,7 +1255,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐλέλυσθε ; ε ‐ λελυ ‐ σθε
 3p: ἐλέλυντο ; ε ‐ λελυ ‐ ντο
 
-Verb 4. γράφω
+Verb 4. γράφω
 
 Present Active Indicative
 1s: γράφω ; γραφ ‐ ω
@@ -2197,7 +2197,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐπέπαυσθε ; ε ‐ πεπαυ ‐ σθε
 3p: ἐπέπαυντο ; ε ‐ πεπαυ ‐ ντο
 
-Verb 7. φυλάττω
+Verb 7. φυλάττω
 
 Present Active Indicative
 1s: φυλάττω ; φυλαττ ‐ ω
@@ -3139,7 +3139,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 10. θάπτω
+Verb 10. θάπτω
 
 Present Active Indicative
 1s: θάπτω ; θαπτ ‐ ω
@@ -3453,7 +3453,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐτέθαφθε ; ε ‐ τεθαπ ‐ σθε
 3p: — ; —
 
-Verb 11. τάττω
+Verb 11. τάττω
 
 Present Active Indicative
 1s: τάττω ; ταττ ‐ ω
@@ -4081,7 +4081,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἦρχθε ; ἠρχ ‐ σθε
 3p: — ; —
 
-Verb 13. βλάπτω
+Verb 13. βλάπτω
 
 Present Active Indicative
 1s: βλάπτω ; βλαπτ ‐ ω
@@ -11617,7 +11617,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 37. βάλλω
+Verb 37. βάλλω
 
 Present Active Indicative
 1s: βάλλω ; βαλλ ‐ ω
@@ -12559,7 +12559,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 40. λαμβάνω (Partial Deponent)
+Verb 40. λαμβάνω (Partial Deponent)
 
 Present Active Indicative
 1s: λαμβάνω ; λαμβαν ‐ ω
@@ -12873,7 +12873,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: εἴληφθε ; εἰληβ ‐ σθε
 3p: — ; —
 
-Verb 41. πάσχω (Partial Deponent)
+Verb 41. πάσχω (Partial Deponent)
 
 Present Active Indicative
 1s: πάσχω ; πασχ ‐ ω
@@ -16955,7 +16955,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 54. μανθάνω (Partial Deponent)
+Verb 54. μανθάνω (Partial Deponent)
 
 Present Active Indicative
 1s: μανθάνω ; μανθαν ‐ ω
@@ -17269,7 +17269,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 55. μάχομαι (Middle Deponent)
+Verb 55. μάχομαι (Middle Deponent)
 
 Present Active Indicative
 1s: NF ; NDF
@@ -20095,7 +20095,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἠρώτησθε ; ἠρωτη ‐ σθε
 3p: ἠρώτηντο ; ἠρωτη ‐ ντο
 
-Verb 64. λανθάνω
+Verb 64. λανθάνω
 
 Present Active Indicative
 1s: λανθάνω ; λανθαν ‐ ω
@@ -21351,7 +21351,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 68. τυγχάνω (Partial Deponent)
+Verb 68. τυγχάνω (Partial Deponent)
 
 Present Active Indicative
 1s: τυγχάνω ; τυγχαν ‐ ω
@@ -23235,7 +23235,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ᾕρησθε ; ᾑρη ‐ σθε
 3p: ᾕρηντο ; ᾑρη ‐ ντο
 
-Verb 74. αἰσθάνομαι (Middle Deponent)
+Verb 74. αἰσθάνομαι (Middle Deponent)
 
 Present Active Indicative
 1s: NF ; NDF
@@ -38669,7 +38669,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 123. πυνθάνομαι (Middle Deponent)
+Verb 123. πυνθάνομαι (Middle Deponent)
 
 Present Active Indicative
 1s: NF ; NDF
