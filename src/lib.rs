@@ -1036,7 +1036,7 @@ mod tests {
                                         println!("{}", form_line);
 
                                         if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
-                                            assert_eq!(paradigm_line[0..paradigm_line.len() - 1].nfc().collect::<String>(), form_line);
+                                            assert_eq!(paradigm_line[0..paradigm_line.len() - 1]/* .nfc().collect::<String>()*/, form_line);
                                         }
                                         paradigm_line.clear();
                                     }
