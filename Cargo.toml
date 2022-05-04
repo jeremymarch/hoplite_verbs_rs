@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 rustunicodetests = { path = "../rustunicodetests" }
+unicode-normalization = { version = "0.1.19", default-features = false }
 
 [profile.release.package."*"] # +
 opt-level = "z" # +

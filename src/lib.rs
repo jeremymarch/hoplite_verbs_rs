@@ -4,6 +4,7 @@ extern crate rustunicodetests;
 use rustunicodetests::*;
 //use rustunicodetests::hgk_toggle_diacritic_str;
 use rustunicodetests::hgk_strip_diacritics;
+use rustunicodetests::hgk_has_diacritics;
 //use rustunicodetests::hgk_transliterate;
 //use rustunicodetests::hgk_convert;
 
@@ -240,6 +241,8 @@ pub struct HcGreekVerbForm<'a> {
     case: Option<HcCase>,
 }
 
+static SEPARATOR:&str = "‐";
+
 trait HcVerbForms {
     fn get_form(&self, decomposed:bool) -> Result<Vec<Step>, &str>;
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
@@ -336,10 +339,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     fn add_ending(&self, stem:&str, ending:&str, decomposed:bool) -> Result<String, &str> {
         if decomposed {
             if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
-                Ok(format!("{} ‐ ησ ‐ {}", stem, ending))        
+                Ok(format!("{} {} ησ {} {}", stem, SEPARATOR, SEPARATOR, ending))        
             }
             else {
-                Ok(format!("{} ‐ {}", stem, ending))
+                Ok(format!("{} {} {}", stem, SEPARATOR, ending))
             }
         }
         else {
@@ -389,7 +392,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         if self.tense == HcTense::Imperfect || self.tense == HcTense::Pluperfect {
             for a in &pps_without_ending {
                 if decomposed {
-                    pps_add_augment.push(format!("ε ‐ {}",a));
+                    pps_add_augment.push(format!("ε {} {}", SEPARATOR, a));
                 }
                 else {
                     pps_add_augment.push(format!("ἐ{}",a));
@@ -397,12 +400,18 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             pps_without_ending = pps_add_augment;
         }
-        else /* remove augment */ if (self.tense == HcTense::Aorist && self.mood != HcMood::Indicative) || (self.tense == HcTense::Future && self.voice == HcVoice::Passive) {
+        else /* remove augment */ if (self.tense == HcTense::Aorist && self.mood == HcMood::Indicative && decomposed) || (self.tense == HcTense::Aorist && self.mood != HcMood::Indicative) || (self.tense == HcTense::Future && self.voice == HcVoice::Passive) {
             for a in &pps_without_ending {
                 let mut chars = a.chars();
                 chars.next();
-                
-                pps_add_augment.push(chars.as_str().to_string());
+
+                //add decomposed augment back
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative && decomposed {
+                    pps_add_augment.push(format!("ε {} {}", SEPARATOR, chars.as_str().to_string()));
+                }
+                else {
+                    pps_add_augment.push(chars.as_str().to_string());
+                }
             }
             pps_without_ending = pps_add_augment;
         }
@@ -415,14 +424,30 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 return Err("Illegal form ending");
             }
             for e in endings_for_form.unwrap() {
-                let y = self.add_ending(&a, e, decomposed);
+                if self.tense == HcTense::Aorist && self.voice == HcVoice::Passive && self.mood == HcMood::Imperative && self.person == HcPerson::Second && self.number == HcNumber::Singular {
+                    if a.ends_with("θ") || a.ends_with("φ") || a.ends_with("χ") {    
+                        if e == "ηθι" {       
+                            continue;
+                        }
+                    }
+                    else {
+                        if e == "ητι" {       
+                            continue;
+                        }
+                    }
+                }
+
+                let ending = if decomposed { hgk_strip_diacritics(&e, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) } else { e.to_string() };
+                let stem = if decomposed && self.tense == HcTense::Aorist && self.voice == HcVoice::Passive && self.mood == HcMood::Subjunctive { format!("{}ε", a.to_owned()) } else { a.to_owned() };
+                let y = self.add_ending(&stem, &ending, decomposed);
                 let y = match y {
                     Ok(y) => y,
                     _ => return Err("Error adding ending")
                 };
+
                 add_ending_collector.push(y.to_string());
                 if !decomposed {
-                    add_accent_collector.push(self.accent_verb(&y));
+                    add_accent_collector.push( if !hgk_has_diacritics(&y, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) { self.accent_verb(&y) } else { y } );
                 }
                 //println!("z1 {:?}", z1);
                 //imperfect/pluperfect: add augment
@@ -865,6 +890,7 @@ mod tests {
     use std::fs::File;
     use std::io::BufRead;
     use std::io::BufReader;
+    use unicode_normalization::UnicodeNormalization;
 
     #[test]
     fn accent_tests() {
@@ -956,7 +982,7 @@ mod tests {
             }
         }
     }
-
+    
     #[test]
     fn check_forms() { 
         let mut paradigm_line = String::new();
@@ -1010,7 +1036,7 @@ mod tests {
                                         println!("{}", form_line);
 
                                         if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
-                                            assert_eq!(paradigm_line[0..paradigm_line.len() - 1], form_line);
+                                            assert_eq!(paradigm_line[0..paradigm_line.len() - 1].nfc().collect::<String>(), form_line);
                                         }
                                         paradigm_line.clear();
                                     }

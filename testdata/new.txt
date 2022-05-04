@@ -313,7 +313,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐπεπαίδευσθε ; ε ‐ πεπαιδευ ‐ σθε
 3p: ἐπεπαίδευντο ; ε ‐ πεπαιδευ ‐ ντο
 
-Verb 1. πέμπω
+Verb 1. πέμπω
 
 Present Active Indicative
 1s: πέμπω ; πεμπ ‐ ω
@@ -6279,7 +6279,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐκεχόρευσθε ; ε ‐ κεχορευ ‐ σθε
 3p: ἐκεχόρευντο ; ε ‐ κεχορευ ‐ ντο
 
-Verb 20. κλέπτω
+Verb 20. κλέπτω
 
 Present Active Indicative
 1s: κλέπτω ; κλεπτ ‐ ω
@@ -9105,7 +9105,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐτετῑ́μησθε ; ε ‐ τετῑμη ‐ σθε
 3p: ἐτετῑ́μηντο ; ε ‐ τετῑμη ‐ ντο
 
-Verb 29. ἀγγέλλω
+Verb 29. ἀγγέλλω
 
 Present Active Indicative
 1s: ἀγγέλλω ; ἀγγελλ ‐ ω
@@ -10361,7 +10361,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐκέκλησθε ; ε ‐ κεκλη ‐ σθε
 3p: ἐκέκληντο ; ε ‐ κεκλη ‐ ντο
 
-Verb 33. μένω
+Verb 33. μένω
 
 Present Active Indicative
 1s: μένω ; μεν ‐ ω
@@ -21037,7 +21037,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: παρεδέδοσθε ; παρα ‐ ε ‐ δεδο ‐ σθε
 3p: παρεδέδοντο ; παρα ‐ ε ‐ δεδο ‐ ντο
 
-Verb 67. παραμένω
+Verb 67. παραμένω
 
 Present Active Indicative
 1s: παραμένω ; παρα ‐ μεν ‐ ω
@@ -21979,7 +21979,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 70. ὑπομένω
+Verb 70. ὑπομένω
 
 Present Active Indicative
 1s: ὑπομένω ; ὑπο ‐ μεν ‐ ω
@@ -25747,7 +25747,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: συνενήνεχθε ; συν ‐ ενηνεκ ‐ σθε
 3p: — ; —
 
-Verb 82. φέρω
+Verb 82. φέρω
 
 Present Active Indicative
 1s: φέρω ; φερ ‐ ω
@@ -27317,7 +27317,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 87. λέγω
+Verb 87. λέγω
 
 Present Active Indicative
 1s: λέγω ; λεγ ‐ ω
@@ -38983,7 +38983,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 124. τρέπω (Partial Deponent)
+Verb 124. τρέπω (Partial Deponent)
 
 Present Active Indicative
 1s: τρέπω ; τρεπ ‐ ω
