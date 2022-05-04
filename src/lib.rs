@@ -352,10 +352,8 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let mut local_stem = stem.to_string();
         let mut local_ending = ending.to_string();
 
-        if local_stem == "πεπεμ" || local_stem == "ἐπεπεμ" || local_stem == "ε ‐ πεπεμ" {
+        if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem == "πεπεμ" || local_stem == "ἐπεπεμ" || local_stem == "ε ‐ πεπεμ" {
             if local_ending.starts_with("ντ") {
-                // println!("blah");
-                println!("endign {} {} {}", stem, ending, decomposed);
                 return Ok(String::from(BLANK));
             }
             else if decomposed {
@@ -371,6 +369,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if local_ending.starts_with("τ") {
                 local_ending = format!("π{}", local_ending);
+            }
+        }
+        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with("σ") {
+            if local_ending.starts_with("ντ") {
+                return Ok(String::from(BLANK));
+            }
+            else if local_ending.starts_with("σ") && !decomposed {
+                crop_letters(&mut local_ending, 1);
             }
         }
 
