@@ -241,7 +241,8 @@ pub struct HcGreekVerbForm<'a> {
     case: Option<HcCase>,
 }
 
-static SEPARATOR:&str = "‐";
+static SEPARATOR: &str = "‐";
+static BLANK: &str = "—";
 
 trait HcVerbForms {
     fn get_form(&self, decomposed:bool) -> Result<Vec<Step>, &str>;
@@ -282,6 +283,17 @@ fn get_voice_label(t:HcTense, v:HcVoice, m:HcMood) -> String {
     }
     else {
         v.value().to_string()
+    }
+}
+
+fn crop_letters(s: &mut String, pos: usize) {
+    match s.char_indices().nth(pos) {
+        Some((pos, _)) => {
+            s.drain(..pos);
+        }
+        None => {
+            s.clear();
+        }
     }
 }
 
@@ -337,6 +349,31 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 
     fn add_ending(&self, stem:&str, ending:&str, decomposed:bool) -> Result<String, &str> {
+        let mut local_stem = stem.to_string();
+        let mut local_ending = ending.to_string();
+
+        if local_stem == "πεπεμ" || local_stem == "ἐπεπεμ" || local_stem == "ε ‐ πεπεμ" {
+            if local_ending.starts_with("ντ") {
+                // println!("blah");
+                println!("endign {} {} {}", stem, ending, decomposed);
+                return Ok(String::from(BLANK));
+            }
+            else if decomposed {
+                local_stem = format!("{}π", stem);
+            }
+            else if local_ending.starts_with("σθ") {
+                crop_letters(&mut local_ending, 1);
+                local_ending = format!("φ{}", local_ending);
+            }
+            else if local_ending.starts_with("σ") {
+                crop_letters(&mut local_ending, 1);
+                local_ending = format!("ψ{}", local_ending);
+            }
+            else if local_ending.starts_with("τ") {
+                local_ending = format!("π{}", local_ending);
+            }
+        }
+
         let future_passive_suffix = if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
             if decomposed {
                 format!("ησ {} ", SEPARATOR)
@@ -350,10 +387,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         };
 
         if decomposed {
-            Ok(format!("{} {} {}{}", stem, SEPARATOR, future_passive_suffix, ending))
+            Ok(format!("{} {} {}{}", local_stem, SEPARATOR, future_passive_suffix, local_ending))
         }
         else {
-            Ok(format!("{}{}{}", stem, future_passive_suffix, ending))
+            Ok(format!("{}{}{}", local_stem, future_passive_suffix, local_ending))
         }
     }
 
@@ -491,13 +528,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else {
                 accent = HGK_CIRCUMFLEX;
             }
-                letter_index = syl[0].2;
-            
+            letter_index = syl[0].2;
         }
-        else {
+        else if syl.len() > 1 {
             //syllable = 2;
             accent = HGK_ACUTE;
             letter_index = syl[syl.len() - 2].2;
+        }
+        else {
+            return String::from(word);
         }
 
         self.accent_syllable(word, letter_index, accent)
@@ -892,7 +931,7 @@ mod tests {
     use std::fs::File;
     use std::io::BufRead;
     use std::io::BufReader;
-    use unicode_normalization::UnicodeNormalization;
+    //use unicode_normalization::UnicodeNormalization;
 
     #[test]
     fn accent_tests() {
