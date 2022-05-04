@@ -270,19 +270,19 @@ fn remove_suffix<'a>(s: &'a str, p: &str) -> &'a str {
 fn get_voice_label(t:HcTense, v:HcVoice, m:HcMood) -> String {
         
     if v == HcVoice::Middle && m == HcMood::Imperative {
-        "Middle".to_string()
+        String::from("Middle")
     }
     else if v == HcVoice::Passive && m == HcMood::Imperative {
-        "Passive".to_string()
+        String::from("Passive")
     }
     else if t != HcTense::Future && t != HcTense::Aorist && v == HcVoice::Middle {
-        "Middle (Middle/Passive)".to_string()
+        String::from("Middle (Middle/Passive)")
     }
     else if t != HcTense::Future && t != HcTense::Aorist && v == HcVoice::Passive {
-        "Passive (Middle/Passive)".to_string()
+        String::from("Passive (Middle/Passive)")
     }
     else {
-        v.value().to_string()
+        String::from(v.value())
     }
 }
 
@@ -352,15 +352,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 local_ending.remove(0);
                 local_ending = format!("φ{}", local_ending);
             }
-            else if local_ending.starts_with("σ") {
+            else if local_ending.starts_with('σ') {
                 local_ending.remove(0);
                 local_ending = format!("ψ{}", local_ending);
             }
-            else if local_ending.starts_with("τ") {
+            else if local_ending.starts_with('τ') {
                 local_ending = format!("π{}", local_ending);
             }
         }
-        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with("μ") {
+        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with('μ') {
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
             }
@@ -373,17 +373,17 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 local_stem.pop();
                 local_ending = format!("φ{}", local_ending);
             }
-            else if local_ending.starts_with("σ") {
+            else if local_ending.starts_with('σ') {
                 local_stem.pop();
                 local_ending.remove(0);
                 local_ending = format!("ψ{}", local_ending);
             }
-            else if local_ending.starts_with("τ") {
+            else if local_ending.starts_with('τ') {
                 local_stem.pop();
                 local_ending = format!("π{}", local_ending);
             }
         }
-        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with("γ") {
+        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with('γ') {
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
             }
@@ -396,21 +396,21 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 local_stem.pop();
                 local_ending = format!("χ{}", local_ending);
             }
-            else if local_ending.starts_with("σ") {
+            else if local_ending.starts_with('σ') {
                 local_stem.pop();
                 local_ending.remove(0);
                 local_ending = format!("ξ{}", local_ending);
             }
-            else if local_ending.starts_with("τ") {
+            else if local_ending.starts_with('τ') {
                 local_stem.pop();
                 local_ending = format!("κ{}", local_ending);
             }
         }
-        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with("σ") {
+        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with('σ') {
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
             }
-            else if local_ending.starts_with("σ") && !decomposed {
+            else if local_ending.starts_with('σ') && !decomposed {
                 local_ending.remove(0);
             }
         }
@@ -487,7 +487,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
                 //add decomposed augment back
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative && decomposed {
-                    pps_add_augment.push(format!("ε {} {}", SEPARATOR, chars.as_str().to_string()));
+                    pps_add_augment.push(format!("ε {} {}", SEPARATOR, chars.as_str()));
                 }
                 else {
                     pps_add_augment.push(chars.as_str().to_string());
@@ -505,19 +505,19 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             for e in endings_for_form.unwrap() {
                 if self.tense == HcTense::Aorist && self.voice == HcVoice::Passive && self.mood == HcMood::Imperative && self.person == HcPerson::Second && self.number == HcNumber::Singular {
-                    if a.ends_with("θ") || a.ends_with("φ") || a.ends_with("χ") {    
+                    if a.ends_with('θ') || a.ends_with('φ') || a.ends_with('χ') {    
                         if e == "ηθι" {       
                             continue;
                         }
                     }
                     else {
-                        if e == "ητι" {       
+                        if e == "ητι" {
                             continue;
                         }
                     }
                 }
 
-                let ending = if decomposed { hgk_strip_diacritics(&e, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) } else { e.to_string() };
+                let ending = if decomposed { hgk_strip_diacritics(e, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) } else { e.to_string() };
                 let stem = if decomposed && self.tense == HcTense::Aorist && self.voice == HcVoice::Passive && self.mood == HcMood::Subjunctive { format!("{}ε", a.to_owned()) } else { a.to_owned() };
                 let y = self.add_ending(&stem, &ending, decomposed);
                 let y = match y {
@@ -551,30 +551,25 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
     fn accent_verb(&self, word:&str) -> String {
         let syl = analyze_syllable_quantities(word, self.person, self.number, self.mood);
-        //println!("result: {:?}", syl);
 
-        //let syllable;
         let accent;
         let letter_index;
-        if syl.len() > 2 && !syl[syl.len() - 1].1 {
-            //syllable = 3;
+        if syl.len() > 2 && !syl.last().unwrap().is_long { //acute on antepenult
             accent = HGK_ACUTE;
-            letter_index = syl[0].2;
+            letter_index = syl[0].index;
         }
-        else if syl.len() == 2 && syl[0].1 && !syl[1].1 {
-            //syllable = 2;
-            if (syl[1].0 == "αι" || syl[1].0 == "οι") && self.mood == HcMood::Optative {
-                accent = HGK_ACUTE;
+        else if syl.len() == 2 && syl[0].is_long && !syl[1].is_long {
+            if (syl[1].letters == "αι" || syl[1].letters == "οι") && self.mood == HcMood::Optative {
+                accent = HGK_ACUTE; //exception to the exception for optative 3rd singular: acute on penult
             }
             else {
-                accent = HGK_CIRCUMFLEX;
+                accent = HGK_CIRCUMFLEX; //circumflex on penult
             }
-            letter_index = syl[0].2;
+            letter_index = syl[0].index;
         }
-        else if syl.len() > 1 {
-            //syllable = 2;
+        else if syl.len() > 1 { //acute on penult
             accent = HGK_ACUTE;
-            letter_index = syl[syl.len() - 2].2;
+            letter_index = syl[syl.len() - 2].index;
         }
         else {
             return String::from(word);
@@ -829,7 +824,13 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 }
 
-fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, m:HcMood) -> Vec<(String, bool, u8)> {
+struct SyllableAnalysis {
+    letters: String,
+    is_long: bool,
+    index: u8,
+}
+
+fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, m:HcMood) -> Vec<SyllableAnalysis> {
     let mut letters = word.gkletters();
 
     let mut letter_num = 0;
@@ -842,12 +843,13 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, m:HcMood) -> V
                 match x.letter_type() {
                     HgkLetterType::HgkLongVowel => {
                         last_letter = '\u{0000}';
-                        res.push((x.to_string(HgkUnicodeMode::Precomposed), true, letter_num));
+                        res.push(SyllableAnalysis {letters: x.to_string(HgkUnicodeMode::Precomposed), is_long: true, index: letter_num});
                     },
                     HgkLetterType::HgkShortVowel => {
                         if x.letter == 'υ' || x.letter == 'ι' && (x.diacritics & HGK_DIAERESIS) != HGK_DIAERESIS {
                             last_letter = x.letter;
-                            res.push((x.letter.to_string(), false, letter_num)); //add short, might be replaced by diphthong
+                            //res.push((x.letter.to_string(), false, letter_num)); //add short, might be replaced by diphthong
+                            res.push(SyllableAnalysis {letters: x.letter.to_string(), is_long: false, index: letter_num});
                         }
                         else {
                             if last_letter != '\u{0000}' && (x.letter == 'ε' || x.letter == 'α' || x.letter == 'ο') {
@@ -857,14 +859,17 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, m:HcMood) -> V
 
                                 let is_short = letter_num == 1 && (x.letter == 'α' || x.letter == 'ο') && last_letter == 'ι';//final diphthongs short accent
                                 if is_short && p == HcPerson::Third && n == HcNumber::Singular && m == HcMood::Optative {
-                                    res.push((s, true, letter_num - 1));
+                                    //res.push((s, true, letter_num - 1));
+                                    res.push(SyllableAnalysis {letters: s, is_long: true, index: letter_num - 1});
                                 }
                                 else {
-                                    res.push((s, !is_short, letter_num - 1));
+                                    //res.push((s, !is_short, letter_num - 1));
+                                    res.push(SyllableAnalysis {letters: s, is_long: !is_short, index: letter_num - 1});
                                 }
                             }
                             else {
-                                res.push((x.letter.to_string(), false, letter_num));
+                                //res.push((x.letter.to_string(), false, letter_num));
+                                res.push(SyllableAnalysis {letters: x.letter.to_string(), is_long: false, index: letter_num});
                             }
                             last_letter = '\u{0000}';
                         }
