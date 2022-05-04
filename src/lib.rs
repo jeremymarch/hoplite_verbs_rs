@@ -337,21 +337,23 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 
     fn add_ending(&self, stem:&str, ending:&str, decomposed:bool) -> Result<String, &str> {
-        if decomposed {
-            if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
-                Ok(format!("{} {} ησ {} {}", stem, SEPARATOR, SEPARATOR, ending))        
+        let future_passive_suffix = if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
+            if decomposed {
+                format!("ησ {} ", SEPARATOR)
             }
             else {
-                Ok(format!("{} {} {}", stem, SEPARATOR, ending))
+                String::from("ησ")
             }
         }
         else {
-            if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
-                Ok(format!("{}ησ{}", stem, ending))
-            }
-            else {
-                Ok(format!("{}{}", stem, ending))
-            }
+            String::from("")
+        };
+
+        if decomposed {
+            Ok(format!("{} {} {}{}", stem, SEPARATOR, future_passive_suffix, ending))
+        }
+        else {
+            Ok(format!("{}{}{}", stem, future_passive_suffix, ending))
         }
     }
 
