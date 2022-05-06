@@ -431,98 +431,112 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let mut local_stem = stem.to_string();
         let mut local_ending = ending.to_string();
 
-        if (self.tense == HcTense::Present || self.tense == HcTense::Imperfect) && !decomposed {
-            if self.mood == HcMood::Optative && self.voice == HcVoice::Active && self.verb.pps[0].ends_with("έω") {
-                local_stem.pop();
-            }
-            else if local_stem.ends_with('α') {
-                
-            }
-            else if local_stem.ends_with('ε') {
-                if local_ending.starts_with("ωμεθα") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ω", "ώ", 1);
-                }
-                else if local_ending.starts_with('ω') {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ω", "ῶ", 1);
-                }
-                else if local_ending.starts_with("ει") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ι", "ῖ", 1);
-                }
-                else if local_ending.starts_with("οιμην") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("οι", "οί", 1);
-                }
-                else if local_ending.starts_with("οιμεθα") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("οι", "οί", 1);
-                }
-                else if local_ending.starts_with("οι") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("οι", "οῖ", 1);
-                }
-                else if local_ending.starts_with("ου") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ου", "οῦ", 1);
-                }
-                else if local_ending.starts_with("ονται") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ο", "οῦ", 1);
-                }
-                else if local_ending.starts_with("ον") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ο", "ου", 1);
-                }
-                
-                else if local_ending.starts_with("οντων") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ο", "ού", 1);
-                }
-                else if local_ending.starts_with("ομεθα") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ο", "ού", 1);
-                }
-                else if local_ending.starts_with("ο") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ο", "οῦ", 1);
-                }
-                else if local_ending.starts_with("ετω") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ε", "εί", 1);
-                }
-                else if local_ending == "ε" {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ε", if self.mood == HcMood::Imperative { "ει" } else { "εῖ" }, 1);
-                }
-                else if local_ending.starts_with("εσθω") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ε", "εί", 1);
-                }
-                else if local_ending.starts_with("ες") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ε", "ει", 1);
-                }
-                else if local_ending.starts_with("ε(ν)") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ε(ν)", "ει", 1);
-                }
-                else if local_ending.starts_with("ε") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ε", "εῖ", 1);
-                }
-                else if local_ending.starts_with("ῃ") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("ῃ", "ῇ", 1);
-                }
-                else if local_ending.starts_with("η") {
-                    local_stem.pop();
-                    local_ending = local_ending.replacen("η", "ῆ", 1);
-                }
-            } 
-            else if local_stem.ends_with('ο') {
+        if (self.tense == HcTense::Present || self.tense == HcTense::Imperfect) {
 
+            if decomposed && (self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω")) {
+                local_ending = local_ending.replacen("ε(ν)", "ε", 1);
+            }
+            else {
+                if self.mood == HcMood::Optative && self.voice == HcVoice::Active && self.verb.pps[0].ends_with("έω") {
+                    local_stem.pop();
+                }
+                else if local_stem.ends_with('α') {
+                    
+                }
+                else if local_stem.ends_with('ε') {
+                    if local_ending.starts_with("ωμεθα") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ω", "ώ", 1);
+                    }
+                    else if local_ending.starts_with('ω') {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ω", "ῶ", 1);
+                    }
+                    else if local_ending.starts_with("ομην") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ο", "ού", 1);
+                    }
+                    else if local_ending.starts_with("οντο") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ο", "οῦ", 1);
+                    }
+                    else if local_ending.starts_with("ει") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ι", "ῖ", 1);
+                    }
+                    else if local_ending.starts_with("οιμην") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("οι", "οί", 1);
+                    }
+                    else if local_ending.starts_with("οιμεθα") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("οι", "οί", 1);
+                    }
+                    else if local_ending.starts_with("οι") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("οι", "οῖ", 1);
+                    }
+                    else if local_ending.starts_with("ου") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ου", "οῦ", 1);
+                    }
+                    else if local_ending.starts_with("ονται") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ο", "οῦ", 1);
+                    }
+                    else if local_ending.starts_with("ον") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ο", "ου", 1);
+                    }
+                    
+                    else if local_ending.starts_with("οντων") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ο", "ού", 1);
+                    }
+                    else if local_ending.starts_with("ομεθα") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ο", "ού", 1);
+                    }
+                    else if local_ending.starts_with("ο") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ο", "οῦ", 1);
+                    }
+                    else if local_ending.starts_with("ετω") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ε", "εί", 1);
+                    }
+                    else if local_ending == "ε" {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ε", if self.mood == HcMood::Imperative { "ει" } else { "εῖ" }, 1);
+                    }
+                    else if local_ending.starts_with("εσθω") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ε", "εί", 1);
+                    }
+                    else if local_ending.starts_with("ες") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ε", "ει", 1);
+                    }
+                    else if local_ending.starts_with("ε(ν)") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ε(ν)", "ει", 1);
+                    }
+                    else if local_ending.starts_with("ε") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ε", "εῖ", 1);
+                    }
+                    else if local_ending.starts_with("ῃ") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ῃ", "ῇ", 1);
+                    }
+                    else if local_ending.starts_with("η") {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("η", "ῆ", 1);
+                    }
+                } 
+                else if local_stem.ends_with('ο') {
+
+                }
             }
         }
 
@@ -646,7 +660,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             loc.remove(0);
             loc = format!("ἐ{}", loc);
         }
-        else if loc.starts_with('ἠ') && self.verb.pps[0].starts_with('ἄ') {
+        else if loc.starts_with('ἠ') && (self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ')) {
             loc.remove(0);
             loc = format!("ἀ{}", loc);
         }
