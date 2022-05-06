@@ -6593,7 +6593,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐκέκλεφθε ; ε ‐ κεκλεπ ‐ σθε
 3p: — ; —
 
-Verb 21. λείπω
+Verb 21. λείπω
 
 Present Active Indicative
 1s: λείπω ; λειπ ‐ ω
@@ -13187,7 +13187,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 42. ἀνατίθημι
+Verb 42. ἀνατίθημι
 
 Present Active Indicative
 1s: ἀνατίθημι ; ἀνα ‐ τιθη ‐ μι
@@ -13501,7 +13501,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἀνετέθεισθε ; ἀνα ‐ ε ‐ τεθει ‐ σθε
 3p: ἀνετέθειντο ; ἀνα ‐ ε ‐ τεθει ‐ ντο
 
-Verb 43. ἀποδίδωμι
+Verb 43. ἀποδίδωμι
 
 Present Active Indicative
 1s: ἀποδίδωμι ; ἀπο ‐ διδω ‐ μι
@@ -14129,7 +14129,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἀφείστασθε ; ἀπο ‐ ἑστα ‐ σθε
 3p: ἀφείσταντο ; ἀπο ‐ ἑστα ‐ ντο
 
-Verb 45. δίδωμι
+Verb 45. δίδωμι
 
 Present Active Indicative
 1s: δίδωμι ; διδω ‐ μι
@@ -15385,7 +15385,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: κατελέλυσθε ; κατα ‐ ε ‐ λελυ ‐ σθε
 3p: κατελέλυντο ; κατα ‐ ε ‐ λελυ ‐ ντο
 
-Verb 49. τίθημι
+Verb 49. τίθημι
 
 Present Active Indicative
 1s: τίθημι ; τιθη ‐ μι
@@ -16327,7 +16327,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 52. γίγνομαι (Deponent gignomai)
+Verb 52. γίγνομαι (Deponent gignomai)
 
 Present Active Indicative
 1s: NF ; NDF
@@ -17583,7 +17583,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 56. μεταδίδωμι
+Verb 56. μεταδίδωμι
 
 Present Active Indicative
 1s: μεταδίδωμι ; μετα ‐ διδω ‐ μι
@@ -18839,7 +18839,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 60. δείκνῡμι
+Verb 60. δείκνῡμι
 
 Present Active Indicative
 1s: δείκνῡμι ; δεικνῡ ‐ μι
@@ -20409,7 +20409,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 65. παραγίγνομαι (Deponent gignomai)
+Verb 65. παραγίγνομαι (Deponent gignomai)
 
 Present Active Indicative
 1s: NF ; NDF
@@ -20723,7 +20723,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 66. παραδίδωμι
+Verb 66. παραδίδωμι
 
 Present Active Indicative
 1s: παραδίδωμι ; παρα ‐ διδω ‐ μι
@@ -22607,7 +22607,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 72. χαίρω
+Verb 72. χαίρω
 
 Present Active Indicative
 1s: χαίρω ; χαιρ ‐ ω
@@ -23863,7 +23863,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: διενήνεχθε ; διενηνεκ ‐ σθε
 3p: — ; —
 
-Verb 76. εἰμί (Partial Deponent)
+Verb 76. εἰμί (Partial Deponent)
 
 Present Active Indicative
 1s: εἰμί ; εἰμί
@@ -26061,7 +26061,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐνήνεχθε ; ἐνηνεκ ‐ σθε
 3p: — ; —
 
-Verb 83. ἀναβαίνω (Partial Deponent)
+Verb 83. ἀναβαίνω (Partial Deponent)
 
 Present Active Indicative
 1s: ἀναβαίνω ; ἀνα ‐ βαιν ‐ ω
@@ -26375,7 +26375,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 84. βαίνω (Partial Deponent)
+Verb 84. βαίνω (Partial Deponent)
 
 Present Active Indicative
 1s: βαίνω ; βαιν ‐ ω
@@ -27631,7 +27631,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: εἴρησθε, ἐλέλεχθε ; εἰρη ‐ σθε, ε ‐ λελεγ ‐ σθε
 3p: εἴρηντο, — ; εἰρη ‐ ντο, —
 
-Verb 88. νομίζω
+Verb 88. νομίζω
 
 Present Active Indicative
 1s: νομίζω ; νομιζ ‐ ω
@@ -28259,7 +28259,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 90. προδίδωμι
+Verb 90. προδίδωμι
 
 Present Active Indicative
 1s: προδίδωμι ; προ ‐ διδω ‐ μι
@@ -28573,7 +28573,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: προεδέδοσθε, προυδέδοσθε ; προ ‐ ε ‐ δεδο ‐ σθε
 3p: προεδέδοντο, προυδέδοντο ; προ ‐ ε ‐ δεδο ‐ ντο
 
-Verb 91. φημί
+Verb 91. φημί
 
 Present Active Indicative
 1s: φημί ; φη ‐ μι
@@ -31399,7 +31399,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 100. ἀποκτείνω
+Verb 100. ἀποκτείνω
 
 Present Active Indicative
 1s: ἀποκτείνω ; ἀπο ‐ κτειν ‐ ω
@@ -36109,7 +36109,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 115. εὑρίσκω
+Verb 115. εὑρίσκω
 
 Present Active Indicative
 1s: εὑρίσκω ; εὑρισκ ‐ ω
@@ -39297,7 +39297,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐτέτραφθε ; ε ‐ τετραπ ‐ σθε
 3p: — ; —
 
-Verb 125. φαίνω
+Verb 125. φαίνω
 
 Present Active Indicative
 1s: φαίνω ; φαιν ‐ ω

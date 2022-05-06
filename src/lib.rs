@@ -375,6 +375,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 }
                 else if form.ends_with('α') {
                     return Ok(form.strip_suffix('α').unwrap().to_string());
+                }
+                else if form.ends_with("ον") {
+                    return Ok(form.strip_suffix("ον").unwrap().to_string());
+                }
+                else if form.ends_with("ομην") {
+                    return Ok(form.strip_suffix("ομην").unwrap().to_string());
                 }              
             },
             4 => {
@@ -641,6 +647,11 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     continue;
                 }
 
+                //skip alternate here because same
+                if self.verb.pps[0].starts_with("σῴζω") && ((a.ends_with("σεσω") && self.person == HcPerson::Second) || (a.ends_with("σεσωσ") && self.person == HcPerson::Third && self.number == HcNumber::Plural)) {
+                    continue;
+                }
+
                 let ending = if decomposed { hgk_strip_diacritics(e, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) } else { e.to_string() };
                 let stem = if decomposed && self.tense == HcTense::Aorist && self.voice == HcVoice::Passive && self.mood == HcMood::Subjunctive { format!("{}ε", a.to_owned()) } else { a.to_owned() };
                 let y = self.add_ending(&stem, &ending, decomposed);
@@ -835,23 +846,47 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             HcTense::Aorist => {
                 match self.voice {
                     HcVoice::Active => {
-                        match self.mood {
-                            HcMood::Indicative => HcEndings::AoristActiveInd,
-                            HcMood::Subjunctive => HcEndings::PresentActiveSubj,
-                            HcMood::Optative => HcEndings::AoristActiveOpt,
-                            HcMood::Imperative => HcEndings::AoristActiveImperative,
-                            HcMood::Infinitive => HcEndings::NotImplemented,
-                            HcMood::Participle => HcEndings::NotImplemented,
+                        if self.verb.pps[2].ends_with("ον") {
+                            match self.mood {
+                                HcMood::Indicative => HcEndings::ImperfectActiveInd,
+                                HcMood::Subjunctive => HcEndings::PresentActiveSubj,
+                                HcMood::Optative => HcEndings::PresentActiveOpt,
+                                HcMood::Imperative => HcEndings::PresentActiveImperative,
+                                HcMood::Infinitive => HcEndings::NotImplemented,
+                                HcMood::Participle => HcEndings::NotImplemented,
+                            }
+                        }
+                        else {
+                            match self.mood {
+                                HcMood::Indicative => HcEndings::AoristActiveInd,
+                                HcMood::Subjunctive => HcEndings::PresentActiveSubj,
+                                HcMood::Optative => HcEndings::AoristActiveOpt,
+                                HcMood::Imperative => HcEndings::AoristActiveImperative,
+                                HcMood::Infinitive => HcEndings::NotImplemented,
+                                HcMood::Participle => HcEndings::NotImplemented,
+                            }                            
                         }
                     },
                     HcVoice::Middle => {
-                        match self.mood {
-                            HcMood::Indicative => HcEndings::AoristMidInd,
-                            HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
-                            HcMood::Optative => HcEndings::AoristMiddleOpt,
-                            HcMood::Imperative => HcEndings::AoristMiddleImperative,
-                            HcMood::Infinitive => HcEndings::NotImplemented,
-                            HcMood::Participle => HcEndings::NotImplemented,
+                        if self.verb.pps[2].ends_with("ον") || self.verb.pps[2].ends_with("ομην") {
+                            match self.mood {
+                                HcMood::Indicative => HcEndings::ImperfectMidpassInd,
+                                HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
+                                HcMood::Optative => HcEndings::PresentMidpassOpt,
+                                HcMood::Imperative => HcEndings::SecondAoristMiddleImperative,
+                                HcMood::Infinitive => HcEndings::NotImplemented,
+                                HcMood::Participle => HcEndings::NotImplemented,
+                            }
+                        }
+                        else {
+                            match self.mood {
+                                HcMood::Indicative => HcEndings::AoristMidInd,
+                                HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
+                                HcMood::Optative => HcEndings::AoristMiddleOpt,
+                                HcMood::Imperative => HcEndings::AoristMiddleImperative,
+                                HcMood::Infinitive => HcEndings::NotImplemented,
+                                HcMood::Participle => HcEndings::NotImplemented,
+                            }
                         }
                     },
                     HcVoice::Passive => {
@@ -1016,7 +1051,7 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, m:HcMood) -> V
     res
 }
 
-static ENDINGS: &[[&str; 6]; /*63*/33] = &[
+static ENDINGS: &[[&str; 6]; /*63*/63] = &[
     ["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
     ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"],//, "Imperfect Active Indicative" },
     ["α", "ας", "ε(ν)", "αμεν", "ατε", "αν"],//, "Aorist Active Indicative" },
@@ -1042,7 +1077,7 @@ static ENDINGS: &[[&str; 6]; /*63*/33] = &[
     ["", "αι", "ασθω", "", "ασθε", "ασθων"],//, "Aorist Middle Imperative" },
     ["", "ητι,ηθι", "ητω", "", "ητε", "εντων"],//, "Aorist Passive Imperative" },
     
-/*
+
     ["ῶ", "ᾷς", "ᾷ", "ῶμεν", "ᾶτε", "ῶσι(ν)"],//, ""],// },         //pres active indic a
     ["ῶμαι", "ᾷ", "ᾶται", "ώμεθα", "ᾶσθε", "ῶνται"],//, "" },   //pres mid/pass indic a
     ["ων", "ᾱς", "ᾱ", "ῶμεν", "ᾶτε", "ων"],//, "" },            //impf active indic a
@@ -1076,7 +1111,7 @@ static ENDINGS: &[[&str; 6]; /*63*/33] = &[
     ["", "οῦ", "είσθω", "", "εῖσθε", "είσθων"],//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper e
     ["", "ου", "ούτω",   "", "οῦτε", "ούντων"],//, "Present Active Imperative" }, //pres. active imper o
     ["", "οῦ", "ούσθω", "", "οῦσθε", "ούσθων"],//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper o
-    */
+    
 
 
     ["μι", "ς", "σι(ν)", "μεν", "τε", "ᾱσι(ν)"],//, "" },   //mi
@@ -1204,7 +1239,7 @@ mod tests {
                 
                 for (idx, pp_line) in pp_reader.lines().enumerate() {
                     if let Ok(line) = pp_line {
-                        let properties = if line.starts_with("θάπτω") {
+                        let properties = if line.starts_with("θάπτω") || line.starts_with("κλέπτω") || line.starts_with("λείπω") {
                             CONSONANT_STEM_PERFECT_PI
                         }
                         else if line.starts_with("τάττω") || line.starts_with("πρᾱ́ττω") {
