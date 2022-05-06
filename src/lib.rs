@@ -1207,7 +1207,7 @@ mod tests {
                         let properties = if line.starts_with("θάπτω") {
                             CONSONANT_STEM_PERFECT_PI
                         }
-                        else if line.starts_with("τάττω") {
+                        else if line.starts_with("τάττω") || line.starts_with("πρᾱ́ττω") {
                             CONSONANT_STEM_PERFECT_GAMMA
                         }
                         else if line.starts_with("ἄρχω") {
