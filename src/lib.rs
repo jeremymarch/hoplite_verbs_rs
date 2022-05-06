@@ -455,6 +455,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 if self.verb.properties & CONSONANT_STEM_PERFECT_PI == CONSONANT_STEM_PERFECT_PI {
                     local_stem = format!("{}π", local_stem);    
                 }
+                else if self.verb.properties & CONSONANT_STEM_PERFECT_BETA == CONSONANT_STEM_PERFECT_BETA {
+                    local_stem = format!("{}β", local_stem);    
+                }
                 else {
                     local_stem = format!("{}φ", local_stem);
                 }
@@ -1201,84 +1204,75 @@ mod tests {
                 
                 for (idx, pp_line) in pp_reader.lines().enumerate() {
                     if let Ok(line) = pp_line {
-                    let mut properties = REGULAR;
-                    if line.starts_with("θάπτω") {
-                        properties = CONSONANT_STEM_PERFECT_PI;
-                    }
-                    else if line.starts_with("τάττω") {
-                        properties = CONSONANT_STEM_PERFECT_GAMMA;
-                    }
-                    else if line.starts_with("ἄρχω") {
-                        properties = CONSONANT_STEM_PERFECT_CHI;
-                    }
-                    else {
-                        properties = REGULAR;
-                    }
-                    let verb = HcGreekVerb::from_string(idx as u32, &line, properties).unwrap();
+                        let properties = if line.starts_with("θάπτω") {
+                            CONSONANT_STEM_PERFECT_PI
+                        }
+                        else if line.starts_with("τάττω") {
+                            CONSONANT_STEM_PERFECT_GAMMA
+                        }
+                        else if line.starts_with("ἄρχω") {
+                            CONSONANT_STEM_PERFECT_CHI
+                        }
+                        else if line.starts_with("βλάπτω") {
+                            CONSONANT_STEM_PERFECT_BETA
+                        }
+                        else {
+                            REGULAR
+                        };
+                        let verb = HcGreekVerb::from_string(idx as u32, &line, properties).unwrap();
 
-                    if paradigm_reader.read_line(&mut paradigm_line).unwrap() == 0 { return; }
-                    paradigm_line.clear();
+                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() == 0 { return; }
+                        paradigm_line.clear();
 
-                    let verb_section = format!("Verb {}. {}", idx, verb.pps[0]);
-                    println!("\n{}", verb_section);
-                    if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
-                        assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
-                    }
-                    paradigm_line.clear();
+                        let verb_section = format!("Verb {}. {}", idx, verb.pps[0]);
+                        println!("\n{}", verb_section);
+                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
+                            assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
+                        }
+                        paradigm_line.clear();
 
-                        for x in [HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect] {   
-                            for v in [HcVoice::Active,HcVoice::Middle,HcVoice::Passive] { 
-                            for m in [HcMood::Indicative, HcMood::Subjunctive,HcMood::Optative,HcMood::Imperative] {
-                                
-                                if ((m == HcMood::Subjunctive || m == HcMood::Optative || m == HcMood::Imperative) && (x == HcTense::Imperfect || x == HcTense::Perfect || x == HcTense::Pluperfect)) || x == HcTense::Future && (m == HcMood::Subjunctive || m == HcMood::Imperative) {
-                                    continue;
-                                }
+                            for x in [HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect] {   
+                                for v in [HcVoice::Active,HcVoice::Middle,HcVoice::Passive] { 
+                                for m in [HcMood::Indicative, HcMood::Subjunctive,HcMood::Optative,HcMood::Imperative] {
+                                    
+                                    if ((m == HcMood::Subjunctive || m == HcMood::Optative || m == HcMood::Imperative) && (x == HcTense::Imperfect || x == HcTense::Perfect || x == HcTense::Pluperfect)) || x == HcTense::Future && (m == HcMood::Subjunctive || m == HcMood::Imperative) {
+                                        continue;
+                                    }
 
-                                if paradigm_reader.read_line(&mut paradigm_line).unwrap() == 0 { return; }
-                                paradigm_line.clear();
+                                    if paradigm_reader.read_line(&mut paradigm_line).unwrap() == 0 { return; }
+                                    paradigm_line.clear();
 
-                                let section = format!("{} {} {}", x.value(), get_voice_label(x, v, m, verb.deponent_type()), m.value());
-                                println!("\n{}", section);
-                                if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
-                                    //assert_eq!(paradigm_line[0..paradigm_line.len() - 1], section);
-                                }
-                                paradigm_line.clear();
+                                    let section = format!("{} {} {}", x.value(), get_voice_label(x, v, m, verb.deponent_type()), m.value());
+                                    println!("\n{}", section);
+                                    if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
+                                        //assert_eq!(paradigm_line[0..paradigm_line.len() - 1], section);
+                                    }
+                                    paradigm_line.clear();
 
-                                for z in [HcNumber::Singular, HcNumber::Plural] {
-                                    for y in [HcPerson::First, HcPerson::Second, HcPerson::Third] {
+                                    for z in [HcNumber::Singular, HcNumber::Plural] {
+                                        for y in [HcPerson::First, HcPerson::Second, HcPerson::Third] {
 
-                                        let form = HcGreekVerbForm {verb:&verb, person:y, number:z, tense:x, voice:v, mood:m, gender:None, case:None};
-                                        let r = if form.get_form(false).unwrap().last().unwrap().form == "" { "NF".to_string() } else { form.get_form(false).unwrap().last().unwrap().form.to_string() };
-                                        let r_d = if form.get_form(true).unwrap().last().unwrap().form == "" { "NDF".to_string() } else { form.get_form(true).unwrap().last().unwrap().form.to_string() };
+                                            let form = HcGreekVerbForm {verb:&verb, person:y, number:z, tense:x, voice:v, mood:m, gender:None, case:None};
+                                            let r = if form.get_form(false).unwrap().last().unwrap().form == "" { "NF".to_string() } else { form.get_form(false).unwrap().last().unwrap().form.to_string() };
+                                            let r_d = if form.get_form(true).unwrap().last().unwrap().form == "" { "NDF".to_string() } else { form.get_form(true).unwrap().last().unwrap().form.to_string() };
 
-                                        let mut form_line = format!("{}{}: {} ; {}", y.value(), z.value(), 
-                                            str::replace(&r, " /", ","),
-                                            str::replace(&r_d, " /", ","));
+                                            let mut form_line = format!("{}{}: {} ; {}", y.value(), z.value(), 
+                                                str::replace(&r, " /", ","),
+                                                str::replace(&r_d, " /", ","));
 
-                                        println!("{}", form_line);
+                                            println!("{}", form_line);
 
-                                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
-                                            assert_eq!(paradigm_line[0..paradigm_line.len() - 1]/* .nfc().collect::<String>()*/, form_line);
+                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
+                                                assert_eq!(paradigm_line[0..paradigm_line.len() - 1]/* .nfc().collect::<String>()*/, form_line);
+                                            }
+                                            paradigm_line.clear();
                                         }
-                                        paradigm_line.clear();
                                     }
                                 }
                             }
                         }
                     }
                 }
-                }
-                /* 
-                for pp_line in pp_reader.lines() {
-                    //println!("{}", line.unwrap());
-                    let verb = HcGreekVerb::from_string(1, &pp_line.as_ref().unwrap(), REGULAR).unwrap();
-
-                    let a1 = HcGreekVerb {id:1,pps:vec!["λω".to_string(), "λσω".to_string(), "ἔλῡσα".to_string(), "λέλυκα".to_string(), "λέλυμαι".to_string(), "ἐλύθην".to_string()],properties:"".to_string()};
-                    println!("yay");
-                    assert_eq!(verb, a1);
-                    println!("yay2");
-                }
-                */
             }
         }
     }
