@@ -406,7 +406,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     fn add_augment(&self, stem:&str, decomposed:bool) -> String {
         let mut local_stem = stem.to_string();
         if decomposed {
-            if local_stem.starts_with('ἠ') {
+            if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') {
                 String::from(local_stem)
             }
             else {
@@ -418,7 +418,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 local_stem.remove(0);
                 format!("ἠ{}", local_stem)
             }
-            else if local_stem.starts_with('ἠ') {
+            else if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') {
                 String::from(local_stem)
             }
             else {
@@ -1242,7 +1242,7 @@ mod tests {
                         let properties = if line.starts_with("θάπτω") || line.starts_with("κλέπτω") || line.starts_with("λείπω") {
                             CONSONANT_STEM_PERFECT_PI
                         }
-                        else if line.starts_with("τάττω") || line.starts_with("πρᾱ́ττω") {
+                        else if line.starts_with("τάττω") || line.starts_with("πρᾱ́ττω") || line.starts_with("ἄγω") {
                             CONSONANT_STEM_PERFECT_GAMMA
                         }
                         else if line.starts_with("ἄρχω") {
