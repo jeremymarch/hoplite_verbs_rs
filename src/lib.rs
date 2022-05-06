@@ -414,7 +414,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
         }
         else {
-            if self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with('ἄ') {
+            if self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ') {
                 local_stem.remove(0);
                 format!("ἠ{}", local_stem)
             }
@@ -430,6 +430,101 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     fn add_ending(&self, stem:&str, ending:&str, decomposed:bool) -> Result<String, &str> {
         let mut local_stem = stem.to_string();
         let mut local_ending = ending.to_string();
+
+        if (self.tense == HcTense::Present || self.tense == HcTense::Imperfect) && !decomposed {
+            if self.mood == HcMood::Optative && self.voice == HcVoice::Active && self.verb.pps[0].ends_with("έω") {
+                local_stem.pop();
+            }
+            else if local_stem.ends_with('α') {
+                
+            }
+            else if local_stem.ends_with('ε') {
+                if local_ending.starts_with("ωμεθα") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ω", "ώ", 1);
+                }
+                else if local_ending.starts_with('ω') {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ω", "ῶ", 1);
+                }
+                else if local_ending.starts_with("ει") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ι", "ῖ", 1);
+                }
+                else if local_ending.starts_with("οιμην") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("οι", "οί", 1);
+                }
+                else if local_ending.starts_with("οιμεθα") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("οι", "οί", 1);
+                }
+                else if local_ending.starts_with("οι") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("οι", "οῖ", 1);
+                }
+                else if local_ending.starts_with("ου") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ου", "οῦ", 1);
+                }
+                else if local_ending.starts_with("ονται") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ο", "οῦ", 1);
+                }
+                else if local_ending.starts_with("ον") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ο", "ου", 1);
+                }
+                
+                else if local_ending.starts_with("οντων") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ο", "ού", 1);
+                }
+                else if local_ending.starts_with("ομεθα") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ο", "ού", 1);
+                }
+                else if local_ending.starts_with("ο") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ο", "οῦ", 1);
+                }
+                else if local_ending.starts_with("ετω") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ε", "εί", 1);
+                }
+                else if local_ending == "ε" {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ε", if self.mood == HcMood::Imperative { "ει" } else { "εῖ" }, 1);
+                }
+                else if local_ending.starts_with("εσθω") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ε", "εί", 1);
+                }
+                else if local_ending.starts_with("ες") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ε", "ει", 1);
+                }
+                else if local_ending.starts_with("ε(ν)") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ε(ν)", "ει", 1);
+                }
+                else if local_ending.starts_with("ε") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ε", "εῖ", 1);
+                }
+                else if local_ending.starts_with("ῃ") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("ῃ", "ῇ", 1);
+                }
+                else if local_ending.starts_with("η") {
+                    local_stem.pop();
+                    local_ending = local_ending.replacen("η", "ῆ", 1);
+                }
+            } 
+            else if local_stem.ends_with('ο') {
+
+            }
+        }
 
         if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem == "πεπεμ" || local_stem == "ἐπεπεμ" || local_stem == format!("ε {} πεπεμ", SEPARATOR) {
             if local_ending.starts_with("ντ") {
@@ -777,7 +872,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         match self.mood {
                             HcMood::Indicative => HcEndings::PresentActiveInd,
                             HcMood::Subjunctive => HcEndings::PresentActiveSubj,
-                            HcMood::Optative => HcEndings::PresentActiveOpt,
+                            HcMood::Optative => if self.verb.pps[0].ends_with("έω") { HcEndings::PresentActiveOptEContracted} else { HcEndings::PresentActiveOpt },
                             HcMood::Imperative => HcEndings::PresentActiveImperative,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
@@ -1084,7 +1179,7 @@ static ENDINGS: &[[&str; 6]; /*63*/63] = &[
     ["ώμην", "ῶ", "ᾶτο", "ώμεθα", "ᾶσθε", "ῶντο"],//, "" },     //impf mid/pass indic a
     ["ῶ", "ᾷς", "ᾷ", "ῶμεν", "ᾶτε", "ῶσι(ν)"],//, "" },         //pres active subj a
     ["ῶμαι", "ᾷ", "ᾶται", "ώμεθα", "ᾶσθε", "ῶνται"],//, "" },   //pres mid/pass subj a
-    ["ῷμι, ῴην", "ῷς, ῴης", "ῷ, ῴη", "ῷμεν, ῴημεν", "ῷτε, ῴητε", "ῷεν, ῴησαν"],//, "" }, //pres active opt a
+    ["ῷμι,ῴην", "ῷς,ῴης", "ῷ,ῴη", "ῷμεν,ῴημεν", "ῷτε,ῴητε", "ῷεν,ῴησαν"],//, "" }, //pres active opt a
     ["ῴμην", "ῷο", "ῷτο", "ῴμεθα", "ῷσθε", "ῷντο"],//, "" },   //pres mid/pass opt a
     
     ["ῶ", "εῖς", "εῖ", "οῦμεν", "εῖτε", "οῦσι(ν)"],//, "" },         //pres active indic e
@@ -1093,7 +1188,7 @@ static ENDINGS: &[[&str; 6]; /*63*/63] = &[
     ["ούμην", "οῦ", "εῖτο", "ούμεθα", "εῖσθε", "οῦντο"],//, "" },     //impf mid/pass indic e
     ["ῶ", "ῇς", "ῇ", "ῶμεν", "ῆτε", "ῶσι(ν)"],//, "" },         //pres active subj e
     ["ῶμαι", "ῇ", "ῆται", "ώμεθα", "ῆσθε", "ῶνται"],//, "" },   //pres mid/pass subj e
-    ["οῖμι, οίην", "οῖς, οίης", "οῖ, οίη", "οῖμεν, οίημεν", "οῖτε, οίητε", "οῖεν, οίησαν"],//, "" },//pres act opt e
+    ["οῖμι,οίην", "οῖς,οίης", "οῖ,οίη", "οῖμεν,οίημεν", "οῖτε,οίητε", "οῖεν,οίησαν"],//, "" },//pres act opt e
     ["οίμην", "οῖο", "οῖτο", "οίμεθα", "οῖσθε", "οῖντο"],//, "" },   //pres mid/ass opt e
     
     ["ῶ", "οῖς", "οῖ", "οῦμεν", "οῦτε", "οῦσι(ν)"],//, "" },         //pres active indic o
@@ -1102,7 +1197,7 @@ static ENDINGS: &[[&str; 6]; /*63*/63] = &[
     ["ούμην", "οῦ", "οῦτο", "ούμεθα", "οῦσθε", "οῦντο"],//, "" },     //impf mid/pass indic o
     ["ῶ", "οῖς", "οῖ", "ῶμεν", "ῶτε", "ῶσι(ν)"],//, "" },         //pres active subj o
     ["ῶμαι", "οῖ", "ῶται", "ώμεθα", "ῶσθε", "ῶνται"],//, "" },   //pres mid/pass subj o
-    ["οῖμι, οίην", "οῖς, οίης", "οῖ, οίη", "οῖμεν, οίημεν", "οῖτε, οίητε", "οῖεν, οίησαν"],//, "" },//pres act opt o
+    ["οῖμι,οίην", "οῖς,οίης", "οῖ,οίη", "οῖμεν,οίημεν", "οῖτε,οίητε", "οῖεν,οίησαν"],//, "" },//pres act opt o
     ["οίμην", "οῖο", "οῖτο", "οίμεθα", "οῖσθε", "οῖντο"],//, "" },   //pres mid/ass opt o
     
     ["", "ᾱ", "ᾱ́τω",   "", "ᾶτε", "ώντων"],//, "Present Active Imperative" }, //pres. active imper a
