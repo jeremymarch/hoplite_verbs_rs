@@ -623,7 +623,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             for e in endings_for_form.unwrap() {
                 if self.tense == HcTense::Aorist && self.voice == HcVoice::Passive && self.mood == HcMood::Imperative && self.person == HcPerson::Second && self.number == HcNumber::Singular {
                     if a.ends_with('θ') || a.ends_with('φ') || a.ends_with('χ') {
-                        if e == "ηθι" {
+                        if e == "ηθι" && !decomposed {
                             continue;
                         }
                     }
