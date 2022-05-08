@@ -182,7 +182,7 @@ enum HcDeponentType {
     MiddleDeponentHgeomai,
 }
 
-pub const REGULAR                           :u32 = 0x000;
+pub const REGULAR                           :u32 = 0x0000;
 pub const CONSONANT_STEM_PERFECT_PHI        :u32 = 0x0001;
 pub const CONSONANT_STEM_PERFECT_MU_PI      :u32 = 0x0002;
 pub const CONSONANT_STEM_PERFECT_KAPPA      :u32 = 0x0004;
@@ -229,14 +229,14 @@ impl HcGreekVerb {
         /*else if ( utf8HasSuffix(v->present, "μαι")) {
             return MIDDLE_DEPONENT;
         }*/
-        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2].ends_with("μην") && self.pps[3] == "" /* && utf8HasSuffix(v->perfmid, "μαι") */ && self.pps[5] == "" {
+        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2].ends_with("μην") && self.pps[3].is_empty() /* && utf8HasSuffix(v->perfmid, "μαι") */ && self.pps[5].is_empty() {
             HcDeponentType::MiddleDeponent
         }
         //this gets μετανίσταμαι and ἐπανίσταμαι: middle deponents which happen to have an active perfect and root aorist
-        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2].ends_with("ην") /* && utf8HasSuffix(v->perfmid, "μαι") */ && self.pps[5] == "" {
+        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2].ends_with("ην") /* && utf8HasSuffix(v->perfmid, "μαι") */ && self.pps[5].is_empty() {
             HcDeponentType::MiddleDeponent
         }
-        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2] == "" && self.pps[3] == "" && self.pps[4].ends_with("μαι") && self.pps[5] != "" {
+        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2].is_empty() && self.pps[3].is_empty() && self.pps[4].ends_with("μαι") && !self.pps[5].is_empty() {
             HcDeponentType::PassiveDeponent
         }
         else if self.pps[0].ends_with("ἐπίσταμαι") {
@@ -331,7 +331,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 
     fn contract_verb(&self, unaccented_form:&str, ending:&str) -> String {
-        let mut form = hgk_strip_diacritics(&unaccented_form, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
+        let mut form = hgk_strip_diacritics(unaccented_form, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
         let orig_syl = analyze_syllable_quantities(&form, self.person, self.number, self.mood);
 
         if form.contains("εει") {               // h&q p236
@@ -465,7 +465,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let mut local_stem = stem.to_string();
         if decomposed {
             if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') {
-                String::from(local_stem)
+                local_stem
             }
             else {
                 format!("ε {} {}", SEPARATOR, local_stem)
@@ -477,7 +477,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 format!("ἠ{}", local_stem)
             }
             else if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') {
-                String::from(local_stem)
+                local_stem
             }
             else {
                 format!("ἐ{}", local_stem)
@@ -680,7 +680,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             (self.tense == HcTense::Future && self.voice == HcVoice::Passive) {
             
             for a in &pps_without_ending {
-                pps_add_augment.push(self.deaugment(&a, decomposed));
+                pps_add_augment.push(self.deaugment(a, decomposed));
             }
             pps_without_ending = pps_add_augment;
         }
