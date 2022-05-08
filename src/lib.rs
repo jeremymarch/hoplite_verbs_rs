@@ -36,38 +36,8 @@ enum HcEndings {
     AoristActiveImperative,
     AoristMiddleImperative,
     AoristPassiveImperative,
-    PresentActiveIndicAContracted,
-    PresentMidpassIndicAContracted,
-    ImperfectActiveIndicAContracted,
-    ImperfectMidpassIndicAContracted,
-    PresentActiveSubjAContracted,
-    PresentMidpassSubjAContracted,
-    PresentActiveOptAContracted,
-    PresentMidpassOptAContracted,
-    PresentActiveIndicEContracted,
-    PresentMidpassIndicEContracted,
-    ImperfectActiveIndicEContracted,
-    ImperfectMidpassIndicEContracted,
-    PresentActiveSubjEContracted,
-    PresentMidpassSubjEContracted,
     PresentActiveOptEContracted,
-    PresentMidpassOptEContracted,
-    PresentActiveIndicOContracted,
-    PresentMidpassIndicOContracted,
-    ImperfectActiveIndicOContracted,
-    ImperfectMidpassIndicOContracted,
-    PresentActiveSubjOContracted,
-    PresentMidpassSubjOContracted,
-    PresentActiveOptOContracted,
-    PresentMidpassOptOContracted,
-    PresentActiveImperativeAContracted,
-    PresentMidpassImperativeAContracted,
-    PresentActiveImperativeEContracted,
-    PresentMidpassImperativeEContracted,
-    PresentActiveImperativeOContracted,
-    PresentMidpassImperativeOContracted,
     PresentActiveIndicativeMi,
-    PresentActiveOptativeContractedNotPrecontracted,
     AoristActiveImperativesMi,
     AoristActiveImperativesMiRoot,
     AoristMiddleImperativesMi,
@@ -1222,7 +1192,7 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, m:HcMood) -> V
     res
 }
 
-static ENDINGS: &[[&str; 6]; /*63*/63] = &[
+static ENDINGS: &[[&str; 6]; /*63*/33] = &[
     ["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
     ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"],//, "Imperfect Active Indicative" },
     ["α", "ας", "ε(ν)", "αμεν", "ατε", "αν"],//, "Aorist Active Indicative" },
@@ -1248,46 +1218,10 @@ static ENDINGS: &[[&str; 6]; /*63*/63] = &[
     ["", "αι", "ασθω", "", "ασθε", "ασθων"],//, "Aorist Middle Imperative" },
     ["", "ητι,ηθι", "ητω", "", "ητε", "εντων"],//, "Aorist Passive Imperative" },
     
-
-    ["ῶ", "ᾷς", "ᾷ", "ῶμεν", "ᾶτε", "ῶσι(ν)"],//, ""],// },         //pres active indic a
-    ["ῶμαι", "ᾷ", "ᾶται", "ώμεθα", "ᾶσθε", "ῶνται"],//, "" },   //pres mid/pass indic a
-    ["ων", "ᾱς", "ᾱ", "ῶμεν", "ᾶτε", "ων"],//, "" },            //impf active indic a
-    ["ώμην", "ῶ", "ᾶτο", "ώμεθα", "ᾶσθε", "ῶντο"],//, "" },     //impf mid/pass indic a
-    ["ῶ", "ᾷς", "ᾷ", "ῶμεν", "ᾶτε", "ῶσι(ν)"],//, "" },         //pres active subj a
-    ["ῶμαι", "ᾷ", "ᾶται", "ώμεθα", "ᾶσθε", "ῶνται"],//, "" },   //pres mid/pass subj a
-    ["ῷμι,ῴην", "ῷς,ῴης", "ῷ,ῴη", "ῷμεν,ῴημεν", "ῷτε,ῴητε", "ῷεν,ῴησαν"],//, "" }, //pres active opt a
-    ["ῴμην", "ῷο", "ῷτο", "ῴμεθα", "ῷσθε", "ῷντο"],//, "" },   //pres mid/pass opt a
+    ["οιμι,οιην", "οις,οιης", "οι,οιη", "οιμεν,οιημεν", "οιτε,οιητε", "οιεν,οιησαν"],//, "" },//pres act opt e
     
-    ["ῶ", "εῖς", "εῖ", "οῦμεν", "εῖτε", "οῦσι(ν)"],//, "" },         //pres active indic e
-    ["οῦμαι", "εῖ, ῇ", "εῖται", "ουμεθα", "εῖσθε", "οῦνται"],//, "" },   //pres mid/pass indic e
-    ["ουν", "εις", "ει", "οῦμεν", "εῖτε", "ουν"],//, "" },            //impf active indic e
-    ["ούμην", "οῦ", "εῖτο", "ούμεθα", "εῖσθε", "οῦντο"],//, "" },     //impf mid/pass indic e
-    ["ῶ", "ῇς", "ῇ", "ῶμεν", "ῆτε", "ῶσι(ν)"],//, "" },         //pres active subj e
-    ["ῶμαι", "ῇ", "ῆται", "ώμεθα", "ῆσθε", "ῶνται"],//, "" },   //pres mid/pass subj e
-    ["οῖμι,οίην", "οῖς,οίης", "οῖ,οίη", "οῖμεν,οίημεν", "οῖτε,οίητε", "οῖεν,οίησαν"],//, "" },//pres act opt e
-    ["οίμην", "οῖο", "οῖτο", "οίμεθα", "οῖσθε", "οῖντο"],//, "" },   //pres mid/ass opt e
-    
-    ["ῶ", "οῖς", "οῖ", "οῦμεν", "οῦτε", "οῦσι(ν)"],//, "" },         //pres active indic o
-    ["οῦμαι", "οῖ", "οῦται", "ουμεθα", "οῦσθε", "οῦνται"],//, "" },   //pres mid/pass indic o
-    ["ουν", "ους", "ου", "οῦμεν", "οῦτε", "ουν"],//, "" },            //impf active indic o
-    ["ούμην", "οῦ", "οῦτο", "ούμεθα", "οῦσθε", "οῦντο"],//, "" },     //impf mid/pass indic o
-    ["ῶ", "οῖς", "οῖ", "ῶμεν", "ῶτε", "ῶσι(ν)"],//, "" },         //pres active subj o
-    ["ῶμαι", "οῖ", "ῶται", "ώμεθα", "ῶσθε", "ῶνται"],//, "" },   //pres mid/pass subj o
-    ["οῖμι,οίην", "οῖς,οίης", "οῖ,οίη", "οῖμεν,οίημεν", "οῖτε,οίητε", "οῖεν,οίησαν"],//, "" },//pres act opt o
-    ["οίμην", "οῖο", "οῖτο", "οίμεθα", "οῖσθε", "οῖντο"],//, "" },   //pres mid/ass opt o
-    
-    ["", "ᾱ", "ᾱ́τω",   "", "ᾶτε", "ώντων"],//, "Present Active Imperative" }, //pres. active imper a
-    ["", "ῶ", "ᾱ́σθω", "", "ᾶσθε", "ᾱ́σθων"],//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper a
-    ["", "ει", "είτω",   "", "εῖτε", "ούντων"],//, "Present Active Imperative" }, //pres. active imper e
-    ["", "οῦ", "είσθω", "", "εῖσθε", "είσθων"],//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper e
-    ["", "ου", "ούτω",   "", "οῦτε", "ούντων"],//, "Present Active Imperative" }, //pres. active imper o
-    ["", "οῦ", "ούσθω", "", "οῦσθε", "ούσθων"],//, "Present Middle/Passive Imperative" }, //pres. mid/pass imper o
-    
-
-
     ["μι", "ς", "σι(ν)", "μεν", "τε", "ᾱσι(ν)"],//, "" },   //mi
     
-    ["οιμι,οιην", "οις,οιης", "οι,οιη", "οιμεν,οιημεν", "οιτε,οιητε", "οιεν,οιησαν"],//, "" },//pres act opt o
     ["", "ς", "τω", "", "τε", "ντων"],//, "" },//mi aorist active imperatives
     ["", "θι", "τω", "", "τε", "ντων"],//", "" },//mi root aorist active imperatives
     
