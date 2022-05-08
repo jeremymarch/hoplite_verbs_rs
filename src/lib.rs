@@ -8,6 +8,8 @@ use rustunicodetests::hgk_has_diacritics;
 //use rustunicodetests::hgk_transliterate;
 //use rustunicodetests::hgk_convert;
 
+use itertools::Itertools;
+
 #[derive(Eq, PartialEq, Debug)]
 enum HcEndings {
     PresentActiveInd,
@@ -311,10 +313,12 @@ trait HcVerbForms {
     fn add_ending(&self, stem:&str, ending:&str, decomposed:bool) -> Result<String, &str>;
     fn get_endings(&self) -> Option<Vec<&str>>;
     fn accent_verb(&self, form:&str) -> String;
+    fn accent_verb_contracted(&self, word:&str, orig_syllables:Vec<SyllableAnalysis>, ending:&str) -> String;
     fn accent_syllable(&self, word:&str, syllable:u8, accent:u32) -> String;
     fn get_label(&self) -> String;
     fn add_augment(&self, stem:&str, decomposed:bool) -> String;
     fn deaugment(&self, stem:&str, decomposed:bool) -> String;
+    fn contract_verb(&self, unaccented_form:&str, ending:&str) -> String;
 }
 
 /*
@@ -354,6 +358,90 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
     fn get_label(&self) -> String {
         "".to_string()
+    }
+
+    fn contract_verb(&self, unaccented_form:&str, ending:&str) -> String {
+        let mut form = hgk_strip_diacritics(&unaccented_form, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
+        let orig_syl = analyze_syllable_quantities(&form, self.person, self.number, self.mood);
+
+        if form.contains("εει") {               // h&q p236
+            form = form.replacen("εει", "ει", 1);
+        }
+        else if form.contains("εε") {
+            form = form.replacen("εε", "ει", 1);
+        }
+        else if form.contains("εη") {
+            form = form.replacen("εη", "η", 1);
+        }
+        else if form.contains("εῃ") {
+            form = form.replacen("εῃ", "ῃ", 1);
+        }
+        else if form.contains("εοι") {
+            form = form.replacen("εοι", "οι", 1);
+        }
+        else if form.contains("εου") {
+            form = form.replacen("εου", "ου", 1);
+        }
+        else if form.contains("εο") {
+            form = form.replacen("εο", "ου", 1);
+        }
+        else if form.contains("εω") {
+            form = form.replacen("εω", "ω", 1);
+        }
+
+        else if form.contains("αει") {          // h&q p232
+            form = form.replacen("αει", "ᾱͅ", 1);
+        }
+        else if form.contains("αε") {
+            form = form.replacen("αε", "ᾱ", 1);
+        }
+        else if form.contains("αη") {
+            form = form.replacen("αη", "ᾱ", 1);
+        }
+        else if form.contains("αῃ") {
+            form = form.replacen("αῃ", "ᾱͅ", 1);
+        }
+        else if form.contains("αοι") {
+            form = form.replacen("αοι", "ῳ", 1);
+        }
+        else if form.contains("αου") {
+            form = form.replacen("αου", "ω", 1);
+        }
+        else if form.contains("αο") {
+            form = form.replacen("αο", "ω", 1);
+        }
+        else if form.contains("αω") {
+            form = form.replacen("αω", "ω", 1);
+        }
+
+        else if form.contains("οει") {          // h&q p264
+            form = form.replacen("οει", "οι", 1);
+        }
+        else if form.contains("οε") {
+            form = form.replacen("οε", "ου", 1);
+        }
+        else if form.contains("οη") {
+            form = form.replacen("οη", "ω", 1);
+        }
+        else if form.contains("οῃ") {
+            form = form.replacen("οῃ", "οι", 1);
+        }
+        else if form.contains("οoι") {
+            form = form.replacen("οοι", "οι", 1);
+        }
+        else if form.contains("οoυ") {
+            form = form.replacen("οου", "ου", 1);
+        }
+        else if form.contains("οo") {
+            form = form.replacen("οο", "ου", 1);
+        }
+        else if form.contains("οω") {
+            form = form.replacen("οω", "ω", 1);
+        }
+
+        self.accent_verb_contracted(&form, orig_syl, ending)
+
+        //unaccented_form.to_string()
     }
 
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str> {
@@ -431,7 +519,13 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let mut local_stem = stem.to_string();
         let mut local_ending = ending.to_string();
 
-        if (self.tense == HcTense::Present || self.tense == HcTense::Imperfect) {
+        //for contracted verbs remove nu movable for imperfect 3rd sing. active
+        if self.tense == HcTense::Imperfect && ( self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") ) && self.person == HcPerson::Third && self.number == HcNumber::Singular && self.voice == HcVoice::Active {
+            local_ending = local_ending.replacen("(ν)", "", 1);
+        }
+
+        /* 
+        if self.tense == HcTense::Present || self.tense == HcTense::Imperfect {
 
             if decomposed && (self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω")) {
                 local_ending = local_ending.replacen("ε(ν)", "ε", 1);
@@ -539,7 +633,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 }
             }
         }
-
+        */
         if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem == "πεπεμ" || local_stem == "ἐπεπεμ" || local_stem == format!("ε {} πεπεμ", SEPARATOR) {
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
@@ -771,7 +865,13 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
                 add_ending_collector.push(y.to_string());
                 if !decomposed {
-                    add_accent_collector.push( if !hgk_has_diacritics(&y, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) { self.accent_verb(&y) } else { y } );
+                    let accented_form = if !hgk_has_diacritics(&y, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) { self.accent_verb(&y) } else { y };
+                    if ( self.tense == HcTense::Imperfect || self.tense == HcTense::Present ) && ( self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") ) {
+                        add_accent_collector.push( self.contract_verb(&accented_form, e) );
+                    }
+                    else {
+                        add_accent_collector.push( accented_form );
+                    }
                 }
                 //println!("z1 {:?}", z1);
                 //imperfect/pluperfect: add augment
@@ -780,12 +880,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 //accent
             }
         }
+        //let v: Vec<_> = v.into_iter().unique().collect();
+
         let f = add_ending_collector.join(" / ");
         let e = "Add ending".to_string();
         steps.push(Step{form:f, explanation:e});   
         
         if !decomposed {
-            let f = add_accent_collector.join(" / ");
+            //remove duplicate and then join alternates with /
+            let f = add_accent_collector.into_iter().unique().collect::<Vec<String>>().join(" / ");
             let e = "Accent verb".to_string();
             steps.push(Step{form:f, explanation:e});   
         }
@@ -816,6 +919,75 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             letter_index = syl[syl.len() - 2].index;
         }
         else {
+            return String::from(word);
+        }
+
+        self.accent_syllable(word, letter_index, accent)
+    }
+
+    fn accent_verb_contracted(&self, word:&str, orig_syllables:Vec<SyllableAnalysis>, ending:&str) -> String {
+        let syl = analyze_syllable_quantities(word, self.person, self.number, self.mood);
+
+        let esyl = analyze_syllable_quantities(ending, self.person, self.number, self.mood);
+
+        let accent;
+        let letter_index;
+        if orig_syllables.len() > 2 && !orig_syllables.last().unwrap().is_long { //acute on antepenult
+            //println!("AAAAA1 {}", word);
+            //accent = HGK_ACUTE;
+            //letter_index = orig_syllables[0].index;
+            //***was acute on antepenult, now acute on penult
+            if esyl.len() == 3 {
+                accent = HGK_ACUTE;
+                letter_index = syl[syl.len() - 3].index;
+            }
+            else {
+                if syl.last().unwrap().is_long {
+                    accent = HGK_ACUTE;
+                    letter_index = syl[syl.len() - 2].index;
+                }
+                else {
+                    accent = HGK_CIRCUMFLEX;
+                    letter_index = syl[syl.len() - 2].index;
+                }
+            }
+        }
+        /* 
+        else if orig_syllables.len() == 2 && orig_syllables[0].is_long && !orig_syllables[1].is_long {
+            //println!("AAAAA2 {}", word);
+            if (orig_syllables[1].letters == "αι" || orig_syllables[1].letters == "οι") && self.mood == HcMood::Optative {
+                accent = HGK_ACUTE; //exception to the exception for optative 3rd singular: acute on penult
+                // ***same?
+            }
+            else {
+                //println!("AAAAA3 {}", word);
+                accent = HGK_CIRCUMFLEX; //circumflex on penult
+                // ***now acute on penult?
+            }
+            letter_index = orig_syllables[].index;
+        }
+        */
+        else if orig_syllables.len() > 1 { //acute on penult
+            //println!("AAAAA4 {}", word);
+            //accent = HGK_ACUTE;
+            //letter_index = orig_syllables[orig_syllables.len() - 2].index;
+            //***now circumflex on ultima
+            if esyl.len() == 2 && esyl[0].is_long && esyl[1].is_long {
+                accent = HGK_ACUTE;
+                letter_index = syl[syl.len() - 2].index;
+            }
+            else if esyl.len() == 2 && !esyl[0].is_long && esyl[1].is_long {
+                accent = HGK_ACUTE;
+                letter_index = syl[syl.len() - 2].index;
+            }
+            else {
+                accent = HGK_CIRCUMFLEX;
+                letter_index = syl[syl.len() - 1].index;
+            }
+
+        }
+        else {
+            //println!("AAAAA5");
             return String::from(word);
         }
 
@@ -886,7 +1058,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         match self.mood {
                             HcMood::Indicative => HcEndings::PresentActiveInd,
                             HcMood::Subjunctive => HcEndings::PresentActiveSubj,
-                            HcMood::Optative => if self.verb.pps[0].ends_with("έω") { HcEndings::PresentActiveOptEContracted} else { HcEndings::PresentActiveOpt },
+                            HcMood::Optative => if self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") { HcEndings::PresentActiveOptEContracted} else { HcEndings::PresentActiveOpt },
                             HcMood::Imperative => HcEndings::PresentActiveImperative,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
