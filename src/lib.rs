@@ -44,7 +44,7 @@ enum HcEndings {
     AoristActiveIndicativeMiRoot,
     SecondAoristMiddleImperative,
     PresentMidpassOptTithhmi,
-    //ImperfectActiveContractedDecomposed,
+    //ImperfectActiveContracteddecompose,
     NotImplemented,
     //NumEndings,
 }
@@ -229,14 +229,14 @@ impl HcGreekVerb {
         /*else if ( utf8HasSuffix(v->present, "μαι")) {
             return MIDDLE_DEPONENT;
         }*/
-        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2].ends_with("μην") && self.pps[3].is_empty() /* && utf8HasSuffix(v->perfmid, "μαι") */ && self.pps[5].is_empty() {
+        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2].ends_with("μην") && self.pps[3] == "—" /* && utf8HasSuffix(v->perfmid, "μαι") */ && self.pps[5] == "—" {
             HcDeponentType::MiddleDeponent
         }
         //this gets μετανίσταμαι and ἐπανίσταμαι: middle deponents which happen to have an active perfect and root aorist
-        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2].ends_with("ην") /* && utf8HasSuffix(v->perfmid, "μαι") */ && self.pps[5].is_empty() {
+        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2].ends_with("ην") /* && utf8HasSuffix(v->perfmid, "μαι") */ && self.pps[5] == "—" {
             HcDeponentType::MiddleDeponent
         }
-        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2].is_empty() && self.pps[3].is_empty() && self.pps[4].ends_with("μαι") && !self.pps[5].is_empty() {
+        else if self.pps[0].ends_with("μαι") && self.pps[1].ends_with("μαι") && self.pps[2] == "—" && self.pps[3] == "—" && self.pps[4].ends_with("μαι") && self.pps[5] != "—" {
             HcDeponentType::PassiveDeponent
         }
         else if self.pps[0].ends_with("ἐπίσταμαι") {
@@ -276,18 +276,18 @@ static SEPARATOR: &str = "‐";
 static BLANK: &str = "—";
 
 trait HcVerbForms {
-    fn get_form(&self, decomposed:bool) -> Result<Vec<Step>, &str>;
+    fn get_form(&self, decompose:bool) -> Result<Vec<Step>, &str>;
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> Option<String>;
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
-    fn add_ending(&self, stem:&str, ending:&str, decomposed:bool) -> Result<String, &str>;
+    fn add_ending(&self, stem:&str, ending:&str, decompose:bool) -> Result<String, &str>;
     fn get_endings(&self) -> Option<Vec<&str>>;
     fn accent_verb(&self, form:&str) -> String;
     fn accent_verb_contracted(&self, word:&str, orig_syllables:Vec<SyllableAnalysis>, ending:&str) -> String;
     fn accent_syllable(&self, word:&str, syllable:u8, accent:u32) -> String;
     fn get_label(&self) -> String;
-    fn add_augment(&self, stem:&str, decomposed:bool) -> String;
-    fn deaugment(&self, stem:&str, decomposed:bool) -> String;
+    fn add_augment(&self, stem:&str, decompose:bool) -> String;
+    fn deaugment(&self, stem:&str, decompose:bool) -> String;
     fn contract_verb(&self, unaccented_form:&str, ending:&str) -> String;
     fn is_deponent(&self, stem:&str) -> bool;
     fn separate_prefix(&self, stem:&str) ->String;
@@ -304,7 +304,7 @@ fn remove_suffix<'a>(s: &'a str, p: &str) -> &'a str {
 }
 */
 
-fn get_voice_label(tense:HcTense, voice:HcVoice, mood:HcMood, deponent_type:HcDeponentType) -> String {
+fn get_voice_label(tense:HcTense, voice:HcVoice, mood:HcMood, _deponent_type:HcDeponentType) -> String {
     if voice == HcVoice::Middle && mood == HcMood::Imperative {
         String::from("Middle")
     }
@@ -476,13 +476,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         Err("error stripping ending 2")
     }
 
-    fn add_augment(&self, stem:&str, decomposed:bool) -> String {
+    fn add_augment(&self, stem:&str, decompose:bool) -> String {
         let mut local_stem = stem.to_string();
-        if decomposed {
+        if decompose {
             if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') {
                 local_stem
             }
             else if local_stem.starts_with("ἀπο") {
+                
                 local_stem.replacen("ἀπο", format!("ἀπο {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
             else {
@@ -510,7 +511,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         if (self.tense == HcTense::Present || self.tense == HcTense::Imperfect || self.tense == HcTense::Future) && stem.ends_with("μαι") {
             true
         }
-        else if (self.tense == HcTense::Aorist && self.voice != HcVoice::Passive) && stem.ends_with("άμην") {
+        else if self.tense == HcTense::Aorist && self.voice != HcVoice::Passive && stem.ends_with("άμην") {
             true
         }
         else {
@@ -518,7 +519,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
     }
 
-    fn add_ending(&self, stem:&str, ending:&str, decomposed:bool) -> Result<String, &str> {
+    fn add_ending(&self, stem:&str, ending:&str, decompose:bool) -> Result<String, &str> {
         let mut local_stem = stem.to_string();
         let mut local_ending = ending.to_string();
 
@@ -531,7 +532,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
             }
-            else if decomposed {
+            else if decompose {
                 local_stem = format!("{}π", local_stem);
             }
             else if local_ending.starts_with("σθ") {
@@ -552,7 +553,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
             }
-            else if decomposed {
+            else if decompose {
                 local_stem.pop();
                 if self.verb.properties & CONSONANT_STEM_PERFECT_PI == CONSONANT_STEM_PERFECT_PI {
                     local_stem = format!("{}π", local_stem);    
@@ -585,7 +586,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
             }
-            else if decomposed {
+            else if decompose {
                 local_stem.pop();
                 if self.verb.properties & CONSONANT_STEM_PERFECT_GAMMA == CONSONANT_STEM_PERFECT_GAMMA {
                     local_stem = format!("{}γ", local_stem);    
@@ -618,7 +619,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
             }
-            else if local_ending.starts_with('σ') && !decomposed {
+            else if local_ending.starts_with('σ') && !decompose {
                 local_ending.remove(0);
             }
         }
@@ -628,13 +629,13 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
             }
-            else if local_ending.starts_with('σ') && !decomposed && self.number == HcNumber::Plural {
+            else if local_ending.starts_with('σ') && !decompose && self.number == HcNumber::Plural {
                 local_ending.remove(0);
             }
         }
 
         let future_passive_suffix = if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
-            if decomposed {
+            if decompose {
                 format!("ησ {} ", SEPARATOR)
             }
             else {
@@ -645,7 +646,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             String::from("")
         };
 
-        if decomposed {
+        if decompose {
             Ok(format!("{} {} {}{}", local_stem, SEPARATOR, future_passive_suffix, local_ending))
         }
         else {
@@ -653,29 +654,62 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
     }
 
-    fn deaugment(&self, a:&str, decomposed:bool) -> String {
+    fn deaugment(&self, a:&str, decompose:bool) -> String {
         let mut loc = a.to_string();
-        if loc.starts_with('ἠ') && self.verb.pps[0].starts_with('ἐ') {
-            loc.remove(0);
-            loc = format!("ἐ{}", loc);
-        }
-        else if loc.starts_with('ἠ') && (self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ')) {
-            loc.remove(0);
-            loc = format!("ἀ{}", loc);
+
+        if decompose {
+            if loc.starts_with("ἀπε") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ἀπε", format!("ἀπο {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ἀπε", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
+                }
+            }
+            else if loc.starts_with('ἠ') && self.verb.pps[0].starts_with('ἐ') {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ἠ", format!("ε {} ἐ", SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ἠ", "ἐ", 1);
+                }
+            }
+            else if loc.starts_with('ἠ') && (self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ')) {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ἠ", format!("ε {} ἀ", SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ἠ", "ἀ", 1);
+                }
+            }
+            else {
+                loc.remove(0);
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = format!("ε {} {}", SEPARATOR, loc);
+                }
+            }
+            loc
         }
         else {
-            loc.remove(0);
-        }
-        //add decomposed augment back
-        if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative && decomposed {
-            format!("ε {} {}", SEPARATOR, loc)
-        }
-        else {
+            if loc.starts_with("ἀπε") {
+                loc = loc.replacen("ἀπε", "ἀπο", 1);
+            }
+            else if loc.starts_with('ἠ') && self.verb.pps[0].starts_with('ἐ') {
+                loc.remove(0);
+                loc = format!("ἐ{}", loc);
+            }
+            else if loc.starts_with('ἠ') && (self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ')) {
+                loc.remove(0);
+                loc = format!("ἀ{}", loc);
+            }
+            else {
+                loc.remove(0);
+            }
             loc
         }
     }
 
-    fn get_form(&self, decomposed:bool) -> Result<Vec<Step>, &str> {
+    fn get_form(&self, decompose:bool) -> Result<Vec<Step>, &str> {
         let mut steps = Vec::new();
         if self.mood == HcMood::Imperative && self.person == HcPerson::First {
             steps.push(Step{form:"".to_string(), explanation:"".to_string()});
@@ -700,13 +734,13 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
             return Ok(steps);
         }
-    /* 
+    
     //block future passive for passive deponents
-    if (deponentType(vf->verb) == PASSIVE_DEPONENT && vf->tense == FUTURE && vf->voice == PASSIVE)
-    {
-        return 0;
+    if self.verb.deponent_type() == HcDeponentType::PassiveDeponent && self.tense == HcTense::Future && self.voice == HcVoice::Passive {
+        steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
+        return Ok(steps);
     }
-    */
+    
     //abd
     //no passive for middle deponent present or imperfect
     //this does not need to be done for future, aorist because from different pp,
@@ -715,18 +749,20 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
         return Ok(steps);
     }
-    /* 
+    
     //for perfect and pluperfect we need to block passive if middle or passive deponent
-    if (vf->voice == PASSIVE && (vf->tense == PERFECT || vf->tense == PLUPERFECT) && (deponentType(vf->verb) == MIDDLE_DEPONENT || deponentType(vf->verb) == PASSIVE_DEPONENT || deponentType(vf->verb) == MIDDLE_DEPONENT_HGEOMAI))
+    if self.voice == HcVoice::Passive && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent || self.verb.deponent_type() == HcDeponentType::MiddleDeponentHgeomai)
     {
-        return 0;
+        steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
+        return Ok(steps);
     }
     
     //middle deponents do not have a passive voice.  H&Q page 316
-    if (vf->voice == PASSIVE && deponentType(vf->verb) == MIDDLE_DEPONENT)
-    {
-        return 0;
+    if self.voice == HcVoice::Passive && self.verb.deponent_type() == HcDeponentType::MiddleDeponent {
+        steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
+        return Ok(steps);
     }
+    /* 
     if (vf->voice == PASSIVE && deponentType(vf->verb) == PASSIVE_DEPONENT && (vf->tense == PRESENT || vf->tense == IMPERFECT || vf->tense == PERFECT || vf->tense == PLUPERFECT)) //aorist or future are ok
     {
         return 0;
@@ -756,16 +792,16 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         //add augment
         if self.tense == HcTense::Imperfect || self.tense == HcTense::Pluperfect {
             for a in &pps_without_ending {
-                pps_add_augment.push(self.add_augment(a, decomposed));
+                pps_add_augment.push(self.add_augment(a, decompose));
             }
             pps_without_ending = pps_add_augment;
         }
-        else /* remove augment */ if (self.tense == HcTense::Aorist && self.mood == HcMood::Indicative && decomposed) || 
+        else /* remove augment */ if (self.tense == HcTense::Aorist && self.mood == HcMood::Indicative && decompose) || 
             (self.tense == HcTense::Aorist && self.mood != HcMood::Indicative) || 
             (self.tense == HcTense::Future && self.voice == HcVoice::Passive) {
             
             for a in &pps_without_ending {
-                pps_add_augment.push(self.deaugment(a, decomposed));
+                pps_add_augment.push(self.deaugment(a, decompose));
             }
             pps_without_ending = pps_add_augment;
         }
@@ -800,22 +836,22 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     continue;
                 }
                 
-                let ending = if decomposed { hgk_strip_diacritics(e, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) } else { e.to_string() };
-                let stem = if decomposed && self.tense == HcTense::Aorist && self.voice == HcVoice::Passive && self.mood == HcMood::Subjunctive { format!("{}ε", a.to_owned()) } else { a.to_owned() };
-                let y = self.add_ending(&stem, &ending, decomposed);
+                let ending = if decompose { hgk_strip_diacritics(e, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) } else { e.to_string() };
+                let stem = if decompose && self.tense == HcTense::Aorist && self.voice == HcVoice::Passive && self.mood == HcMood::Subjunctive { format!("{}ε", a.to_owned()) } else { a.to_owned() };
+                let y = self.add_ending(&stem, &ending, decompose);
                 let y = match y {
                     Ok(y) => y,
                     _ => return Err("Error adding ending")
                 };
 
-                if decomposed && self.tense != HcTense::Imperfect && self.tense != HcTense::Pluperfect {
+                if decompose && self.tense != HcTense::Imperfect && self.tense != HcTense::Pluperfect && self.tense != HcTense::Aorist {
                     add_ending_collector.push( self.separate_prefix(&y) );
                 }
                 else {
                     add_ending_collector.push(y.to_string());
                 }
                 
-                if !decomposed {
+                if !decompose {
                     let accented_form = if !hgk_has_diacritics(&y, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) { self.accent_verb(&y) } else { y };
                     if ((self.tense == HcTense::Imperfect || self.tense == HcTense::Present) && ( self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") )) || (self.tense == HcTense::Future && self.voice != HcVoice::Passive && self.verb.pps[1].ends_with('ῶ')) {
                         add_accent_collector.push( self.contract_verb(&accented_form, e) );
@@ -837,7 +873,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let e = "Add ending".to_string();
         steps.push(Step{form:f, explanation:e});   
         
-        if !decomposed {
+        if !decompose {
             //remove duplicate and then join alternates with /
             let f = add_accent_collector.into_iter().unique().collect::<Vec<String>>().join(" / ");
             let e = "Accent verb".to_string();
@@ -1320,7 +1356,7 @@ static ENDINGS: &[[&str; 6]; /*63*/32] = &[
     
     ["", "οῦ", "εσθω", "", "εσθε", "εσθων"],//, "Present Middle/Passive Imperative" }, //second aorist middle/passive imperatives
     ["ειμην", "εῖο", "εῖτο,οῖτο", "ειμεθα,οιμεθα", "εῖσθε,οῖσθε", "εῖντο,οῖντο"],//, "Present Middle/Passive Optative Tithemi" }, //Exception: H&Q page 347
-    //["ον", "ες", "ε", "ομεν", "ετε", "ον"],//***, "Imperfect Active Indicative" } //this is only for contracted verbs when decomposed so the nu moveable doesn't show up
+    //["ον", "ες", "ε", "ομεν", "ετε", "ον"],//***, "Imperfect Active Indicative" } //this is only for contracted verbs when decompose so the nu moveable doesn't show up
 ];
 
 
@@ -1441,7 +1477,7 @@ mod tests {
                         else if line.starts_with("τάττω") || line.starts_with("πρᾱ́ττω") || line.starts_with("ἄγω") {
                             CONSONANT_STEM_PERFECT_GAMMA
                         }
-                        else if line.starts_with("ἄρχω") {
+                        else if line.starts_with("ἄρχω") || line.starts_with("ἀποδέχομαι") || line.starts_with("δέχομαι") {
                             CONSONANT_STEM_PERFECT_CHI
                         }
                         else if line.starts_with("βλάπτω") {
@@ -1491,7 +1527,7 @@ mod tests {
                                             let r = if form.get_form(false).unwrap().last().unwrap().form == "" { "NF".to_string() } else { form.get_form(false).unwrap().last().unwrap().form.to_string() };
                                             let r_d = if form.get_form(true).unwrap().last().unwrap().form == "" { "NDF".to_string() } else { form.get_form(true).unwrap().last().unwrap().form.to_string() };
 
-                                            let mut form_line = format!("{}{}: {} ; {}", y.value(), z.value(), 
+                                            let form_line = format!("{}{}: {} ; {}", y.value(), z.value(), 
                                                 str::replace(&r, " /", ","),
                                                 str::replace(&r_d, " /", ","));
 
