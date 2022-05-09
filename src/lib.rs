@@ -479,7 +479,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     fn add_augment(&self, stem:&str, decompose:bool) -> String {
         let mut local_stem = stem.to_string();
         if decompose {
-            if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') {
+            if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') || local_stem.starts_with("εἰ") {
                 local_stem
             }
             else if local_stem.starts_with("ἀπο") {
@@ -493,6 +493,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         else {
             if local_stem.starts_with("ἀπο") {
                 local_stem.replacen("ἀπο", "ἀπε", 1)
+            }
+            else if local_stem.starts_with("εἰ") {
+                local_stem
             }
             else if self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ') {
                 local_stem.remove(0);
@@ -650,6 +653,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             Ok(format!("{} {} {}{}", local_stem, SEPARATOR, future_passive_suffix, local_ending))
         }
         else {
+            if local_stem == "λαβ" && local_ending == "ε" {
+                local_ending = "έ".to_string();
+            }
             Ok(format!("{}{}{}", local_stem, future_passive_suffix, local_ending))
         }
     }
@@ -853,7 +859,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 
                 if !decompose {
                     let accented_form = if !hgk_has_diacritics(&y, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) { self.accent_verb(&y) } else { y };
-                    if ((self.tense == HcTense::Imperfect || self.tense == HcTense::Present) && ( self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") )) || (self.tense == HcTense::Future && self.voice != HcVoice::Passive && self.verb.pps[1].ends_with('ῶ')) {
+                    if ((self.tense == HcTense::Imperfect || self.tense == HcTense::Present) && 
+                        ( self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") )) || 
+                        (self.tense == HcTense::Future && self.voice != HcVoice::Passive && self.verb.pps[1].ends_with('ῶ')) {
+
                         add_accent_collector.push( self.contract_verb(&accented_form, e) );
                     }
                     else {
@@ -1480,7 +1489,7 @@ mod tests {
                         else if line.starts_with("ἄρχω") || line.starts_with("ἀποδέχομαι") || line.starts_with("δέχομαι") {
                             CONSONANT_STEM_PERFECT_CHI
                         }
-                        else if line.starts_with("βλάπτω") {
+                        else if line.starts_with("βλάπτω") || line.starts_with("λαμβάνω") {
                             CONSONANT_STEM_PERFECT_BETA
                         }
                         else if line.starts_with("ἀγγέλλω") {
