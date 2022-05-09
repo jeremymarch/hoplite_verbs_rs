@@ -44,9 +44,9 @@ enum HcEndings {
     AoristActiveIndicativeMiRoot,
     SecondAoristMiddleImperative,
     PresentMidpassOptTithhmi,
-    ImperfectActiveContractedDecomposed,
+    //ImperfectActiveContractedDecomposed,
     NotImplemented,
-    NumEndings,
+    //NumEndings,
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
@@ -418,7 +418,13 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         match pp_num {
             1..=2 => {
                 if form.ends_with('ω') {
-                    return Ok(form.strip_suffix('ω').unwrap().to_string());
+                    if self.tense == HcTense::Future && self.voice != HcVoice::Passive && self.verb.pps[1].ends_with('ῶ') {
+                        //conctracted future
+                        return Ok(format!("{}ε", form.strip_suffix('ω').unwrap()));
+                    }
+                    else {
+                        return Ok(form.strip_suffix('ω').unwrap().to_string());
+                    }
                 }
                 else if form.ends_with("ομαι") {
                     return Ok(form.strip_suffix("ομαι").unwrap().to_string());
@@ -579,11 +585,23 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 local_ending = format!("κ{}", local_ending);
             }
         }
-        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with('σ') {
+        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && 
+            (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with('σ') {
+            
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
             }
             else if local_ending.starts_with('σ') && !decomposed {
+                local_ending.remove(0);
+            }
+        }
+        else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && 
+            (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with('λ') {
+            
+            if local_ending.starts_with("ντ") {
+                return Ok(String::from(BLANK));
+            }
+            else if local_ending.starts_with('σ') && !decomposed && self.number == HcNumber::Plural {
                 local_ending.remove(0);
             }
         }
@@ -710,11 +728,11 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     continue;
                 }
 
-                //skip alternate here because same
+                //skip alternate here because same, could remove this now that we're removing duplicates later?
                 if self.verb.pps[0].starts_with("σῴζω") && ((a.ends_with("σεσω") && self.person == HcPerson::Second) || (a.ends_with("σεσωσ") && self.person == HcPerson::Third && self.number == HcNumber::Plural)) {
                     continue;
                 }
-
+                
                 let ending = if decomposed { hgk_strip_diacritics(e, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) } else { e.to_string() };
                 let stem = if decomposed && self.tense == HcTense::Aorist && self.voice == HcVoice::Passive && self.mood == HcMood::Subjunctive { format!("{}ε", a.to_owned()) } else { a.to_owned() };
                 let y = self.add_ending(&stem, &ending, decomposed);
@@ -726,7 +744,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 add_ending_collector.push(y.to_string());
                 if !decomposed {
                     let accented_form = if !hgk_has_diacritics(&y, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) { self.accent_verb(&y) } else { y };
-                    if ( self.tense == HcTense::Imperfect || self.tense == HcTense::Present ) && ( self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") ) {
+                    if ((self.tense == HcTense::Imperfect || self.tense == HcTense::Present) && ( self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") )) || (self.tense == HcTense::Future && self.voice != HcVoice::Passive && self.verb.pps[1].ends_with("ῶ")) {
                         add_accent_collector.push( self.contract_verb(&accented_form, e) );
                     }
                     else {
@@ -789,7 +807,6 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let syl = analyze_syllable_quantities(word, self.person, self.number, self.mood);
 
         let esyl = analyze_syllable_quantities(ending, self.person, self.number, self.mood);
-
         let accent;
         let letter_index;
         if orig_syllables.len() > 2 && !orig_syllables.last().unwrap().is_long { //acute on antepenult
@@ -966,7 +983,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         match self.mood {
                             HcMood::Indicative => HcEndings::PresentActiveInd,
                             HcMood::Subjunctive => HcEndings::NotImplemented,
-                            HcMood::Optative => HcEndings::PresentActiveOpt,
+                            HcMood::Optative => if self.verb.pps[1].ends_with("ῶ") { HcEndings::PresentActiveOptEContracted} else { HcEndings::PresentActiveOpt },
                             HcMood::Imperative => HcEndings::NotImplemented,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
@@ -1192,7 +1209,7 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, m:HcMood) -> V
     res
 }
 
-static ENDINGS: &[[&str; 6]; /*63*/33] = &[
+static ENDINGS: &[[&str; 6]; /*63*/32] = &[
     ["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
     ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"],//, "Imperfect Active Indicative" },
     ["α", "ας", "ε(ν)", "αμεν", "ατε", "αν"],//, "Aorist Active Indicative" },
@@ -1230,7 +1247,7 @@ static ENDINGS: &[[&str; 6]; /*63*/33] = &[
     
     ["", "οῦ", "εσθω", "", "εσθε", "εσθων"],//, "Present Middle/Passive Imperative" }, //second aorist middle/passive imperatives
     ["ειμην", "εῖο", "εῖτο,οῖτο", "ειμεθα,οιμεθα", "εῖσθε,οῖσθε", "εῖντο,οῖντο"],//, "Present Middle/Passive Optative Tithemi" }, //Exception: H&Q page 347
-    ["ον", "ες", "ε", "ομεν", "ετε", "ον"],//***, "Imperfect Active Indicative" } //this is only for contracted verbs when decomposed so the nu moveable doesn't show up
+    //["ον", "ες", "ε", "ομεν", "ετε", "ον"],//***, "Imperfect Active Indicative" } //this is only for contracted verbs when decomposed so the nu moveable doesn't show up
 ];
 
 
@@ -1355,6 +1372,9 @@ mod tests {
                         }
                         else if line.starts_with("βλάπτω") {
                             CONSONANT_STEM_PERFECT_BETA
+                        }
+                        else if line.starts_with("ἀγγέλλω") {
+                            CONSONANT_STEM_PERFECT_LAMBDA
                         }
                         else {
                             REGULAR
