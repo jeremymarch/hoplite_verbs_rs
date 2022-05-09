@@ -396,13 +396,13 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         else if form.contains("οῃ") {
             form = form.replacen("οῃ", "οι", 1);
         }
-        else if form.contains("οoι") {
+        else if form.contains("οοι") {
             form = form.replacen("οοι", "οι", 1);
         }
-        else if form.contains("οoυ") {
+        else if form.contains("οου") {
             form = form.replacen("οου", "ου", 1);
         }
-        else if form.contains("οo") {
+        else if form.contains("οο") {
             form = form.replacen("οο", "ου", 1);
         }
         else if form.contains("οω") {
