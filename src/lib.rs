@@ -9,7 +9,25 @@ use rustunicodetests::hgk_has_diacritics;
 //use rustunicodetests::hgk_convert;
 
 use itertools::Itertools;
-
+/* 
+trait RReplacen {
+    fn rreplacen(&self, pat: &str, to: &str, count: usize) -> Self;
+}
+impl RReplacen for String {
+    fn rreplacen(&self, pat: &str, to: &str, count: usize) -> String {
+        // Hope to reduce the times of re-allocation
+        let mut result = String::with_capacity(32);
+        let mut last_end = 0;
+        for (start, part) in self.rmatch_indices(pat).take(count) {
+            result.push_str(unsafe { self.get_unchecked(last_end..start) });
+            result.push_str(to);
+            last_end = start + part.len();
+        }
+        result.push_str(unsafe { self.get_unchecked(last_end..self.len()) });
+        result
+    }
+}
+*/
 #[derive(Eq, PartialEq, Debug)]
 enum HcEndings {
     PresentActiveInd,
@@ -285,6 +303,7 @@ trait HcVerbForms {
     fn accent_verb(&self, form:&str) -> String;
     fn accent_verb_contracted(&self, word:&str, orig_syllables:Vec<SyllableAnalysis>, ending:&str) -> String;
     fn accent_syllable(&self, word:&str, syllable:u8, accent:u32) -> String;
+    fn accent_syllable_start(&self, word:&str, letter_index_from_end:u8, accent:u32) -> String;
     fn get_label(&self) -> String;
     fn add_augment(&self, stem:&str, decompose:bool) -> String;
     fn deaugment(&self, stem:&str, decompose:bool) -> String;
@@ -335,6 +354,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     fn separate_prefix(&self, stem:&str) ->String {
         if stem.starts_with("ἀπο") {
             return stem.replacen("ἀπο", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
+        }
+        if stem.starts_with("ἀνα") {
+            return stem.replacen("ἀνα", format!("ἀνα {} ", SEPARATOR).as_str(), 1);
         }
         stem.to_string()
     }
@@ -529,6 +551,76 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         //for contracted verbs remove nu movable for imperfect 3rd sing. active
         if self.tense == HcTense::Imperfect && ( self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") ) && self.person == HcPerson::Third && self.number == HcNumber::Singular && self.voice == HcVoice::Active {
             local_ending = local_ending.replacen("(ν)", "", 1);
+        }
+
+        if self.verb.pps[0].ends_with("τίθημι") {
+            if self.voice == HcVoice::Active {
+                if self.mood == HcMood::Subjunctive {
+                    if decompose {
+                        local_stem.pop();
+                        local_stem.push_str("ε");
+                    }
+                    else {
+                        local_stem.pop();
+                    }
+                }
+                else if self.mood == HcMood::Optative {
+                    if decompose {
+                        local_stem.pop();
+                        local_stem.push_str("ε");
+                        local_ending.remove(0);
+                    }
+                    else {
+                        local_stem.pop();
+                    }
+                }
+                else if self.mood == HcMood::Imperative {
+                    if decompose {
+                        local_stem.pop();
+                        local_stem.push_str("ε");
+                        if self.person == HcPerson::Third && self.number == HcNumber::Singular || self.number == HcNumber::Plural {
+                            local_ending.remove(0);
+                        }
+                    }
+                    else {
+                        local_stem.pop();
+                        if self.person == HcPerson::Second && self.number == HcNumber::Singular {
+                            local_ending = "ει".to_string();
+                        }
+                        else if self.person == HcPerson::Third && self.number == HcNumber::Plural {
+                            local_ending = local_ending.replacen("ο", "ε", 1);
+                        }
+                    }
+                }
+                else if self.tense == HcTense::Present && self.number == HcNumber::Plural {
+                    local_stem = local_stem.replacen("η", "ε", 1);
+                }
+            }
+            else {
+                if self.mood == HcMood::Subjunctive && !decompose {
+                    local_stem.pop();
+                    local_ending = self.accent_syllable_start(&local_ending, 0, if local_ending == "ωμεθα" { HGK_ACUTE } else { HGK_CIRCUMFLEX });
+                }
+                else if self.mood == HcMood::Optative {
+                    if self.person == HcPerson::Second || self.person == HcPerson::Third && self.number == HcNumber::Singular {
+                        local_stem.pop();
+                        local_stem.push_str("ε");
+                        local_ending.remove(0);
+                        if !decompose {
+                            local_ending = self.accent_syllable_start(&local_ending, 0,  HGK_CIRCUMFLEX );
+                        }
+                    }
+                    else {
+                        local_stem.pop();
+                        local_stem.push_str("ε");
+                        local_ending.remove(0);
+                    }
+                }
+                else {
+                    local_stem.pop();
+                    local_stem.push_str("ε");
+                }
+            }
         }
 
         if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem == "πεπεμ" || local_stem == "ἐπεπεμ" || local_stem == format!("ε {} πεπεμ", SEPARATOR) {
@@ -1001,6 +1093,18 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         s
     }
 
+    fn accent_syllable_start(&self, word:&str, letter_index_from_end:u8, accent:u32) -> String {
+        let v = word.gkletters().enumerate().map(|(x, mut a)| { 
+            if x == letter_index_from_end as usize {
+                a.toggle_diacritic(accent, true);
+                //println!("abc {:?} {:?} {:?}", a.letter, accent, letter_index_from_end);
+            } 
+            a}).collect::<Vec<HGKLetter>>();
+
+            let s = v.iter().map(|a|{ a.to_string(HgkUnicodeMode::Precomposed)}).collect::<String>();
+        s
+    }
+
     fn get_pp(&self) -> Option<String> {
         let num = self.get_pp_num() as usize;
         if (1..=6).contains(&num) {
@@ -1051,9 +1155,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 match self.voice {
                     HcVoice::Active => {
                         match self.mood {
-                            HcMood::Indicative => HcEndings::PresentActiveInd,
-                            HcMood::Subjunctive => HcEndings::PresentActiveSubj,
-                            HcMood::Optative => if self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") { HcEndings::PresentActiveOptEContracted} else { HcEndings::PresentActiveOpt },
+                            HcMood::Indicative => if self.verb.pps[0].ends_with("μι") { HcEndings::PresentActiveIndicativeMi } else { HcEndings::PresentActiveInd },
+                            HcMood::Subjunctive => if self.verb.pps[0].ends_with("μι") { HcEndings::AoristPassiveSubj } else { HcEndings::PresentActiveSubj },
+                            HcMood::Optative => if self.verb.pps[0].ends_with("μι") { HcEndings::AoristPassiveOpt } else { if self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") { HcEndings::PresentActiveOptEContracted} else { HcEndings::PresentActiveOpt } },
                             HcMood::Imperative => HcEndings::PresentActiveImperative,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
@@ -1061,7 +1165,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     },
                     HcVoice::Middle | HcVoice::Passive => {
                         match self.mood {
-                            HcMood::Indicative => HcEndings::PresentMidpassInd,
+                            HcMood::Indicative => if self.verb.pps[0].ends_with("μι") { HcEndings::PerfectMidpassInd } else { HcEndings::PresentMidpassInd },
                             HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
                             HcMood::Optative => HcEndings::PresentMidpassOpt,
                             HcMood::Imperative => HcEndings::PresentMidpassImperative,
@@ -1368,8 +1472,6 @@ static ENDINGS: &[[&str; 6]; /*63*/32] = &[
     //["ον", "ες", "ε", "ομεν", "ετε", "ον"],//***, "Imperfect Active Indicative" } //this is only for contracted verbs when decompose so the nu moveable doesn't show up
 ];
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1504,10 +1606,14 @@ mod tests {
                         if paradigm_reader.read_line(&mut paradigm_line).unwrap() == 0 { return; }
                         paradigm_line.clear();
 
-                        let verb_section = format!("Verb {}. {}", idx, verb.pps[0]);
+                        let partial = if verb.deponent_type() == HcDeponentType::PartialDeponent { " (Partial Deponent)" } 
+                            else if verb.deponent_type() == HcDeponentType::MiddleDeponent { " (Middle Deponent)"} 
+                            else if verb.deponent_type() == HcDeponentType::PassiveDeponent { " (Passive Deponent)"} 
+                            else { "" };
+                        let verb_section = format!("Verb {}. {}{}", idx, verb.pps[0], partial);
                         println!("\n{}", verb_section);
                         if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
-                            //assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
+                            assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
                         }
                         paradigm_line.clear();
 
@@ -1523,6 +1629,7 @@ mod tests {
                                     paradigm_line.clear();
 
                                     let section = format!("{} {} {}", x.value(), get_voice_label(x, v, m, verb.deponent_type()), m.value());
+                                    //if m == HcMood::Imperative { section = section.replacen(" (Middle/Passive)", "", 1)};
                                     println!("\n{}", section);
                                     if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 { 
                                         //assert_eq!(paradigm_line[0..paradigm_line.len() - 1], section);

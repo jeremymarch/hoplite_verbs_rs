@@ -10989,7 +10989,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐτετελεύτησθε ; ε ‐ τετελευτη ‐ σθε
 3p: ἐτετελεύτηντο ; ε ‐ τετελευτη ‐ ντο
 
-Verb 35. ἀκούω (Partial Deponent)
+Verb 35. ἀκούω (Partial Deponent)
 
 Present Active Indicative
 1s: ἀκούω ; ἀκου ‐ ω
@@ -11931,7 +11931,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: ἐβέβλησθε ; ε ‐ βεβλη ‐ σθε
 3p: ἐβέβληντο ; ε ‐ βεβλη ‐ ντο
 
-Verb 38. βούλομαι (Passive Deponent)
+Verb 38. βούλομαι (Passive Deponent)
 
 Present Active Indicative
 1s: NF ; NDF
@@ -18525,7 +18525,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 59. φεύγω (Partial Deponent)
+Verb 59. φεύγω (Partial Deponent)
 
 Present Active Indicative
 1s: φεύγω ; φευγ ‐ ω
@@ -21665,7 +21665,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 69. ὑπακούω (Partial Deponent)
+Verb 69. ὑπακούω (Partial Deponent)
 
 Present Active Indicative
 1s: ὑπακούω ; ὑπο ‐ ακου ‐ ω
@@ -30143,7 +30143,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 96. ἐλαύνω
+Verb 96. ἐλαύνω
 
 Present Active Indicative
 1s: ἐλαύνω ; ἐλαυν ‐ ω
