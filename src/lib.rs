@@ -690,10 +690,16 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         local_stem = local_stem.replacen("ηκ", "ε", 1);
                     }
                     if self.mood != HcMood::Indicative {
-                        local_stem = local_stem.replacen("ηκ", "", 1);
                         if !decompose {
+                            local_stem = local_stem.replacen("ηκ", "", 1);
                             local_ending = self.accent_syllable_start(&local_ending, 0,  HGK_CIRCUMFLEX );
                         }
+                        else {
+                            local_stem = local_stem.replacen("ηκ", "ε", 1);
+                        }
+                    }
+                    if self.mood == HcMood::Optative && decompose {
+                        local_ending.remove(0);
                     }
                 }
             }
@@ -1327,8 +1333,8 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                             match self.mood {
                                 HcMood::Indicative => if self.verb.pps[0].ends_with("μι") { HcEndings::MixedAoristMi } else { HcEndings::AoristActiveInd },
                                 HcMood::Subjunctive => HcEndings::PresentActiveSubj,
-                                HcMood::Optative => HcEndings::AoristActiveOpt,
-                                HcMood::Imperative => HcEndings::AoristActiveImperative,
+                                HcMood::Optative => if self.verb.pps[0].ends_with("μι") { HcEndings::AoristPassiveOpt } else { HcEndings::AoristActiveOpt },
+                                HcMood::Imperative => if self.verb.pps[0].ends_with("μι") { HcEndings::AoristActiveImperativesMi } else { HcEndings::AoristActiveImperative },
                                 HcMood::Infinitive => HcEndings::NotImplemented,
                                 HcMood::Participle => HcEndings::NotImplemented,
                             }                            
