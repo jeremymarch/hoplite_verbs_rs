@@ -94,6 +94,7 @@ enum HcEndings {
     PresentMidpassImperativeMi,
     ImperfectActiveMi,
     MixedAoristMi,
+    //AoristMiddleOptMi,
     NotImplemented,
     
     //NumEndings,
@@ -676,7 +677,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     //if self.number == HcNumber::Plural && self.mood == HcMood::Indicative {
                     local_stem = local_stem.replacen("ηκ", "ε", 1);
                     //}
-                    if (self.mood == HcMood::Subjunctive || self.mood == HcMood::Optative) && !decompose {
+                    if (self.mood == HcMood::Subjunctive || self.mood == HcMood::Optative) && !decompose && self.voice != HcVoice::Passive {
                         local_stem.pop();
                     }
 
@@ -714,9 +715,21 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                             local_ending = self.accent_syllable_start(&local_ending, 0,  HGK_CIRCUMFLEX );
                         }
                         else if self.mood == HcMood::Optative {
-                            local_ending.remove(0);
-                            if !decompose {
-                                local_stem.push_str("ε");
+                            if decompose {
+                                if !local_ending.starts_with("ο") {
+                                    local_ending.remove(0);
+                                }
+                            }
+                        }
+                        else if self.mood == HcMood::Imperative {
+                            if self.person == HcPerson::Second && self.number == HcNumber::Singular {
+                                if decompose {
+                                    local_ending.remove(0);
+                                }
+                                else {
+                                    local_stem.pop();
+                                    local_ending = local_ending.replacen("σο", "ου", 1);
+                                }
                             }
                         }
                     }
@@ -1376,8 +1389,8 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                             match self.mood {
                                 HcMood::Indicative => if self.verb.pps[0].ends_with("μι") { HcEndings::ImperfectMidpassInd } else { HcEndings::AoristMidInd },
                                 HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
-                                HcMood::Optative => HcEndings::AoristMiddleOpt,
-                                HcMood::Imperative => HcEndings::AoristMiddleImperative,
+                                HcMood::Optative => if self.verb.pps[0].ends_with("μι") { HcEndings::PresentMidpassOptTithhmi } else { HcEndings::AoristMiddleOpt },
+                                HcMood::Imperative => if self.verb.pps[0].ends_with("μι") { HcEndings::PresentMidpassImperativeMi } else { HcEndings::AoristMiddleImperative },
                                 HcMood::Infinitive => HcEndings::NotImplemented,
                                 HcMood::Participle => HcEndings::NotImplemented,
                             }
@@ -1587,6 +1600,7 @@ static ENDINGS: &[[&str; 6]; 35] = &[
     ["", "σο", "σθω", "", "σθε", "σθων"],
     ["ν", "ς", "", "μεν", "τε", "σαν"],
     ["α", "ας", "ε(ν)", "μεν", "τε", "σαν"],
+    //["ιμην", "ῖο", "ῖτο", "ιμεθα", "ῖσθε", "ῖντο"],
     ];
 
 #[cfg(test)]
