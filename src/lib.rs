@@ -967,8 +967,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if local_stem.starts_with("ἀνα") {     
                 local_stem.replacen("ἀνα", format!("ἀνα {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
+            else if local_stem.starts_with("κατα") {     
+                local_stem.replacen("κατα", format!("κατα {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
+            }
             else if local_stem.starts_with("ἀφι") {     
                 local_stem.replacen("ἀφι", format!("ἀπο {} ε {} ἱ", SEPARATOR, SEPARATOR).as_str(), 1)
+            }
+            else if local_stem.starts_with("καθι") {     
+                local_stem.replacen("καθι", format!("κατα {} ε {} ἱ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
             else if local_stem.starts_with("ἀφε") {    
                 if self.number == HcNumber::Singular /*|| self.voice != HcVoice::Active FIX ME */ {
@@ -976,6 +982,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 }
                 else {
                     local_stem.replacen("ἀφε", format!("ἀπο {} ἑ", SEPARATOR).as_str(), 1)
+                }
+            }
+            else if local_stem.starts_with("καθε") {    
+                if self.number == HcNumber::Singular /*|| self.voice != HcVoice::Active FIX ME */ {
+                    local_stem.replacen("καθε", format!("κατα {} ε {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1)
+                }
+                else {
+                    local_stem.replacen("καθε", format!("κατα {} ἑ", SEPARATOR).as_str(), 1)
                 }
             }
             else if local_stem.starts_with("ἑ") {    
@@ -997,12 +1011,26 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if local_stem.starts_with("ἀνα") {
                 local_stem.replacen("ἀνα", "ἀνε", 1)
             }
+            else if local_stem.starts_with("κατα") {
+                local_stem.replacen("κατα", "κατε", 1)
+            }
             else if local_stem.starts_with("ἀφι") {
                 local_stem.replacen("ἀφι", "ἀφῑ", 1)
+            }
+            else if local_stem.starts_with("καθι") {
+                local_stem.replacen("καθι", "καθῑ", 1)
             }
             else if local_stem.starts_with("ἀφε") {
                 if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
                     local_stem.replacen("ἀφε", "ἀφει", 1)
+                }
+                else {
+                    local_stem
+                }
+            }
+            else if local_stem.starts_with("καθε") {
+                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                    local_stem.replacen("καθε", "καθει", 1)
                 }
                 else {
                     local_stem
@@ -1055,6 +1083,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     loc = loc.replacen("ἀνε", format!("ἀνα {} ", SEPARATOR).as_str(), 1);
                 }
             }
+            else if loc.starts_with("κατε") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("κατε", format!("κατα {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("κατε", format!("κατα {} ", SEPARATOR).as_str(), 1);
+                }
+            }
             else if loc.starts_with('ἠ') && self.verb.pps[0].starts_with('ἐ') {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("ἠ", format!("ε {} ἐ", SEPARATOR).as_str(), 1);
@@ -1086,6 +1122,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if loc.starts_with("ἀνε") {
                 loc = loc.replacen("ἀνε", "ἀνα", 1);
             }
+            else if loc.starts_with("κατε") {
+                loc = loc.replacen("κατε", "κατα", 1);
+            }
             else if loc.starts_with('ἠ') && self.verb.pps[0].starts_with('ἐ') {
                 loc.remove(0);
                 loc = format!("ἐ{}", loc);
@@ -1110,6 +1149,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
         else if stem.starts_with("ἀφι") {
             return stem.replacen("ἀφι", format!("ἀπο {} ἱ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("καθι") {
+            return stem.replacen("καθι", format!("κατα {} ἱ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("καθε") {
+            return stem.replacen("καθε", format!("κατα {} ἑ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("κατα") {
+            return stem.replacen("κατα", format!("κατα {} ", SEPARATOR).as_str(), 1);
         }
         else if stem.starts_with("ἀφε") {
             return stem.replacen("ἀφε", format!("ἀπο {} ἑ", SEPARATOR).as_str(), 1);
@@ -1266,7 +1314,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 if !decompose {
                     let accented_form = if !hgk_has_diacritics(&y, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) { self.accent_verb(&y) } else { y };
                     if ((self.tense == HcTense::Imperfect || self.tense == HcTense::Present) && 
-                        ( self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") )) || 
+                        ( self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") || self.verb.pps[0].ends_with("άομαι") || self.verb.pps[0].ends_with("έομαι") || self.verb.pps[0].ends_with("όομαι") )) || 
                         (self.tense == HcTense::Future && self.voice != HcVoice::Passive && self.verb.pps[1].ends_with('ῶ')) {
 
                         add_accent_collector.push( self.contract_verb(&accented_form, e) );
