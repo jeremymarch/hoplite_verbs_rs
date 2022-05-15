@@ -94,7 +94,8 @@ enum HcEndings {
     PresentMidpassImperativeMi,
     ImperfectActiveMi,
     MixedAoristMi,
-    //AoristMiddleOptMi,
+    MiddleOptMi,
+    PresentActiveOptMi,
     NotImplemented,
     
     //NumEndings,
@@ -593,11 +594,16 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             local_ending = local_ending.replacen("(ν)", "", 1);
         }
 
-        if self.verb.pps[0].ends_with("τίθημι") {
+        if self.verb.pps[0].ends_with("μι") {
             if self.tense == HcTense::Present || self.tense == HcTense::Imperfect {
                 if self.number == HcNumber::Plural || self.mood != HcMood::Indicative || self.voice != HcVoice::Active {
                     local_stem.pop();
-                    local_stem.push_str("ε");
+                    if self.verb.pps[0].ends_with("ωμι") {
+                        local_stem.push_str("ο");
+                    }
+                    else {
+                        local_stem.push_str("ε");
+                    }
                 }
             }
 
@@ -605,70 +611,90 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 if self.voice == HcVoice::Active {
                     if self.mood == HcMood::Subjunctive {
                         if !decompose {
-                            local_stem.pop();
-                        }
-                    }
-                    else if self.mood == HcMood::Optative {
-                        if decompose {
-                            local_ending.remove(0);
-                        }
-                        else {
+                            if self.verb.pps[0].ends_with("ωμι") && self.person != HcPerson::First && self.number == HcNumber::Singular {
+                                local_ending = local_ending.replacen("ῇ", "ῷ", 1);
+                            }
+                            else if self.verb.pps[0].ends_with("ωμι") && self.person == HcPerson::Second && self.number == HcNumber::Plural {
+                                local_ending = local_ending.replacen("ῆ", "ῶ", 1);
+                            }
                             local_stem.pop();
                         }
                     }
                     else if self.mood == HcMood::Imperative {
                         if decompose {
-                            if self.person == HcPerson::Third && self.number == HcNumber::Singular || self.number == HcNumber::Plural {
+                            if !(self.person == HcPerson::Second && self.number == HcNumber::Singular) {
                                 local_ending.remove(0);
                             }
                         }
                         else {
-                            local_stem.pop();
                             if self.person == HcPerson::Second && self.number == HcNumber::Singular {
-                                local_ending = "ει".to_string();
+                                if self.verb.pps[0].ends_with("ωμι") {
+                                    local_ending = String::from("υ");
+                                }
+                                else {
+                                    local_ending = String::from("ι");
+                                }
                             }
-                            else if self.person == HcPerson::Third && self.number == HcNumber::Plural {
-                                local_ending = local_ending.replacen("ο", "ε", 1);
+                            else {
+                                local_ending.remove(0);
                             }
                         }
                     }
                 }
-                else { //middle/passive
+                else { // middle/passive
                     if self.mood == HcMood::Subjunctive && !decompose {
                         local_stem.pop();
-                        local_ending = self.accent_syllable_start(&local_ending, 0, if local_ending == "ωμεθα" { HGK_ACUTE } else { HGK_CIRCUMFLEX });
-                    }
-                    else if self.mood == HcMood::Optative {
-                        if self.person == HcPerson::Second && self.number == HcNumber::Singular {
-                            local_ending.remove(0);
-                            if !decompose {
-                                local_ending = self.accent_syllable_start(&local_ending, 0,  HGK_CIRCUMFLEX );
-                            }
+                        if self.verb.pps[0].ends_with("ωμι") && self.person == HcPerson::Second && self.number == HcNumber::Singular {
+                            local_ending = local_ending.replacen("ῃ", "ῷ", 1);
+                        }
+                        else if self.verb.pps[0].ends_with("ωμι") && ((self.person == HcPerson::Third && self.number == HcNumber::Singular) || (self.person == HcPerson::Second && self.number == HcNumber::Plural)) {
+                            local_ending = local_ending.replacen("η", "ῶ", 1);
                         }
                         else {
-                            local_stem.pop();
-                            if decompose {
-                                local_stem.push_str("ε");
-                                if !local_ending.starts_with("ο") {
-                                    local_ending.remove(0);
-                                }
-                            }
-                            
+                            local_ending = self.accent_syllable_start(&local_ending, 0, if local_ending == "ωμεθα" { HGK_ACUTE } else { HGK_CIRCUMFLEX });
                         }
                     }
+                    else if self.mood == HcMood::Optative {
+                        if !decompose {
+                            if local_ending.starts_with("ο") { //alt endings for tithhmi and ihmi
+                                local_stem.pop();
+                            }
+                        }
+                    }    
                 }
             }
             else if self.tense == HcTense::Imperfect {
-                if (self.person == HcPerson::Second || self.person == HcPerson::Third) && self.number == HcNumber::Singular {
-                    if decompose {
-                        local_stem = local_stem.replacen("η", "ε", 1); //use short stem when using thematic endings
-                        local_ending = local_ending.replacen("ς", "ες", 1);
-                        if self.person == HcPerson::Third && self.voice == HcVoice::Active {
-                            local_ending = String::from("ε");
+                if self.verb.pps[0].ends_with("ωμι") {
+                    if self.number == HcNumber::Singular {
+                        if decompose {
+                            local_stem = local_stem.replacen("ω", "ο", 1); //use short stem when using thematic endings
+                            if self.person == HcPerson::First && self.voice == HcVoice::Active{
+                                local_ending = local_ending.replacen("ν", "ον", 1);
+                            }
+                            else {
+                                local_ending = local_ending.replacen("ς", "ες", 1);
+                                if self.person == HcPerson::Third && self.voice == HcVoice::Active {
+                                    local_ending = String::from("ε");
+                                }
+                            }
+                        }
+                        else {
+                            local_stem = local_stem.replacen("ω", "ου", 1);
                         }
                     }
-                    else {
-                        local_stem = local_stem.replacen("η", "ει", 1);
+                }
+                else {
+                    if (self.person == HcPerson::Second || self.person == HcPerson::Third) && self.number == HcNumber::Singular {
+                        if decompose {
+                            local_stem = local_stem.replacen("η", "ε", 1); //use short stem when using thematic endings
+                            local_ending = local_ending.replacen("ς", "ες", 1);
+                            if self.person == HcPerson::Third && self.voice == HcVoice::Active {
+                                local_ending = String::from("ε");
+                            }
+                        }
+                        else {
+                            local_stem = local_stem.replacen("η", "ει", 1);
+                        }
                     }
                 }
             }
@@ -677,7 +703,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     //if self.number == HcNumber::Plural && self.mood == HcMood::Indicative {
                     local_stem = local_stem.replacen("ηκ", "ε", 1);
                     //}
-                    if (self.mood == HcMood::Subjunctive || self.mood == HcMood::Optative) && !decompose && self.voice != HcVoice::Passive {
+                    if self.mood == HcMood::Subjunctive && !decompose && self.voice != HcVoice::Passive {
                         local_stem.pop();
                     }
 
@@ -694,7 +720,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                                     }
                                 }
                             }
-                            if self.mood == HcMood::Optative && decompose {
+                            if self.mood == HcMood::Optative {
                                 local_ending.remove(0);
                             }
                         }
@@ -715,9 +741,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                             local_ending = self.accent_syllable_start(&local_ending, 0,  HGK_CIRCUMFLEX );
                         }
                         else if self.mood == HcMood::Optative {
-                            if decompose {
-                                if !local_ending.starts_with("ο") {
-                                    local_ending.remove(0);
+                            if !decompose {
+                                if local_ending.starts_with("ο") {
+                                    local_stem.pop();
                                 }
                             }
                         }
@@ -1284,7 +1310,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         match self.mood {
                             HcMood::Indicative => if self.verb.pps[0].ends_with("μι") { HcEndings::PresentActiveIndicativeMi } else { HcEndings::PresentActiveInd },
                             HcMood::Subjunctive => if self.verb.pps[0].ends_with("μι") { HcEndings::AoristPassiveSubj } else { HcEndings::PresentActiveSubj },
-                            HcMood::Optative => if self.verb.pps[0].ends_with("μι") { HcEndings::AoristPassiveOpt } else { if self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") { HcEndings::PresentActiveOptEContracted} else { HcEndings::PresentActiveOpt } },
+                            HcMood::Optative => if self.verb.pps[0].ends_with("μι") { HcEndings::PresentActiveOptMi } else { if self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") { HcEndings::PresentActiveOptEContracted} else { HcEndings::PresentActiveOpt } },
                             HcMood::Imperative => HcEndings::PresentActiveImperative,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
@@ -1294,7 +1320,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         match self.mood {
                             HcMood::Indicative => if self.verb.pps[0].ends_with("μι") { HcEndings::PerfectMidpassInd } else { HcEndings::PresentMidpassInd },
                             HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
-                            HcMood::Optative => if self.verb.pps[0].ends_with("μι") { HcEndings::PresentMidpassOptTithhmi } else { HcEndings::PresentMidpassOpt },
+                            HcMood::Optative => if self.verb.pps[0].ends_with("ημι") { HcEndings::PresentMidpassOptTithhmi } else if self.verb.pps[0].ends_with("μι") { HcEndings::MiddleOptMi } else { HcEndings::PresentMidpassOpt },
                             HcMood::Imperative => if self.verb.pps[0].ends_with("μι") { HcEndings::PresentMidpassImperativeMi } else { HcEndings::PresentMidpassImperative },
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
@@ -1558,7 +1584,7 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, m:HcMood) -> V
     res
 }
 
-static ENDINGS: &[[&str; 6]; 35] = &[
+static ENDINGS: &[[&str; 6]; 37] = &[
     ["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"],//, "Present Active Indicative" },
     ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"],//, "Imperfect Active Indicative" },
     ["α", "ας", "ε(ν)", "αμεν", "ατε", "αν"],//, "Aorist Active Indicative" },
@@ -1595,12 +1621,13 @@ static ENDINGS: &[[&str; 6]; 35] = &[
     ["ν", "ς", "", "μεν", "τε", "σαν"],//, "Root Aorist Indicative" },//mi root aorist indicative
     
     ["", "οῦ", "εσθω", "", "εσθε", "εσθων"],//, "Present Middle/Passive Imperative" }, //second aorist middle/passive imperatives
-    ["ειμην", "εῖο", "εῖτο,οῖτο", "ειμεθα,οιμεθα", "εῖσθε,οῖσθε", "εῖντο,οῖντο"],//, "Present Middle/Passive Optative Tithemi" }, //Exception: H&Q page 347
+    ["ιμην", "ῖο", "ῖτο,οῖτο", "ιμεθα,οιμεθα", "ῖσθε,οῖσθε", "ῖντο,οῖντο"],//, "Present Middle/Passive Optative Tithemi" }, //Exception: H&Q page 347
     //["ον", "ες", "ε", "ομεν", "ετε", "ον"],//***, "Imperfect Active Indicative" } //this is only for contracted verbs when decompose so the nu moveable doesn't show up
     ["", "σο", "σθω", "", "σθε", "σθων"],
     ["ν", "ς", "", "μεν", "τε", "σαν"],
     ["α", "ας", "ε(ν)", "μεν", "τε", "σαν"],
-    //["ιμην", "ῖο", "ῖτο", "ιμεθα", "ῖσθε", "ῖντο"],
+    ["ιμην", "ῖο", "ῖτο", "ιμεθα", "ῖσθε", "ῖντο"],
+    ["ιην", "ιης", "ιη", "ῖμεν,ιημεν", "ῖτε,ιητε", "ῖεν,ιησαν"],//, "Aorist Passive Optative" },
     ];
 
 #[cfg(test)]
