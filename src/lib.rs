@@ -978,6 +978,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     local_stem.replacen("ἀφε", format!("ἀπο {} ἑ", SEPARATOR).as_str(), 1)
                 }
             }
+            else if local_stem.starts_with("ἑ") {    
+                if self.number == HcNumber::Singular /*|| self.voice != HcVoice::Active FIX ME */ {
+                    local_stem.replacen("ἑ", format!("ε {} ἑ", SEPARATOR).as_str(), 1)
+                }
+                else {
+                    local_stem
+                }
+            }
             else {
                 format!("ε {} {}", SEPARATOR, local_stem)
             }
@@ -997,11 +1005,22 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     local_stem.replacen("ἀφε", "ἀφει", 1)
                 }
                 else {
-                    local_stem.replacen("ἀφε", "ἀφε", 1)
+                    local_stem
+                }
+            }
+            else if local_stem.starts_with("ἑ") {
+                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                    local_stem.replacen("ἑ", "εἱ", 1)
+                }
+                else {
+                    local_stem
                 }
             }
             else if local_stem.starts_with("εἰ") {
                 local_stem
+            }
+            else if local_stem.starts_with("ἱ") {
+                local_stem.replacen("ἱ", "ῑ̔", 1)
             }
             else if self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ') {
                 local_stem.remove(0);
@@ -1300,6 +1319,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         else if syl.len() > 1 { //acute on penult
             accent = HGK_ACUTE;
             letter_index = syl[syl.len() - 2].index;
+        }
+        else if syl.len() == 1 { //acute on ultima. e.g. do/s
+            if syl[0].is_long {
+                accent = HGK_CIRCUMFLEX;
+            }
+            else {
+                accent = HGK_ACUTE;
+            }
+            letter_index = syl[0].index;
         }
         else {
             return String::from(word);
