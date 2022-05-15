@@ -333,7 +333,7 @@ trait HcVerbForms {
     fn get_pp(&self) -> Option<String>;
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
     fn add_ending(&self, stem:&str, ending:&str, decompose:bool) -> Result<String, &str>;
-    fn get_endings(&self) -> Option<Vec<&str>>;
+    fn get_endings(&self, stem: &str) -> Option<Vec<&str>>;
     fn accent_verb(&self, form:&str) -> String;
     fn accent_verb_contracted(&self, word:&str, orig_syllables:Vec<SyllableAnalysis>, ending:&str) -> String;
     fn accent_syllable(&self, word:&str, syllable:u8, accent:u32) -> String;
@@ -686,11 +686,13 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 }
             }
             else if self.tense == HcTense::Aorist {
-                if self.number == HcNumber::Plural || self.mood != HcMood::Indicative || self.voice != HcVoice::Active {
-                    if self.verb.pps[0].ends_with("ωμι") {
+
+                if local_stem.ends_with("κ") && (self.number == HcNumber::Plural || self.mood != HcMood::Indicative || self.voice != HcVoice::Active) {
+                        
+                    if self.verb.pps[0].ends_with("δίδωμι") {
                         local_stem = local_stem.replacen("ωκ", "ο", 1);
                     }
-                    else {
+                    else if self.verb.pps[0].ends_with("τίθημι") {
                         local_stem = local_stem.replacen("ηκ", "ε", 1);
                     }
 
@@ -773,6 +775,24 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                                 }
                             }
                         }
+                    }
+                }
+                // root aorist
+                else if local_stem.ends_with("στη") {
+                    if self.mood == HcMood::Subjunctive {
+                        if decompose {
+                            local_stem.pop();
+                            local_stem.push_str("ε")
+                        }
+                        else {
+                            local_stem.pop();
+                        }
+                    }
+                    else if self.mood == HcMood::Optative {
+                        
+                            local_stem.pop();
+                            local_stem.push_str("α")
+                        
                     }
                 }
             }
@@ -1133,7 +1153,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         let mut add_ending_collector = Vec::new();
         let mut add_accent_collector = Vec::new();
         for a in pps_without_ending {
-            let endings_for_form = self.get_endings();
+            let endings_for_form = self.get_endings(&a);
             if endings_for_form == None {
                 return Err("Illegal form ending");
             }
@@ -1376,7 +1396,8 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
     }
 
-    fn get_endings(&self) -> Option<Vec<&str>> {
+    fn get_endings(&self, stem: &str) -> Option<Vec<&str>> {
+        //println!("stem {}", stem);
         let ending = match self.tense {
             HcTense::Present => {
                 match self.voice {
@@ -1465,9 +1486,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         }
                         else {
                             match self.mood {
-                                HcMood::Indicative => if self.verb.pps[0].ends_with("μι") { HcEndings::MixedAoristMi } else { HcEndings::AoristActiveInd },
-                                HcMood::Subjunctive => HcEndings::PresentActiveSubj,
-                                HcMood::Optative => if self.verb.pps[0].ends_with("μι") { HcEndings::AoristPassiveOpt } else { HcEndings::AoristActiveOpt },
+                                HcMood::Indicative => if stem.ends_with("στη") { HcEndings::AoristActiveIndicativeMiRoot } else if stem.ends_with("κ") { HcEndings::MixedAoristMi } else { HcEndings::AoristActiveInd },
+                                HcMood::Subjunctive => if stem.ends_with("στη") { HcEndings::AoristPassiveSubj } else { HcEndings::PresentActiveSubj },
+                                HcMood::Optative => if stem.ends_with("στη") { HcEndings::PresentActiveOptMi } else if stem.ends_with("κ") { HcEndings::AoristPassiveOpt } else { HcEndings::AoristActiveOpt },
                                 HcMood::Imperative => if self.verb.pps[0].ends_with("μι") { HcEndings::AoristActiveImperativesMi } else { HcEndings::AoristActiveImperative },
                                 HcMood::Infinitive => HcEndings::NotImplemented,
                                 HcMood::Participle => HcEndings::NotImplemented,
@@ -1760,13 +1781,13 @@ mod tests {
         assert_eq!(b.get_form(false).unwrap()[2].form, "ἐβλαβ / ἐβλαφθ"); 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form(false).unwrap()[2].form, "βλαπτ");
-        assert_eq!(b.get_endings().unwrap()[0], "ω");
+        assert_eq!(b.get_endings("").unwrap()[0], "ω");
 
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form(false).unwrap()[3].form, "βλαπτομαι");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
-        assert_eq!(b.get_endings().unwrap()[0], "ει");
-        assert_eq!(b.get_endings().unwrap()[1], "ῃ");
+        assert_eq!(b.get_endings("").unwrap()[0], "ει");
+        assert_eq!(b.get_endings("").unwrap()[1], "ῃ");
         assert_eq!(b.get_form(false).unwrap()[3].form, "βλαπτει / βλαπτῃ");
         let b = HcGreekVerbForm {verb:&a, person:HcPerson::Third, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form(false).unwrap()[3].form, "βλαπτεται");
