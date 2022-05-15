@@ -488,6 +488,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 else if form.ends_with("ομαι") {
                     return Ok(form.strip_suffix("ομαι").unwrap().to_string());
                 }
+                else if form.ends_with("μαι") {
+                    return Ok(form.strip_suffix("μαι").unwrap().to_string());
+                }
                 else if form.ends_with("μι") {
                     return Ok(form.strip_suffix("μι").unwrap().to_string());
                 }
@@ -550,17 +553,19 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             local_ending = local_ending.replacen("(ν)", "", 1);
         }
 
-        if self.verb.pps[0].ends_with("μι") {
+        if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") {
             if self.tense == HcTense::Present || self.tense == HcTense::Imperfect {
                 if self.number == HcNumber::Plural || self.mood != HcMood::Indicative || self.voice != HcVoice::Active {
-                    local_stem.pop();
                     if self.verb.pps[0].ends_with("ωμι") {
+                        local_stem.pop();
                         local_stem.push_str("ο");
                     }
                     else if self.verb.pps[0].ends_with("στημι") {
+                        local_stem.pop();
                         local_stem.push_str("α");
                     }
-                    else {
+                    else if self.verb.pps[0].ends_with("τίθημι") || self.verb.pps[0].ends_with("ῑ̔́ημι") {
+                        local_stem.pop();
                         local_stem.push_str("ε");
                     }
                 }
@@ -639,7 +644,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         else {
     
                             //isthmi subjunctive stem
-                            if self.verb.pps[0].ends_with("στημι") {
+                            if self.verb.pps[0].ends_with("στημι") || self.verb.pps[0].ends_with("αμαι") {
                                 local_stem.pop();
                                 local_stem.push_str("ε");
                             }
@@ -980,6 +985,17 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if local_stem.starts_with("κατα") {     
                 local_stem.replacen("κατα", format!("κατα {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
+            else if local_stem.starts_with("μετανι") {     
+                local_stem.replacen("μετανι", format!("μετα {} ανα {} ε {} ἱ", SEPARATOR, SEPARATOR, SEPARATOR).as_str(), 1)
+            }
+            else if local_stem.starts_with("μετανε") {    
+                if self.number == HcNumber::Singular { 
+                    local_stem.replacen("μετανε", format!("μετα {} ανα {} ε {} ἑ", SEPARATOR, SEPARATOR, SEPARATOR).as_str(), 1)
+                } 
+                else {
+                    local_stem.replacen("μετανε", format!("μετα {} ανα {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1)
+                }
+            }
             else if local_stem.starts_with("μετα") {     
                 local_stem.replacen("μετα", format!("μετα {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
@@ -1034,6 +1050,17 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if local_stem.starts_with("κατα") {
                 local_stem.replacen("κατα", "κατε", 1)
+            }
+            else if local_stem.starts_with("μετανε") {
+                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                    local_stem.replacen("μετανε", "μετανει", 1)
+                }
+                else {
+                    local_stem
+                }
+            }
+            else if local_stem.starts_with("μετανι") {
+                local_stem.replacen("μετανι", "μετανῑ", 1)
             }
             else if local_stem.starts_with("μετα") {
                 local_stem.replacen("μετα", "μετε", 1)
@@ -1123,6 +1150,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     loc = loc.replacen("κατε", format!("κατα {} ", SEPARATOR).as_str(), 1);
                 }
             }
+            else if loc.starts_with("μετανε") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("μετανε", format!("μετα {} ανα {} ε {} ", SEPARATOR, SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("μετανε", format!("μετα {} ανα {} ", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+            }
             else if loc.starts_with("μετε") {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("μετε", format!("μετα {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1);
@@ -1173,6 +1208,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if loc.starts_with("κατε") {
                 loc = loc.replacen("κατε", "κατα", 1);
             }
+            else if loc.starts_with("μετανε") {
+                loc = loc.replacen("μετανε", "μετανα", 1);
+            }
             else if loc.starts_with("μετε") {
                 loc = loc.replacen("μετε", "μετα", 1);
             }
@@ -1214,6 +1252,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         else if stem.starts_with("κατα") {
             return stem.replacen("κατα", format!("κατα {} ", SEPARATOR).as_str(), 1);
         }
+        else if stem.starts_with("μετανα") {
+            return stem.replacen("μετανα", format!("μετα {} ανα {} ", SEPARATOR, SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("μετανι") {
+            return stem.replacen("μετανι", format!("μετα {} ανα {} ἱ", SEPARATOR, SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("μετανε") {
+            return stem.replacen("μετανε", format!("μετα {} ανα {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1);
+        }
         else if stem.starts_with("μετα") {
             return stem.replacen("μετα", format!("μετα {} ", SEPARATOR).as_str(), 1);
         }
@@ -1248,51 +1295,50 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
             return Ok(steps);
         }
-    
-    //block future passive for passive deponents
-    if self.verb.deponent_type() == HcDeponentType::PassiveDeponent && self.tense == HcTense::Future && self.voice == HcVoice::Passive {
-        steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-        return Ok(steps);
-    }
-    
-    //abd
-    //no passive for middle deponent present or imperfect
-    //this does not need to be done for future, aorist because from different pp,
-    if self.voice == HcVoice::Passive && (self.tense == HcTense::Present || self.tense == HcTense::Imperfect) && self.verb.pps[0].ends_with("μαι")
-    {
-        steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-        return Ok(steps);
-    }
-    
-    //for perfect and pluperfect we need to block passive if middle or passive deponent
-    if self.voice == HcVoice::Passive && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent || self.verb.deponent_type() == HcDeponentType::MiddleDeponentHgeomai)
-    {
-        steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-        return Ok(steps);
-    }
-    
-    //middle deponents do not have a passive voice.  H&Q page 316
-    if self.voice == HcVoice::Passive && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::GignomaiDeponent) {
-        steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-        return Ok(steps);
-    }
 
-    if self.voice == HcVoice::Active && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent) {
-        steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-        return Ok(steps);
-    }
+        //block future passive for passive deponents
+        if self.verb.deponent_type() == HcDeponentType::PassiveDeponent && self.tense == HcTense::Future && self.voice == HcVoice::Passive {
+            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
+            return Ok(steps);
+        }
+        
+        //abd
+        //no passive for middle deponent present or imperfect
+        //this does not need to be done for future, aorist because from different pp,
+        if self.voice == HcVoice::Passive && (self.tense == HcTense::Present || self.tense == HcTense::Imperfect) && self.verb.pps[0].ends_with("μαι")
+        {
+            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
+            return Ok(steps);
+        }
+        
+        //for perfect and pluperfect we need to block passive if middle or passive deponent
+        if self.voice == HcVoice::Passive && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent || self.verb.deponent_type() == HcDeponentType::MiddleDeponentHgeomai)
+        {
+            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
+            return Ok(steps);
+        }
+        
+        //middle deponents do not have a passive voice.  H&Q page 316
+        if self.voice == HcVoice::Passive && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::GignomaiDeponent) {
+            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
+            return Ok(steps);
+        }
 
-    if self.voice == HcVoice::Active && self.tense != HcTense::Perfect && self.tense != HcTense::Pluperfect && self.verb.deponent_type() == HcDeponentType::GignomaiDeponent {
-        steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-        return Ok(steps);
-    }
-    /* 
-    if (vf->voice == PASSIVE && deponentType(vf->verb) == PASSIVE_DEPONENT && (vf->tense == PRESENT || vf->tense == IMPERFECT || vf->tense == PERFECT || vf->tense == PLUPERFECT)) //aorist or future are ok
-    {
-        return 0;
-    }
-*/
+        if self.voice == HcVoice::Active && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent)  && !self.verb.pps[2].ends_with("στην") {
+            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
+            return Ok(steps);
+        }
 
+        if self.voice == HcVoice::Active && self.tense != HcTense::Perfect && self.tense != HcTense::Pluperfect && self.verb.deponent_type() == HcDeponentType::GignomaiDeponent {
+            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
+            return Ok(steps);
+        }
+        /* 
+        if (vf->voice == PASSIVE && deponentType(vf->verb) == PASSIVE_DEPONENT && (vf->tense == PRESENT || vf->tense == IMPERFECT || vf->tense == PERFECT || vf->tense == PLUPERFECT)) //aorist or future are ok
+        {
+            return 0;
+        }
+        */
 
     
         
@@ -1606,10 +1652,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     },
                     HcVoice::Middle | HcVoice::Passive => {
                         match self.mood {
-                            HcMood::Indicative => if self.verb.pps[0].ends_with("μι") { HcEndings::PerfectMidpassInd } else { HcEndings::PresentMidpassInd },
+                            HcMood::Indicative => if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι")  { HcEndings::PerfectMidpassInd } else { HcEndings::PresentMidpassInd },
                             HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
-                            HcMood::Optative => if self.verb.pps[0].ends_with("ημι") && !self.verb.pps[0].ends_with("στημι") { HcEndings::PresentMidpassOptTithhmi } else if self.verb.pps[0].ends_with("μι") { HcEndings::MiddleOptMi } else { HcEndings::PresentMidpassOpt },
-                            HcMood::Imperative => if self.verb.pps[0].ends_with("μι") { HcEndings::PresentMidpassImperativeMi } else { HcEndings::PresentMidpassImperative },
+                            HcMood::Optative => if self.verb.pps[0].ends_with("ημι") && !self.verb.pps[0].ends_with("στημι") { HcEndings::PresentMidpassOptTithhmi } else if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") { HcEndings::MiddleOptMi } else { HcEndings::PresentMidpassOpt },
+                            HcMood::Imperative => if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") { HcEndings::PresentMidpassImperativeMi } else { HcEndings::PresentMidpassImperative },
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
@@ -1630,7 +1676,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     },
                     HcVoice::Middle | HcVoice::Passive => {
                         match self.mood {
-                            HcMood::Indicative => if self.verb.pps[0].ends_with("μι") { HcEndings::PluperfectMidpassInd } else { HcEndings::ImperfectMidpassInd },
+                            HcMood::Indicative => if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") { HcEndings::PluperfectMidpassInd } else { HcEndings::ImperfectMidpassInd },
                             HcMood::Subjunctive => HcEndings::NotImplemented,
                             HcMood::Optative => HcEndings::NotImplemented,
                             HcMood::Imperative => HcEndings::NotImplemented,
@@ -1679,7 +1725,11 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         }
                         else {
                             match self.mood {
-                                HcMood::Indicative => if stem.ends_with("στη") { HcEndings::AoristActiveIndicativeMiRoot } else if stem.ends_with("κ") { HcEndings::MixedAoristMi } else { HcEndings::AoristActiveInd },
+                                HcMood::Indicative => if stem.ends_with("στη") { 
+                                        HcEndings::AoristActiveIndicativeMiRoot } 
+                                    else if stem.ends_with("κ") { 
+                                        HcEndings::MixedAoristMi } 
+                                    else { HcEndings::AoristActiveInd },
                                 HcMood::Subjunctive => if stem.ends_with("στη") { HcEndings::AoristPassiveSubj } else { HcEndings::PresentActiveSubj },
                                 HcMood::Optative => if stem.ends_with("στη") { HcEndings::PresentActiveOptMi } else if stem.ends_with("κ") { HcEndings::AoristPassiveOpt } else { HcEndings::AoristActiveOpt },
                                 HcMood::Imperative => if stem.ends_with("στη") { HcEndings::AoristActiveImperativesMiRoot } else if stem.ends_with("κ") { HcEndings::AoristActiveImperativesMi } else { HcEndings::AoristActiveImperative },
