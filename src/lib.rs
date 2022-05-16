@@ -568,6 +568,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         local_stem.pop();
                         local_stem.push_str("ε");
                     }
+                    else if self.verb.pps[0].ends_with("ῡμι") {
+                        local_stem = local_stem.replacen("ῡ", "υ", 1);
+                    }
                 }
             }
 
@@ -584,7 +587,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                                     local_ending = local_ending.replacen("ῆ", "ῶ", 1);
                                 }
                             }
-                            local_stem.pop();
+
+                            if !self.verb.pps[0].ends_with("ῡμι") {
+                                local_stem.pop();
+                            }
                         }
                         else {
                             //isthmi subjunctive stem
@@ -599,6 +605,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                             if !(self.person == HcPerson::Second && self.number == HcNumber::Singular) {
                                 local_ending.remove(0);
                             }
+                            else if self.verb.pps[0].ends_with("ῡμι") { 
+                                local_stem = local_stem.replacen("υ", "ῡ", 1); //fix me
+                                local_ending = String::from(""); // fix me
+                            }
                         }
                         else {
                             if self.person == HcPerson::Second && self.number == HcNumber::Singular {
@@ -608,6 +618,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                                 else if self.verb.pps[0].ends_with("στημι") { 
                                     local_stem.pop();
                                     local_ending = String::from("η");
+                                }
+                                else if self.verb.pps[0].ends_with("ῡμι") { 
+                                    local_stem = local_stem.replacen("υ", "ῡ", 1);
+                                    local_ending = String::from("");
                                 }
                                 else {
                                     local_ending = String::from("ι");
@@ -626,7 +640,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 else { // middle/passive
                     if self.mood == HcMood::Subjunctive {
                         if !decompose {
-                            local_stem.pop();
+                            if !self.verb.pps[0].ends_with("ῡμι") { 
+                                local_stem.pop();
+                            }
                             if self.verb.pps[0].ends_with("ωμι") {
                                 // didwmi subjunctive contraction
                                 if local_ending.contains("ῃ") {
@@ -637,12 +653,11 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                                 }
                             }
     
-                            if local_ending != "ωμεθα" {
+                            if local_ending != "ωμεθα" && !self.verb.pps[0].ends_with("ῡμι") {
                                 local_ending = self.accent_syllable_start(&local_ending, 0, HGK_CIRCUMFLEX );
                             }
                         }
                         else {
-    
                             //isthmi subjunctive stem
                             if self.verb.pps[0].ends_with("στημι") || self.verb.pps[0].ends_with("αμαι") {
                                 local_stem.pop();
@@ -652,7 +667,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     }
                     else if self.mood == HcMood::Optative {
                         if !decompose {
-                            if local_ending.starts_with("ο") { //alt endings for tithhmi and ihmi
+                            if local_ending.starts_with("ο") && !self.verb.pps[0].ends_with("ῡμι") { //alt endings for tithhmi and ihmi
                                 local_stem.pop();
                             }
                         }
@@ -1643,8 +1658,8 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     HcVoice::Active => {
                         match self.mood {
                             HcMood::Indicative => if self.verb.pps[0].ends_with("μι") { HcEndings::PresentActiveIndicativeMi } else { HcEndings::PresentActiveInd },
-                            HcMood::Subjunctive => if self.verb.pps[0].ends_with("μι") { HcEndings::AoristPassiveSubj } else { HcEndings::PresentActiveSubj },
-                            HcMood::Optative => if self.verb.pps[0].ends_with("μι") { HcEndings::PresentActiveOptMi } else { if self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") { HcEndings::PresentActiveOptEContracted} else { HcEndings::PresentActiveOpt } },
+                            HcMood::Subjunctive => if self.verb.pps[0].ends_with("μι") && !self.verb.pps[0].ends_with("ῡμι") { HcEndings::AoristPassiveSubj } else { HcEndings::PresentActiveSubj },
+                            HcMood::Optative => if self.verb.pps[0].ends_with("μι") && !self.verb.pps[0].ends_with("ῡμι") { HcEndings::PresentActiveOptMi } else { if self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") { HcEndings::PresentActiveOptEContracted} else { HcEndings::PresentActiveOpt } },
                             HcMood::Imperative => HcEndings::PresentActiveImperative,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
@@ -1654,7 +1669,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         match self.mood {
                             HcMood::Indicative => if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι")  { HcEndings::PerfectMidpassInd } else { HcEndings::PresentMidpassInd },
                             HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
-                            HcMood::Optative => if self.verb.pps[0].ends_with("ημι") && !self.verb.pps[0].ends_with("στημι") { HcEndings::PresentMidpassOptTithhmi } else if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") { HcEndings::MiddleOptMi } else { HcEndings::PresentMidpassOpt },
+                            HcMood::Optative => if self.verb.pps[0].ends_with("ημι") && !self.verb.pps[0].ends_with("στημι") { HcEndings::PresentMidpassOptTithhmi } else if (self.verb.pps[0].ends_with("μι") && !self.verb.pps[0].ends_with("ῡμι")) || self.verb.pps[0].ends_with("αμαι") { HcEndings::MiddleOptMi } else { HcEndings::PresentMidpassOpt },
                             HcMood::Imperative => if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") { HcEndings::PresentMidpassImperativeMi } else { HcEndings::PresentMidpassImperative },
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
