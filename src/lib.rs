@@ -751,6 +751,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                                     else if self.verb.pps[0].ends_with("μεταδίδωμι") && self.person == HcPerson::Second && self.number == HcNumber::Singular {
                                         local_stem = self.accent_syllable(&local_stem, 2, HGK_ACUTE );
                                     }
+                                    else if self.verb.pps[0].ends_with("παραδίδωμι") && self.person == HcPerson::Second && self.number == HcNumber::Singular {
+                                        local_stem = self.accent_syllable(&local_stem, 2, HGK_ACUTE );
+                                    }
                                 }
                             }
                             if self.mood == HcMood::Optative {
@@ -994,14 +997,37 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if local_stem.starts_with("ἀπο") {        
                 local_stem.replacen("ἀπο", format!("ἀπο {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
+            else if local_stem.starts_with("ὑπο") {        
+                local_stem.replacen("ὑπο", format!("ὑπο {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
+            }
+            else if local_stem.starts_with("ὑπα") {        
+                local_stem.replacen("ὑπα", format!("ὑπο {} ε {} α" /* FIX ME ἀ */, SEPARATOR, SEPARATOR).as_str(), 1)
+            }
             else if local_stem.starts_with("ἀνα") {     
                 local_stem.replacen("ἀνα", format!("ἀνα {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
+            }
+            else if local_stem.starts_with("παρα") {     
+                local_stem.replacen("παρα", format!("παρα {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
+            }
+            else if local_stem.starts_with("ἐπι") {     
+                local_stem.replacen("ἐπι", format!("ἐπι {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
             else if local_stem.starts_with("κατα") {     
                 local_stem.replacen("κατα", format!("κατα {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
             else if local_stem.starts_with("μετανι") {     
                 local_stem.replacen("μετανι", format!("μετα {} ανα {} ε {} ἱ", SEPARATOR, SEPARATOR, SEPARATOR).as_str(), 1)
+            }
+            else if local_stem.starts_with("ἐπανι") {     
+                local_stem.replacen("ἐπανι", format!("ἐπι {} ανα {} ε {} ἱ", SEPARATOR, SEPARATOR, SEPARATOR).as_str(), 1)
+            }
+            else if local_stem.starts_with("ἐπανε") {    
+                if self.number == HcNumber::Singular { 
+                    local_stem.replacen("ἐπανε", format!("ἐπι {} ανα {} ε {} ἑ", SEPARATOR, SEPARATOR, SEPARATOR).as_str(), 1)
+                } 
+                else {
+                    local_stem.replacen("ἐπανε", format!("ἐπι {} ανα {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1)
+                }
             }
             else if local_stem.starts_with("μετανε") {    
                 if self.number == HcNumber::Singular { 
@@ -1060,8 +1086,20 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             if local_stem.starts_with("ἀπο") {
                 local_stem.replacen("ἀπο", "ἀπε", 1)
             }
+            else if local_stem.starts_with("ὑπο") {
+                local_stem.replacen("ὑπο", "ὑπε", 1)
+            }
+            else if local_stem.starts_with("ὑπα") {
+                local_stem.replacen("ὑπα", "ὑπη", 1)
+            }
             else if local_stem.starts_with("ἀνα") {
                 local_stem.replacen("ἀνα", "ἀνε", 1)
+            }
+            else if local_stem.starts_with("παρα") {
+                local_stem.replacen("παρα", "παρε", 1)
+            }
+            else if local_stem.starts_with("ἐπι") {
+                local_stem.replacen("ἐπι", "ἐπε", 1)
             }
             else if local_stem.starts_with("κατα") {
                 local_stem.replacen("κατα", "κατε", 1)
@@ -1076,6 +1114,17 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if local_stem.starts_with("μετανι") {
                 local_stem.replacen("μετανι", "μετανῑ", 1)
+            }
+            else if local_stem.starts_with("ἐπανε") {
+                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                    local_stem.replacen("ἐπανε", "ἐπανει", 1)
+                }
+                else {
+                    local_stem
+                }
+            }
+            else if local_stem.starts_with("ἐπανι") {
+                local_stem.replacen("ἐπανι", "ἐπανῑ", 1)
             }
             else if local_stem.starts_with("μετα") {
                 local_stem.replacen("μετα", "μετε", 1)
@@ -1149,12 +1198,44 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     loc = loc.replacen("ἀπε", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
                 }
             }
+            else if loc.starts_with("ὑπε") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ὑπε", format!("ὑπο {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ὑπε", format!("ὑπο {} ", SEPARATOR).as_str(), 1);
+                }
+            }
+            else if loc.starts_with("ὑπη") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ὑπη", format!("ὑπο {} ε {} α"/* FIX ME ἀ */, SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ὑπη", format!("ὑπο {} α"/* FIX ME ἀ */, SEPARATOR).as_str(), 1);
+                }
+            }
+            else if loc.starts_with("ἐπεδ") {  //because pempw and epideiknumi
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ἐπε", format!("ἐπι {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ἐπε", format!("ἐπι {} ", SEPARATOR).as_str(), 1);
+                }
+            }
             else if loc.starts_with("ἀνε") {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("ἀνε", format!("ἀνα {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1);
                 }
                 else {
                     loc = loc.replacen("ἀνε", format!("ἀνα {} ", SEPARATOR).as_str(), 1);
+                }
+            }
+            else if loc.starts_with("παρε") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("παρε", format!("παρα {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("παρε", format!("παρα {} ", SEPARATOR).as_str(), 1);
                 }
             }
             else if loc.starts_with("κατε") {
@@ -1171,6 +1252,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 }
                 else {
                     loc = loc.replacen("μετανε", format!("μετα {} ανα {} ", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+            }
+            else if loc.starts_with("ἐπανε") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ἐπανε", format!("ἐπι {} ανα {} ε {} ", SEPARATOR, SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ἐπανε", format!("ἐπι {} ανα {} ", SEPARATOR, SEPARATOR).as_str(), 1);
                 }
             }
             else if loc.starts_with("μετε") {
@@ -1217,14 +1306,29 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             if loc.starts_with("ἀπε") {
                 loc = loc.replacen("ἀπε", "ἀπο", 1);
             }
+            else if loc.starts_with("ὑπε") {
+                loc = loc.replacen("ὑπε", "ὑπο", 1);
+            }
+            else if loc.starts_with("ὑπη") {
+                loc = loc.replacen("ὑπη", "ὑπα", 1);
+            }
+            else if loc.starts_with("ἐπεδ") { //because pempw and epideiknumi
+                loc = loc.replacen("ἐπε", "ἐπι", 1);
+            }
             else if loc.starts_with("ἀνε") {
                 loc = loc.replacen("ἀνε", "ἀνα", 1);
+            }
+            else if loc.starts_with("παρε") {
+                loc = loc.replacen("παρε", "παρα", 1);
             }
             else if loc.starts_with("κατε") {
                 loc = loc.replacen("κατε", "κατα", 1);
             }
             else if loc.starts_with("μετανε") {
                 loc = loc.replacen("μετανε", "μετανα", 1);
+            }
+            else if loc.starts_with("ἐπανε") {
+                loc = loc.replacen("ἐπανε", "ἐπανα", 1);
             }
             else if loc.starts_with("μετε") {
                 loc = loc.replacen("μετε", "μετα", 1);
@@ -1252,8 +1356,20 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         if stem.starts_with("ἀπο") {
             return stem.replacen("ἀπο", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
         }
+        else if stem.starts_with("ὑπο") {
+            return stem.replacen("ὑπο", format!("ὑπο {} ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("ὑπα") {
+            return stem.replacen("ὑπα", format!("ὑπο {} α"/* FIX ME ἀ */, SEPARATOR).as_str(), 1);
+        }
         else if stem.starts_with("ἀνα") {
             return stem.replacen("ἀνα", format!("ἀνα {} ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("παρα") {
+            return stem.replacen("παρα", format!("παρα {} ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("ἐπι") {
+            return stem.replacen("ἐπι", format!("ἐπι {} ", SEPARATOR).as_str(), 1);
         }
         else if stem.starts_with("ἀφι") {
             return stem.replacen("ἀφι", format!("ἀπο {} ἱ", SEPARATOR).as_str(), 1);
@@ -1275,6 +1391,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
         else if stem.starts_with("μετανε") {
             return stem.replacen("μετανε", format!("μετα {} ανα {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("ἐπανα") {
+            return stem.replacen("ἐπανα", format!("ἐπι {} ανα {} ", SEPARATOR, SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("ἐπανι") {
+            return stem.replacen("ἐπανι", format!("ἐπι {} ανα {} ἱ", SEPARATOR, SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("ἐπανε") {
+            return stem.replacen("ἐπανε", format!("ἐπι {} ανα {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1);
         }
         else if stem.starts_with("μετα") {
             return stem.replacen("μετα", format!("μετα {} ", SEPARATOR).as_str(), 1);
@@ -1667,10 +1792,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     },
                     HcVoice::Middle | HcVoice::Passive => {
                         match self.mood {
-                            HcMood::Indicative => if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι")  { HcEndings::PerfectMidpassInd } else { HcEndings::PresentMidpassInd },
+                            HcMood::Indicative => if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("υμαι") || self.verb.pps[0].ends_with("αμαι")  { HcEndings::PerfectMidpassInd } else { HcEndings::PresentMidpassInd },
                             HcMood::Subjunctive => HcEndings::PresentMidpassSubj,
                             HcMood::Optative => if self.verb.pps[0].ends_with("ημι") && !self.verb.pps[0].ends_with("στημι") { HcEndings::PresentMidpassOptTithhmi } else if (self.verb.pps[0].ends_with("μι") && !self.verb.pps[0].ends_with("ῡμι")) || self.verb.pps[0].ends_with("αμαι") { HcEndings::MiddleOptMi } else { HcEndings::PresentMidpassOpt },
-                            HcMood::Imperative => if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") { HcEndings::PresentMidpassImperativeMi } else { HcEndings::PresentMidpassImperative },
+                            HcMood::Imperative => if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("υμαι") || self.verb.pps[0].ends_with("αμαι") { HcEndings::PresentMidpassImperativeMi } else { HcEndings::PresentMidpassImperative },
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
                         }
@@ -1691,7 +1816,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     },
                     HcVoice::Middle | HcVoice::Passive => {
                         match self.mood {
-                            HcMood::Indicative => if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") { HcEndings::PluperfectMidpassInd } else { HcEndings::ImperfectMidpassInd },
+                            HcMood::Indicative => if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("υμαι") || self.verb.pps[0].ends_with("αμαι") { HcEndings::PluperfectMidpassInd } else { HcEndings::ImperfectMidpassInd },
                             HcMood::Subjunctive => HcEndings::NotImplemented,
                             HcMood::Optative => HcEndings::NotImplemented,
                             HcMood::Imperative => HcEndings::NotImplemented,
