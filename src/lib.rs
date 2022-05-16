@@ -1003,6 +1003,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if local_stem.starts_with("ἀπο") {        
                 local_stem.replacen("ἀπο", format!("ἀπο {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
+            else if local_stem.starts_with("δια") {        
+                local_stem.replacen("δια", format!("δια {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
+            }
             else if local_stem.starts_with("ὑπο") {        
                 local_stem.replacen("ὑπο", format!("ὑπο {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
@@ -1084,6 +1087,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     local_stem
                 }
             }
+            else if local_stem.starts_with("ᾐ") {    
+                local_stem
+            }
+            else if local_stem.starts_with("ᾑ") {    
+                local_stem
+            }
             else {
                 format!("ε {} {}", SEPARATOR, local_stem)
             }
@@ -1091,6 +1100,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         else {
             if local_stem.starts_with("ἀπο") {
                 local_stem.replacen("ἀπο", "ἀπε", 1)
+            }
+            else if local_stem.starts_with("δια") {
+                local_stem.replacen("δια", "διε", 1)
             }
             else if local_stem.starts_with("ὑπο") {
                 local_stem.replacen("ὑπο", "ὑπε", 1)
@@ -1157,6 +1169,18 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     local_stem
                 }
             }
+            else if local_stem.starts_with("ᾐ") {
+                local_stem
+            }  
+            else if local_stem.starts_with("ᾑ") {
+                local_stem
+            }   
+            else if local_stem.starts_with("αἰ") {
+                local_stem.replacen("αἰ", "ᾐ", 1)
+            }   
+            else if local_stem.starts_with("αἱ") {
+                local_stem.replacen("αἱ", "ᾑ", 1)
+            }   
             else if local_stem.starts_with("ἑ") {
                 if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
                     local_stem.replacen("ἑ", "εἱ", 1)
@@ -1202,6 +1226,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 }
                 else {
                     loc = loc.replacen("ἀπε", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
+                }
+            }
+            else if loc.starts_with("διη") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("διη", format!("δια {} ε {} ε", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("διη", format!("δια {} ε", SEPARATOR).as_str(), 1);
                 }
             }
             else if loc.starts_with("ὑπε") {
@@ -1276,6 +1308,30 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     loc = loc.replacen("μετε", format!("μετα {} ", SEPARATOR).as_str(), 1);
                 }
             }
+            else if loc.starts_with("εἱ") && self.verb.pps[0].starts_with("αἱ") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("εἱ", format!("ε {} ἑ", SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("εἱ", "ἑ", 1);
+                }
+            }
+            else if loc.starts_with('ᾐ') && self.verb.pps[0].starts_with("αἰ") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ᾐ", format!("ε {} αἰ", SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ᾐ", "αἰ", 1);
+                }
+            }
+            else if loc.starts_with('ᾑ') && self.verb.pps[0].starts_with("αἱ") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ᾑ", format!("ε {} αἱ", SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ᾑ", "αἱ", 1);
+                }
+            }
             else if loc.starts_with('ἠ') && self.verb.pps[0].starts_with('ἐ') {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("ἠ", format!("ε {} ἐ", SEPARATOR).as_str(), 1);
@@ -1312,6 +1368,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             if loc.starts_with("ἀπε") {
                 loc = loc.replacen("ἀπε", "ἀπο", 1);
             }
+            else if loc.starts_with("διη") {
+                loc = loc.replacen("διη", "διε", 1);
+            }
             else if loc.starts_with("ὑπε") {
                 loc = loc.replacen("ὑπε", "ὑπο", 1);
             }
@@ -1339,6 +1398,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if loc.starts_with("μετε") {
                 loc = loc.replacen("μετε", "μετα", 1);
             }
+            else if loc.starts_with("εἱ") {
+                loc = loc.replacen("εἱ", "ἑ", 1);
+            }
+            else if loc.starts_with("ᾐ") {
+                loc = loc.replacen("ᾐ", "αἰ", 1);
+            }
+            else if loc.starts_with("ᾑ") {
+                loc = loc.replacen("ᾑ", "αἱ", 1);
+            }
             else if loc.starts_with('ἠ') && self.verb.pps[0].starts_with('ἐ') {
                 loc.remove(0);
                 loc = format!("ἐ{}", loc);
@@ -1361,6 +1429,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     fn separate_prefix(&self, stem:&str) ->String {
         if stem.starts_with("ἀπο") {
             return stem.replacen("ἀπο", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("διο") { // διοίσω
+            return stem.replacen("διο", format!("δια {} ο", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("δια") {
+            return stem.replacen("δια", format!("δια {} ", SEPARATOR).as_str(), 1);
         }
         else if stem.starts_with("ὑπο") {
             return stem.replacen("ὑπο", format!("ὑπο {} ", SEPARATOR).as_str(), 1);
