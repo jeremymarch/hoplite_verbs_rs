@@ -12,7 +12,7 @@ unicode-normalization = { version = "0.1.19", default-features = false }
 itertools = "0.10.3"
 
 [lib]
-#doctest = false # don't run Doc-tests for now
+doctest = false # don't run Doc-tests for now
 
 [profile.release.package."*"] # +
 opt-level = "z" # +

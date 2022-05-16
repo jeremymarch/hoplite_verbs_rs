@@ -710,7 +710,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 }
             }
             else if self.tense == HcTense::Aorist {
-
+                //mixed aorist
                 if local_stem.ends_with("κ") && (self.number == HcNumber::Plural || self.mood != HcMood::Indicative || self.voice != HcVoice::Active) {
                         
                     if self.verb.pps[0].ends_with("δίδωμι") {
@@ -807,28 +807,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         }
                     }
                 }
-                // root aorist
-                else if local_stem.ends_with("στη") {
-                    if self.mood == HcMood::Subjunctive {
-                        if decompose {
-                            local_stem.pop();
-                            local_stem.push_str("ε")
-                        }
-                        else {
-                            local_stem.pop();
-                        }
-                    }
-                    else if self.mood == HcMood::Optative {
-                        local_stem.pop();
-                        local_stem.push_str("α") 
-                    }
-                    else if self.mood == HcMood::Imperative {
-                        if self.person == HcPerson::Third && self.number == HcNumber::Plural {
-                            local_stem.pop();
-                            local_stem.push_str("α");
-                        }
-                    }
-                }
+
             }
             else if self.tense == HcTense::Perfect {
                 if self.number == HcNumber::Plural && local_stem.ends_with("στηκ") {
@@ -855,7 +834,34 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
         }
 
+        // root aorist
+        if (self.tense == HcTense::Aorist && self.voice == HcVoice::Active) && local_stem.ends_with("στη") || local_stem.ends_with("φθη") || local_stem.ends_with("βη") {
+            println!("stem {}", local_stem);
+            if self.mood == HcMood::Subjunctive {
+                if decompose {
+                    local_stem.pop();
+                    local_stem.push_str("ε")
+                }
+                else {
+                    local_stem.pop();
+                }
+            }
+            else if self.mood == HcMood::Optative {
+                local_stem.pop();
+                local_stem.push_str("α") 
+            }
+            else if self.mood == HcMood::Imperative {
+                if self.person == HcPerson::Second && self.number == HcNumber::Singular && local_stem.ends_with("φθη") {
+                    local_ending = local_ending.replacen("θ", "τ", 1);
+                }
+                else if self.person == HcPerson::Third && self.number == HcNumber::Plural {
+                    local_stem.pop();
+                    local_stem.push_str("α");
+                }
+            }
+        }
 
+        // consonant stem perfects and pluperfects
         if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem == "πεπεμ" || local_stem == "ἐπεπεμ" || local_stem == format!("ε {} πεπεμ", SEPARATOR) {
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
@@ -1537,7 +1543,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     }
                 }
 
-                if a.ends_with("στη") && self.tense == HcTense::Aorist && self.voice == HcVoice::Middle {
+                if (a.ends_with("στη")  || a.ends_with("φθη") || a.ends_with("βη")) && self.tense == HcTense::Aorist && self.voice == HcVoice::Middle {
                     continue;
                 }
 
@@ -1865,14 +1871,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                         }
                         else {
                             match self.mood {
-                                HcMood::Indicative => if stem.ends_with("στη") { 
+                                HcMood::Indicative => if stem.ends_with("στη") || stem.ends_with("φθη") || stem.ends_with("βη") { 
                                         HcEndings::AoristActiveIndicativeMiRoot } 
                                     else if stem.ends_with("κ") { 
                                         HcEndings::MixedAoristMi } 
                                     else { HcEndings::AoristActiveInd },
-                                HcMood::Subjunctive => if stem.ends_with("στη") { HcEndings::AoristPassiveSubj } else { HcEndings::PresentActiveSubj },
-                                HcMood::Optative => if stem.ends_with("στη") { HcEndings::PresentActiveOptMi } else if stem.ends_with("κ") { HcEndings::AoristPassiveOpt } else { HcEndings::AoristActiveOpt },
-                                HcMood::Imperative => if stem.ends_with("στη") { HcEndings::AoristActiveImperativesMiRoot } else if stem.ends_with("κ") { HcEndings::AoristActiveImperativesMi } else { HcEndings::AoristActiveImperative },
+                                HcMood::Subjunctive => if stem.ends_with("στη") || stem.ends_with("φθη") || stem.ends_with("βη") { HcEndings::AoristPassiveSubj } else { HcEndings::PresentActiveSubj },
+                                HcMood::Optative => if stem.ends_with("στη") || stem.ends_with("φθη") || stem.ends_with("βη") { HcEndings::PresentActiveOptMi } else if stem.ends_with("κ") { HcEndings::AoristPassiveOpt } else { HcEndings::AoristActiveOpt },
+                                HcMood::Imperative => if stem.ends_with("στη") || stem.ends_with("φθη") || stem.ends_with("βη") { HcEndings::AoristActiveImperativesMiRoot } else if stem.ends_with("κ") { HcEndings::AoristActiveImperativesMi } else { HcEndings::AoristActiveImperative },
                                 HcMood::Infinitive => HcEndings::NotImplemented,
                                 HcMood::Participle => HcEndings::NotImplemented,
                             }                            
