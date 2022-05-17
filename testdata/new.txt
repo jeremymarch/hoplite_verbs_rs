@@ -26689,7 +26689,7 @@ Pluperfect Passive Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 85. γιγνώσκω (Partial Deponent)
+Verb 85. γιγνώσκω (Partial Deponent)
 
 Present Active Indicative
 1s: γιγνώσκω ; γιγνωσκ ‐ ω
