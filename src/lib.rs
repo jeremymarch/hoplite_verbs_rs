@@ -1048,17 +1048,20 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         if decompose {
             Ok(format!("{} {} {}{}", local_stem, SEPARATOR, future_passive_suffix, local_ending))
         }
-        else { //come take seek say find
-            if local_stem == "λαβ" && local_ending == "ε" {
+        else { //come take see say find
+            if local_stem == "ἐλθ" && local_ending == "ε" {
                 local_ending = "έ".to_string();
             }
-            else if local_stem == "ἐλθ" && local_ending == "ε" {
+            else if local_stem == "λαβ" && local_ending == "ε" {
                 local_ending = "έ".to_string();
             }
             else if local_stem == "ἰδ" && local_ending == "ε" {
                 local_ending = "έ".to_string();
             }
             else if local_stem == "εἰπ" && local_ending == "ε" {
+                local_ending = "έ".to_string();
+            }
+            else if local_stem == "εὑρ" && local_ending == "ε" {
                 local_ending = "έ".to_string();
             }
             Ok(format!("{}{}{}", local_stem, future_passive_suffix, local_ending))
@@ -1073,6 +1076,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if local_stem.starts_with("ἀπο") {        
                 local_stem.replacen("ἀπο", format!("ἀπο {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
+            }
+            else if local_stem.starts_with("ἀπεκ") {        
+                local_stem.replacen("ἀπεκ", format!("ἀπο {} εκ", SEPARATOR).as_str(), 1)
             }
             else if local_stem.starts_with("-ἐ") {        
                 local_stem
@@ -1195,6 +1201,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         else {
             if local_stem.starts_with("ἀπο") {
                 local_stem.replacen("ἀπο", "ἀπε", 1)
+            }
+            else if local_stem.starts_with("ἀπεκ") {
+                local_stem.replacen("ἀπεκ", "ἀπεκ", 1)
             }
             else if local_stem.starts_with("ὁ") {
                 local_stem.replacen("ὁ", "ἑω", 1)
@@ -1337,7 +1346,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if local_stem.starts_with("ἱ") {
                 local_stem.replacen("ἱ", "ῑ̔", 1)
             }
-            else if self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ') {
+            else if (self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ')) && !self.verb.pps[0].starts_with("ἀποθνῄσκω") {
                 local_stem.remove(0);
                 format!("ἠ{}", local_stem)
             }
@@ -1636,14 +1645,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if loc.starts_with("ἐρρ") {
                 loc = loc.replacen("ἐρρ", "ῥ", 1);
             }
-            else if loc.starts_with("ᾐ") {
-                loc = loc.replacen("ᾐ", "αἰ", 1);
+            else if loc.starts_with('ᾐ') {
+                loc = loc.replacen('ᾐ', "αἰ", 1);
             }
-            else if loc.starts_with("ᾑ") {
-                loc = loc.replacen("ᾑ", "αἱ", 1);
+            else if loc.starts_with('ᾑ') {
+                loc = loc.replacen('ᾑ', "αἱ", 1);
             }
-            else if loc.starts_with("ὠ") {
-                loc = loc.replacen("ὠ", "ὀ", 1);
+            else if loc.starts_with('ὠ') {
+                loc = loc.replacen('ὠ', "ὀ", 1);
             }
             else if loc.starts_with('ἠ') && (self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with("φέρω")) {
                 loc.remove(0);
@@ -1680,6 +1689,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
         if stem.starts_with("ἀπο") {
             return stem.replacen("ἀπο", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("ἀπεκ") {
+            return stem.replacen("ἀπεκ", format!("ἀπο {} εκ", SEPARATOR).as_str(), 1);
         }
         else if stem.starts_with("ἐκ") {
             return stem.replacen("ἐκ", format!("ἐκ {} ", SEPARATOR).as_str(), 1);
@@ -1896,7 +1908,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 }
 
                 // root aorist: skip middle voice
-                if (a.ends_with("στη")  || a.ends_with("φθη") || a.ends_with("βη") || a.ends_with("γνω")) && self.tense == HcTense::Aorist && self.voice == HcVoice::Middle {
+                if (a.ends_with("στη") || a.ends_with("φθη") || a.ends_with("βη") || a.ends_with("γνω")) && self.tense == HcTense::Aorist && self.voice == HcVoice::Middle {
                     continue;
                 }
 
@@ -1953,8 +1965,28 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
         //dynamai
         if decompose && self.verb.pps[0] == "δύναμαι" && self.mood == HcMood::Indicative && (self.tense == HcTense::Imperfect || self.tense == HcTense::Aorist || self.tense == HcTense::Pluperfect) {
-            let alt = add_ending_collector[0].replacen("ε", "η", 1);
+            let alt = add_ending_collector[0].replacen('ε', "η", 1);
             add_ending_collector.push(alt);
+        }
+
+        //add alts for ἀποθνῄσκω
+        if self.verb.pps[0] == "ἀποθνῄσκω" && decompose && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) {
+            if add_ending_collector.len() > 0 && add_ending_collector[0] == "τεθνηκ ‐ αμεν" {
+                let alt = String::from("τεθν ‐ αμεν");
+                add_ending_collector.push(alt);
+            }
+            else if add_ending_collector.len() > 0 && add_ending_collector[0] == "τεθνηκ ‐ ατε" {
+                let alt = String::from("τεθν ‐ ατε");
+                add_ending_collector.push(alt);
+            }
+            else if add_ending_collector.len() > 0 && add_ending_collector[0] == "τεθνηκ ‐ ᾱσι(ν)" {
+                let alt = String::from("τεθν ‐ ᾱσι(ν)");
+                add_ending_collector.push(alt);
+            }
+            else if add_ending_collector.len() > 0 && add_ending_collector[0] == "ε ‐ τεθνηκ ‐ εσαν" {
+                let alt = String::from("ε ‐ τεθν ‐ ασαν");
+                add_ending_collector.push(alt);
+            }
         }
 
         let f = add_ending_collector.join(" / ");
@@ -1962,17 +1994,35 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         steps.push(Step{form:f, explanation:e});
     
         if !decompose {
-
             //add proe / prou forms for imperfect
             if self.verb.pps[0] == "προδίδωμι" && (self.tense == HcTense::Imperfect || self.tense == HcTense::Pluperfect) {
-                //println!("y {}", y);
                 let alt = add_accent_collector[0].replacen("προε", "πρου", 1);
                 add_accent_collector.push(alt);
             }
 
+            //add alts for ἀποθνῄσκω
+            if self.verb.pps[0] == "ἀποθνῄσκω" && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) {
+                if add_accent_collector.len() > 0 && add_accent_collector[0] == "τεθνήκαμεν" {
+                    let alt = String::from("τέθναμεν");
+                    add_accent_collector.push(alt);
+                }
+                else if add_accent_collector.len() > 0 && add_accent_collector[0] == "τεθνήκατε" {
+                    let alt = String::from("τέθνατε");
+                    add_accent_collector.push(alt);
+                }
+                else if add_accent_collector.len() > 0 && add_accent_collector[0] == "τεθνήκᾱσι(ν)" {
+                    let alt = String::from("τεθνᾶσι(ν)");
+                    add_accent_collector.push(alt);
+                }
+                else if add_accent_collector.len() > 0 && add_accent_collector[0] == "ἐτεθνήκεσαν" {
+                    let alt = String::from("ἐτέθνασαν");
+                    add_accent_collector.push(alt);
+                }
+            }
+
             //dynamai
             if self.verb.pps[0] == "δύναμαι" && (self.tense == HcTense::Imperfect || self.tense == HcTense::Aorist || self.tense == HcTense::Pluperfect) {
-                let alt = add_accent_collector[0].replacen("ἐ", "ἠ", 1);
+                let alt = add_accent_collector[0].replacen('ἐ', "ἠ", 1);
                 add_accent_collector.push(alt);
             }
 
