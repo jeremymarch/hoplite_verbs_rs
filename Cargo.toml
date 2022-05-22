@@ -9,6 +9,8 @@ edition = "2021"
 [dependencies]
 rustunicodetests = { path = "../rustunicodetests" }
 unicode-normalization = { version = "0.1.19", default-features = false }
+unicode-segmentation = "1.9.0"
+
 itertools = "0.10.3"
 
 [lib]
