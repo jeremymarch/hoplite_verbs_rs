@@ -747,7 +747,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if self.tense == HcTense::Aorist {
                 //mixed aorist
-                if local_stem.ends_with("κ") && (self.number == HcNumber::Plural || self.mood != HcMood::Indicative || self.voice != HcVoice::Active) {
+                if self.verb.pps[2].ends_with("κα") && (self.number == HcNumber::Plural || self.mood != HcMood::Indicative || self.voice != HcVoice::Active) {
                         
                     if self.verb.pps[0].ends_with("δίδωμι") {
                         local_stem = local_stem.replacen("ωκ", "ο", 1);
@@ -778,7 +778,6 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                                             local_ending = local_ending.replacen("η", "ῶ", 1);
                                         }
                                     }
-                                    
                                     local_ending = self.accent_syllable_start(&local_ending, 0,  HGK_CIRCUMFLEX );
                                 }
                                 if self.mood == HcMood::Imperative {
@@ -1389,12 +1388,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     loc = loc.replacen("ἀπε", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
                 }
             }
-            else if loc.starts_with("ἀφηκ")  && self.number == HcNumber::Plural {
+            else if loc.starts_with("ἀφηκ")  && (self.mood != HcMood::Indicative || self.number == HcNumber::Plural || self.voice != HcVoice::Active) {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("ἀφηκ", format!("ἀπο {} ε {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1);
                 }
                 else {
-                    loc = loc.replacen("ἀφει", format!("ἀπο {} ἑ", SEPARATOR).as_str(), 1);
+                    loc = loc.replacen("ἀφηκ", format!("ἀπο {} ἑ", SEPARATOR).as_str(), 1);
                 }
             }
             else if loc.starts_with("ἀφει") {
@@ -1632,6 +1631,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         else {
             if loc.starts_with("ἀπε") {
                 loc = loc.replacen("ἀπε", "ἀπο", 1);
+            }
+            else if loc.starts_with("ἀφηκ")  && (self.mood != HcMood::Indicative || self.number == HcNumber::Plural || self.voice != HcVoice::Active) {
+                loc = loc.replacen("ἀφηκ", "ἀφε", 1);
             }
             else if loc.starts_with("ἀφει") {
                 loc = loc.replacen("ἀφει", "ἀφε", 1);
@@ -2370,7 +2372,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                                         HcEndings::MixedAoristMi }
                                     else { HcEndings::AoristActiveInd },
                                 HcMood::Subjunctive => if stem.ends_with("στην") || stem.ends_with("φθην") || stem.ends_with("βην") || stem.ends_with("γνων") { HcEndings::AoristPassiveSubj } else { HcEndings::PresentActiveSubj },
-                                HcMood::Optative => if stem.ends_with("στην") || stem.ends_with("φθην") || stem.ends_with("βην") || stem.ends_with("γνων") { HcEndings::PresentActiveOptMi } else if self.verb.pps[0].ends_with("μι") && stem.ends_with("κα") { HcEndings::AoristPassiveOpt } else { HcEndings::AoristActiveOpt },
+                                HcMood::Optative => if stem.ends_with("στην") || stem.ends_with("φθην") || stem.ends_with("βην") || stem.ends_with("γνων") { HcEndings::PresentActiveOptMi } else if self.verb.pps[0].ends_with("μι") && self.verb.pps[2].ends_with("κα") { HcEndings::AoristPassiveOpt } else { HcEndings::AoristActiveOpt },
                                 HcMood::Imperative => if stem.ends_with("στην") || stem.ends_with("φθην") || stem.ends_with("βην") || stem.ends_with("γνων") { HcEndings::AoristActiveImperativesMiRoot } else if self.verb.pps[0].ends_with("μι") && stem.ends_with("κα") { HcEndings::AoristActiveImperativesMi } else { HcEndings::AoristActiveImperative },
                                 HcMood::Infinitive => HcEndings::NotImplemented,
                                 HcMood::Participle => HcEndings::NotImplemented,
