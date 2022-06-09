@@ -1092,7 +1092,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     fn add_augment(&self, stem:&str, decompose:bool) -> String {
         let mut local_stem = stem.to_string();
         if decompose {
-            if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') || local_stem.starts_with("εἰ") {
+            if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') || local_stem.starts_with("εἰ") || local_stem.starts_with("ῑ̔") {
                 local_stem
             }
             else if local_stem.starts_with("ἀπο") {        
@@ -1376,6 +1376,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     local_stem
                 }
             }
+            else if local_stem.starts_with("ῑ̔") {
+                local_stem
+            }
             else if local_stem.starts_with("ἱ") {
                 local_stem.replacen("ἱ", "ῑ̔", 1)
             }
@@ -1426,6 +1429,22 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 }
                 else {
                     loc = loc.replacen("ἀφη", format!("ἀπο {} ἡ", SEPARATOR).as_str(), 1);
+                }
+            }
+            else if loc.starts_with("-εἱθ") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("-εἱθ", format!("-ε {} ἑθ", SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("-εἱθ", format!("-ἑθ").as_str(), 1);
+                }
+            }
+            else if loc.starts_with("-ἡκ") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("-ἡκ", format!("-ἡκ").as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("-ἡκ", format!("-ἑθ").as_str(), 1);
                 }
             }
             else if loc.starts_with("προε") {
@@ -1656,6 +1675,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if loc.starts_with("-ἐ") {
                 loc = loc.replacen("-ἐ", "-", 1);
+            }
+            else if loc.starts_with("-εἱθ") {
+                loc = loc.replacen("-εἱθ", "-ἑθ", 1);
             }
             else if loc.starts_with("προε") {
                 loc = loc.replacen("προε", "προ", 1);
@@ -1911,11 +1933,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         */
 
     
-        
         //let mut pps_without_ending = Vec::new();
         //strip accent: internally (not as a step)
         let f = hgk_strip_diacritics(f, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
-        
+
         let mut pps_without_ending = f.split(" / ").map(|e| e.to_string()).collect::<Vec<String>>();
         // for alt_pp in alt_pps {
         //     let y = self.strip_ending(pp_num, alt_pp.to_string());
@@ -1954,6 +1975,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             if endings_for_form == None {
                 return Err("Illegal form ending");
             }
+            
             for e in endings_for_form.unwrap() {
 
                 let a = self.strip_ending(pp_num, a.to_string());
@@ -1996,11 +2018,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 let ending = if decompose { hgk_strip_diacritics(e, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) } else { e.to_string() };
                 let stem = if decompose && self.tense == HcTense::Aorist && self.voice == HcVoice::Passive && self.mood == HcMood::Subjunctive { format!("{}ε", a.to_owned()) } else { a.to_owned() };
                 let y = self.add_ending(&stem, &ending, decompose);
+                
                 let y = match y {
                     Ok(y) => y,
                     _ => return Err("Error adding ending")
                 };
-
+                
                 if decompose && self.tense != HcTense::Imperfect && self.tense != HcTense::Pluperfect && self.tense != HcTense::Aorist && !(self.tense == HcTense::Future && self.voice == HcVoice::Passive) {
                     add_ending_collector.push( self.separate_prefix(&y) );
                 }
@@ -2044,7 +2067,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         //aphihmi
         if self.verb.pps[0] == "ἀφῑ́ημι" && decompose && self.person == HcPerson::Second && self.number == HcNumber::Singular && self.tense == HcTense::Present && self.voice == HcVoice::Active && self.mood == HcMood::Indicative {
             let alt = String::from("ἀπο ‐ ῑ̔ε ‐ εις");
-                add_ending_collector.push(alt);
+            add_ending_collector.push(alt);
+        }
+        else if self.verb.pps[0] == "συνῑ́ημι" && decompose && self.person == HcPerson::Second && self.number == HcNumber::Singular && self.tense == HcTense::Present && self.voice == HcVoice::Active && self.mood == HcMood::Indicative {
+            let alt = String::from("συν ‐ ῑ̔ε ‐ εις");
+            add_ending_collector.push(alt);
+        }
+        else if self.verb.pps[0] == "ῑ̔́ημι" && decompose && self.person == HcPerson::Second && self.number == HcNumber::Singular && self.tense == HcTense::Present && self.voice == HcVoice::Active && self.mood == HcMood::Indicative {
+            let alt = String::from("ῑ̔ε ‐ εις");
+            add_ending_collector.push(alt);
         }
 
         //add alts for ἀποθνῄσκω
@@ -2081,6 +2112,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             //aphihmi
             if self.verb.pps[0] == "ἀφῑ́ημι" && self.person == HcPerson::Second && self.number == HcNumber::Singular && self.tense == HcTense::Present && self.voice == HcVoice::Active && self.mood == HcMood::Indicative {
                 let alt = String::from("ἀφῑεῖς");
+                add_accent_collector.push(alt);
+            }
+            else if self.verb.pps[0] == "συνῑ́ημι" && self.person == HcPerson::Second && self.number == HcNumber::Singular && self.tense == HcTense::Present && self.voice == HcVoice::Active && self.mood == HcMood::Indicative {
+                let alt = String::from("συνῑεῖς");
+                add_accent_collector.push(alt);
+            }
+            else if self.verb.pps[0] == "ῑ̔́ημι" && self.person == HcPerson::Second && self.number == HcNumber::Singular && self.tense == HcTense::Present && self.voice == HcVoice::Active && self.mood == HcMood::Indicative {
+                let alt = String::from("ῑ̔εῖς");
                 add_accent_collector.push(alt);
             }
 
@@ -2537,7 +2576,7 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, t:HcTense, m:H
             for p in PREFIXES {
                 if word.starts_with(p) {
                     area = p.graphemes(true).count();
-                    println!("area: {} {}", p, area);
+                    //println!("area: {} {}", p, area);
                     break;
                 }
             }
