@@ -1165,6 +1165,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if local_stem.starts_with("δια") {        
                 local_stem.replacen("δια", format!("δια {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
+            else if local_stem.starts_with("συνῑ") {        
+                local_stem.replacen("συνῑ", format!("συν {} ῑ̔", SEPARATOR).as_str(), 1)
+            }
             else if local_stem.starts_with("συνε") {        
                 local_stem.replacen("συνε", format!("συν {} ε", SEPARATOR).as_str(), 1)
             }
@@ -1300,6 +1303,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 local_stem.replacen("ἐκ", "ἐξε", 1)
             }
             else if local_stem.starts_with("συνε") {
+                local_stem
+            }
+            else if local_stem.starts_with("συνῑ") {
                 local_stem
             }
             else if local_stem.starts_with("συμ") {
@@ -1536,6 +1542,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     loc = loc.replacen("-ἐ", format!("-").as_str(), 1);
                 }
             }
+            // else if loc.starts_with("συνη") && self.verb.pps[0].ends_with("ῑ́ημι") {
+            //     if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+            //         loc = loc.replacen("συνη", format!("συν {} ε {} ἡ", SEPARATOR, SEPARATOR).as_str(), 1);
+            //     }
+            //     else {
+            //         loc = loc.replacen("συνη", format!("συν {} ἡ", SEPARATOR).as_str(), 1);
+            //     }
+            // }
             else if loc.starts_with("συνη") {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("συνη", format!("συν {} ε {} ε", SEPARATOR, SEPARATOR).as_str(), 1);
@@ -1869,6 +1883,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
         else if stem.starts_with("συμ") {
             return stem.replacen("συμ", format!("συν {} ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("συνῑ") {
+            return stem.replacen("συνῑ", format!("συν {} ῑ̔", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("συνη") && self.verb.pps[0].ends_with("ῑ́ημι"){
+            return stem.replacen("συνη", format!("συν {} ἡ", SEPARATOR).as_str(), 1);
         }
         else if stem.starts_with("συν") {
             return stem.replacen("συν", format!("συν {} ", SEPARATOR).as_str(), 1);
