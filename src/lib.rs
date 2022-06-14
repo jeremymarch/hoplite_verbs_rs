@@ -1015,6 +1015,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && 
             (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)) && local_stem.ends_with('μ') {
 
+            if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU && self.person == HcPerson::Second && self.number == HcNumber::Singular {
+                return Ok(String::from(BLANK));
+            }
+
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
             }
@@ -1026,6 +1030,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 else if self.verb.properties & CONSONANT_STEM_PERFECT_BETA == CONSONANT_STEM_PERFECT_BETA {
                     local_stem = format!("{}β", local_stem);    
                 }
+                else if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU {
+                    local_stem = format!("{}ν", local_stem);    
+                }
                 else {
                     local_stem = format!("{}φ", local_stem);
                 }
@@ -1033,7 +1040,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if local_ending.starts_with("σθ") {
                 local_ending.remove(0);
                 local_stem.pop();
-                local_ending = format!("φ{}", local_ending);
+                if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU {
+                    local_ending = format!("ν{}", local_ending);
+                }
+                else {
+                    local_ending = format!("φ{}", local_ending);
+                }
             }
             else if local_ending.starts_with('σ') {
                 local_stem.pop();
@@ -1042,7 +1054,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if local_ending.starts_with('τ') {
                 local_stem.pop();
-                local_ending = format!("π{}", local_ending);
+                if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU {
+                    local_ending = format!("ν{}", local_ending);
+                }
+                else {
+                    local_ending = format!("π{}", local_ending);
+                }
             }
         }
         else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && 
@@ -3013,6 +3030,9 @@ mod tests {
                         }
                         else if line.starts_with("ἀγγέλλω") {
                             CONSONANT_STEM_PERFECT_LAMBDA
+                        }
+                        else if line.starts_with("αἰσχῡ́νομαι") {
+                            CONSONANT_STEM_PERFECT_NU
                         }
                         else {
                             REGULAR
