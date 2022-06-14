@@ -35167,7 +35167,7 @@ Pluperfect Passive (Middle/Passive) Indicative
 2p: NF ; NDF
 3p: NF ; NDF
 
-Verb 112. ἀπόλλῡμι (Partial Deponent)
+Verb 112. ἀπόλλῡμι (Partial Deponent)
 
 Present Active Indicative
 1s: ἀπόλλῡμι ; ἀπο ‐ ολλῡ ‐ μι

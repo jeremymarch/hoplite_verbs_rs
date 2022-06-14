@@ -1161,6 +1161,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') || local_stem.starts_with("εἰ") || local_stem.starts_with("ῑ̔") {
                 local_stem
             }
+            else if local_stem.starts_with("ἀπολ") {        
+                local_stem.replacen("ἀπολ", format!("ἀπο {} ε {} ολ", SEPARATOR, SEPARATOR).as_str(), 1)
+            }
             else if local_stem.starts_with("ἀπο") {        
                 local_stem.replacen("ἀπο", format!("ἀπο {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
@@ -1293,7 +1296,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if local_stem.starts_with("ᾐ") {    
                 local_stem
             }
-            else if local_stem.starts_with("ᾑ") {    
+            else if local_stem.starts_with("ᾑ") {
                 local_stem
             }
             else {
@@ -1301,7 +1304,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
         }
         else {
-            if local_stem.starts_with("ἀπο") {
+            if local_stem.starts_with("ἀπολ") {
+                local_stem.replacen("ἀπολ", "ἀπωλ", 1)
+            }
+            else if local_stem.starts_with("ἀπο") {
                 local_stem.replacen("ἀπο", "ἀπε", 1)
             }
             else if local_stem.starts_with("ἀπεκ") {
@@ -1488,6 +1494,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     loc = loc.replacen("ἀπε", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
                 }
             }
+            else if loc.starts_with("ἀπω") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ἀπω", format!("ἀπο {} ε {} ο", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ἀπω", format!("ἀπο {} ο", SEPARATOR).as_str(), 1);
+                }
+            }
             else if loc.starts_with("ἀφηκ")  && (self.mood != HcMood::Indicative || self.number == HcNumber::Plural || self.voice != HcVoice::Active) {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("ἀφηκ", format!("ἀπο {} ε {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1);
@@ -1502,6 +1516,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 }
                 else {
                     loc = loc.replacen("ἀφει", format!("ἀπο {} ἑ", SEPARATOR).as_str(), 1);
+                }
+            }
+            else if loc.starts_with("ἀνη") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ἀνη", format!("ἀνα {} ε {} ε", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ἀνη", format!("ἀνα {} ε", SEPARATOR).as_str(), 1);
                 }
             }
             else if loc.starts_with("ἀφη") {
@@ -1730,7 +1752,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     loc = loc.replacen("ᾑ", "αἱ", 1);
                 }
             }
-            else if loc.starts_with('ἠ') && (self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with("φέρω")) {
+            else if loc.starts_with('ἠ') && (self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with("φέρω") || self.verb.pps[1].starts_with("ἐρήσομαι")) {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("ἠ", format!("ε {} ἐ", SEPARATOR).as_str(), 1);
                 }
@@ -1781,6 +1803,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         else {
             if loc.starts_with("ἀπε") {
                 loc = loc.replacen("ἀπε", "ἀπο", 1);
+            }
+            else if loc.starts_with("ἀπω") {
+                loc = loc.replacen("ἀπω", "ἀπο", 1);
+            }
+            else if loc.starts_with("ἀνη") {
+                loc = loc.replacen("ἀνη", "ἀνε", 1);
             }
             else if loc.starts_with("ἀφηκ")  && (self.mood != HcMood::Indicative || self.number == HcNumber::Plural || self.voice != HcVoice::Active) {
                 loc = loc.replacen("ἀφηκ", "ἀφε", 1);
@@ -1866,7 +1894,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if loc.starts_with('ὠ') {
                 loc = loc.replacen('ὠ', "ὀ", 1);
             }
-            else if loc.starts_with('ἠ') && (self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with("φέρω")) {
+            else if loc.starts_with('ἠ') && (self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with("φέρω") || self.verb.pps[1].starts_with("ἐρήσομαι")) {
                 loc.remove(0);
                 loc = format!("ἐ{}", loc);
             }
@@ -1899,7 +1927,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         //     }
         // }
 
-        if stem.starts_with("ἀπο") {
+        if stem.starts_with("ἀπολ") {
+            return stem.replacen("ἀπολ", format!("ἀπο {} ολ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("ἀπο") {
             return stem.replacen("ἀπο", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
         }
         else if stem.starts_with("ἀφῑ") {
@@ -1916,6 +1947,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
         else if stem.starts_with("ἀπεκ") {
             return stem.replacen("ἀπεκ", format!("ἀπο {} εκ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("ἀνε") {
+            return stem.replacen("ἀνε", format!("ἀνα {} ε", SEPARATOR).as_str(), 1);
         }
         else if stem.starts_with("ἐκ") {
             return stem.replacen("ἐκ", format!("ἐκ {} ", SEPARATOR).as_str(), 1);
@@ -2113,6 +2147,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             
             for e in endings_for_form.unwrap() {
+
+                if a.ends_with("ομην") && self.voice == HcVoice::Active {
+                    continue;
+                }
 
                 let a = self.strip_ending(pp_num, a.to_string());
                 if a.is_err() {
@@ -3056,7 +3094,7 @@ mod tests {
                             else if verb.deponent_type() == HcDeponentType::GignomaiDeponent { " (Deponent gignomai)"} 
                             else { "" };
      
-                        let verb_section = format!("Verb {}. {}{}", idx, verb.pps[0], partial);
+                        let verb_section = format!("Verb {}. {}{}", idx, if verb.pps[0] != "—" { verb.pps[0].clone() } else { verb.pps[1].clone() }, partial);
                         println!("\n{}", verb_section);
                         if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 76 && idx != 77 && idx != 78 && idx != 91 && idx != 95 { 
                             assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
