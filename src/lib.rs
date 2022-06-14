@@ -1168,6 +1168,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if local_stem.starts_with("συνῑ") {        
                 local_stem.replacen("συνῑ", format!("συν {} ῑ̔", SEPARATOR).as_str(), 1)
             }
+            else if local_stem.starts_with("συνει") {        
+                local_stem.replacen("συνει", format!("συν {} εἱ", SEPARATOR).as_str(), 1)
+            }
             else if local_stem.starts_with("συνε") {        
                 local_stem.replacen("συνε", format!("συν {} ε", SEPARATOR).as_str(), 1)
             }
@@ -1542,20 +1545,36 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     loc = loc.replacen("-ἐ", format!("-").as_str(), 1);
                 }
             }
-            // else if loc.starts_with("συνη") && self.verb.pps[0].ends_with("ῑ́ημι") {
-            //     if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
-            //         loc = loc.replacen("συνη", format!("συν {} ε {} ἡ", SEPARATOR, SEPARATOR).as_str(), 1);
-            //     }
-            //     else {
-            //         loc = loc.replacen("συνη", format!("συν {} ἡ", SEPARATOR).as_str(), 1);
-            //     }
-            // }
+            else if loc.starts_with("συνηκ")  && (self.mood != HcMood::Indicative || self.number == HcNumber::Plural || self.voice != HcVoice::Active) {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("συνηκ", format!("συν {} ε {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("συνηκ", format!("συν {} ἑ", SEPARATOR).as_str(), 1);
+                }
+            }
+            else if loc.starts_with("συνη") && self.verb.pps[0].ends_with("ῑ́ημι") && self.number == HcNumber::Singular {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("συνη", format!("συν {} ἡ", SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("συνη", format!("συν {} ἡ", SEPARATOR).as_str(), 1);
+                }
+            }
             else if loc.starts_with("συνη") {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("συνη", format!("συν {} ε {} ε", SEPARATOR, SEPARATOR).as_str(), 1);
                 }
                 else {
                     loc = loc.replacen("συνη", format!("συν {} ε", SEPARATOR).as_str(), 1);
+                }
+            }
+            else if loc.starts_with("συνει") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("συνει", format!("συν {} ε {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("συνει", format!("συν {} ἑ", SEPARATOR).as_str(), 1);
                 }
             }
             else if loc.starts_with("συνε") {
@@ -1749,6 +1768,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if loc.starts_with("ἀφηκ")  && (self.mood != HcMood::Indicative || self.number == HcNumber::Plural || self.voice != HcVoice::Active) {
                 loc = loc.replacen("ἀφηκ", "ἀφε", 1);
             }
+            else if loc.starts_with("συνηκ")  && (self.mood != HcMood::Indicative || self.number == HcNumber::Plural || self.voice != HcVoice::Active) {
+                loc = loc.replacen("συνηκ", "συνε", 1);
+            }
             else if loc.starts_with("ἀφει") {
                 loc = loc.replacen("ἀφει", "ἀφε", 1);
             }
@@ -1775,6 +1797,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if loc.starts_with("συνη") {
                 loc = loc.replacen("συνη", "συνε", 1);
+            }
+            else if loc.starts_with("συνει") {
+                loc = loc.replacen("συνει", "συνε", 1);
             }
             else if loc.starts_with("συνε") {
                 loc = loc.replacen("συνε", "συμ", 1);
@@ -1889,6 +1914,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
         else if stem.starts_with("συνη") && self.verb.pps[0].ends_with("ῑ́ημι"){
             return stem.replacen("συνη", format!("συν {} ἡ", SEPARATOR).as_str(), 1);
+        }
+        else if stem.starts_with("συνει") {
+            return stem.replacen("συνει", format!("συν {} εἱ", SEPARATOR).as_str(), 1);
         }
         else if stem.starts_with("συν") {
             return stem.replacen("συν", format!("συν {} ", SEPARATOR).as_str(), 1);
