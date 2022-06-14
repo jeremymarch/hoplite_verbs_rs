@@ -507,6 +507,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 else if form.ends_with("ται") {
                     return Ok(form.strip_suffix("ται").unwrap().to_string());
                 }
+                else if form.ends_with("οἰδα") || form.ends_with("οιδα") {
+                    return Ok("οἰδ".to_string());
+                }
             },
             3 => {
                 if form.ends_with("αμην") {
@@ -3157,7 +3160,7 @@ mod tests {
      
                         let verb_section = format!("Verb {}. {}{}", idx, if verb.pps[0] != "—" { verb.pps[0].clone() } else { verb.pps[1].clone() }, partial);
                         println!("\n{}", verb_section);
-                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 76 && idx != 77 && idx != 78 && idx != 91 && idx != 95 && idx != 118 { 
+                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 76 && idx != 77 && idx != 78 && idx != 91 && idx != 95 && idx != 118 && idx != 119 { 
                             assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
                         }
                         paradigm_line.clear();
@@ -3194,7 +3197,7 @@ mod tests {
 
                                             println!("{}", form_line);
 
-                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 76 && idx != 77 && idx != 78 && idx != 91 && idx != 95 && idx != 118 { 
+                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 76 && idx != 77 && idx != 78 && idx != 91 && idx != 95 && idx != 118 && idx != 119 { 
                                                 assert_eq!(paradigm_line[0..paradigm_line.len() - 1]/* .nfc().collect::<String>()*/, form_line);
                                             }
                                             paradigm_line.clear();
