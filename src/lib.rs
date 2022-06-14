@@ -1161,6 +1161,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') || local_stem.starts_with("εἰ") || local_stem.starts_with("ῑ̔") {
                 local_stem
             }
+            // else if local_stem.starts_with("εὑ") {        
+            //     local_stem.replacen("εὑ", format!("ε {} εὑ", SEPARATOR).as_str(), 1)
+            // }
             else if local_stem.starts_with("ἀπολ") {        
                 local_stem.replacen("ἀπολ", format!("ἀπο {} ε {} ολ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
@@ -1309,6 +1312,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if local_stem.starts_with("ἀπο") {
                 local_stem.replacen("ἀπο", "ἀπε", 1)
+            }
+            else if local_stem.starts_with("εὑ") {
+                local_stem.replacen("εὑ", "ηὑ", 1)
             }
             else if local_stem.starts_with("ἀπεκ") {
                 local_stem.replacen("ἀπεκ", "ἀπεκ", 1)
@@ -1500,6 +1506,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 }
                 else {
                     loc = loc.replacen("ἀπω", format!("ἀπο {} ο", SEPARATOR).as_str(), 1);
+                }
+            }
+            else if loc.starts_with("ηὑ") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ηὑ", format!("ε {} εὑ", SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ηὑ", format!("εὑ").as_str(), 1);
                 }
             }
             else if loc.starts_with("ἀφηκ")  && (self.mood != HcMood::Indicative || self.number == HcNumber::Plural || self.voice != HcVoice::Active) {
@@ -1806,6 +1820,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if loc.starts_with("ἀπω") {
                 loc = loc.replacen("ἀπω", "ἀπο", 1);
+            }
+            else if loc.starts_with("ηὑ") {
+                loc = loc.replacen("ηὑ", "εὑ", 1);
             }
             else if loc.starts_with("ἀνη") {
                 loc = loc.replacen("ἀνη", "ἀνε", 1);
@@ -2238,6 +2255,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             add_ending_collector.push(alt);
         }
 
+        //euriskw
+        if self.verb.pps[0] == "εὑρίσκω" && decompose && self.mood == HcMood::Indicative && (self.tense == HcTense::Imperfect || self.tense == HcTense::Aorist || self.tense == HcTense::Pluperfect) {
+            let alt = add_ending_collector[0].replacen("ε ‐ ", "", 1);
+            add_ending_collector.push(alt);
+        }
+
         //aphihmi
         if self.verb.pps[0] == "ἀφῑ́ημι" && decompose && self.person == HcPerson::Second && self.number == HcNumber::Singular && self.tense == HcTense::Present && self.voice == HcVoice::Active && self.mood == HcMood::Indicative {
             let alt = String::from("ἀπο ‐ ῑ̔ε ‐ εις");
@@ -2320,6 +2343,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             //dynamai
             if self.verb.pps[0] == "δύναμαι" && (self.tense == HcTense::Imperfect || self.tense == HcTense::Aorist || self.tense == HcTense::Pluperfect) {
                 let alt = add_accent_collector[0].replacen('ἐ', "ἠ", 1);
+                add_accent_collector.push(alt);
+            }
+
+            //euriskw
+            if self.verb.pps[0] == "εὑρίσκω" && (self.tense == HcTense::Imperfect || self.tense == HcTense::Aorist || self.tense == HcTense::Pluperfect) {
+                let alt = add_accent_collector[0].replacen('η', "ε", 1);
                 add_accent_collector.push(alt);
             }
 
