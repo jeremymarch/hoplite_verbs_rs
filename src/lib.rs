@@ -1179,6 +1179,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if local_stem.starts_with("-εἱ") {
                 local_stem
             }
+            else if local_stem.starts_with("ηὑ") {
+                local_stem
+            }
             else if local_stem.starts_with("ἐκ") {        
                 local_stem.replacen("ἐκ", format!("ἐκ {} ε {} ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
@@ -1315,6 +1318,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if local_stem.starts_with("εὑ") {
                 local_stem.replacen("εὑ", "ηὑ", 1)
+            }
+            else if local_stem.starts_with("ηὑ") {
+                local_stem
             }
             else if local_stem.starts_with("ἀπεκ") {
                 local_stem.replacen("ἀπεκ", "ἀπεκ", 1)
@@ -1798,6 +1804,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     loc = loc.replacen("ἠ", "ἀ", 1);
                 }
             }
+            else if loc.starts_with('ἡ') {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ἡ", format!("ἡ").as_str(), 1);
+                }
+                else {
+                    return loc;
+                }
+            }
             else if loc.starts_with("ἐρρ") {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("ἐρρ", format!("ε {} ῥ", SEPARATOR).as_str(), 1);
@@ -1926,6 +1940,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             else if loc.starts_with('ἠ') && (self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ')) {
                 loc.remove(0);
                 loc = format!("ἀ{}", loc);
+            }
+            else if loc.starts_with('ἡ') {
+                return loc;
             }
             else {
                 loc.remove(0);
@@ -2256,9 +2273,15 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         }
 
         //euriskw
-        if self.verb.pps[0] == "εὑρίσκω" && decompose && self.mood == HcMood::Indicative && (self.tense == HcTense::Imperfect || self.tense == HcTense::Aorist || self.tense == HcTense::Pluperfect) {
-            let alt = add_ending_collector[0].replacen("ε ‐ ", "", 1);
-            add_ending_collector.push(alt);
+        if self.verb.pps[0] == "εὑρίσκω" && decompose && self.mood == HcMood::Indicative {
+            if self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect {
+                let alt = add_ending_collector[0].replacen("η", "ε", 1);
+                add_ending_collector.push(alt);
+            }
+            else if self.tense == HcTense::Imperfect || self.tense == HcTense::Aorist || self.tense == HcTense::Pluperfect {
+                let alt = add_ending_collector[0].replacen("ε ‐ ", "", 1);
+                add_ending_collector.push(alt);
+            }
         }
 
         //aphihmi
@@ -2347,7 +2370,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
 
             //euriskw
-            if self.verb.pps[0] == "εὑρίσκω" && (self.tense == HcTense::Imperfect || self.tense == HcTense::Aorist || self.tense == HcTense::Pluperfect) {
+            if self.verb.pps[0] == "εὑρίσκω" && self.mood == HcMood::Indicative && (self.tense == HcTense::Perfect || self.tense == HcTense::Imperfect || self.tense == HcTense::Aorist || self.tense == HcTense::Pluperfect) {
                 let alt = add_accent_collector[0].replacen('η', "ε", 1);
                 add_accent_collector.push(alt);
             }
@@ -2829,8 +2852,16 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, t:HcTense, m:H
                 //println!("letter: {:?}", x);
                 match x.letter_type() {
                     HgkLetterType::HgkLongVowel => {
-                        last_letter = '\u{0000}';
-                        res.push(SyllableAnalysis {letters: x.to_string(HgkUnicodeMode::Precomposed), is_long: true, index: letter_num});
+                        if last_letter == 'υ' && x.letter == 'η' {
+                            res.pop();
+                            let mut s = String::from(x.letter);
+                            s.push(last_letter);
+                            res.push(SyllableAnalysis {letters: s, is_long: true, index: letter_num - 1});
+                        }
+                        else {
+                            last_letter = '\u{0000}';
+                            res.push(SyllableAnalysis {letters: x.to_string(HgkUnicodeMode::Precomposed), is_long: true, index: letter_num});
+                        }
                     },
                     HgkLetterType::HgkShortVowel => {
                         if x.letter == 'υ' || x.letter == 'ι' && (x.diacritics & HGK_DIAERESIS) != HGK_DIAERESIS {
@@ -3121,11 +3152,12 @@ mod tests {
                             else if verb.deponent_type() == HcDeponentType::MiddleDeponent { " (Middle Deponent)"} 
                             else if verb.deponent_type() == HcDeponentType::PassiveDeponent { " (Passive Deponent)"} 
                             else if verb.deponent_type() == HcDeponentType::GignomaiDeponent { " (Deponent gignomai)"} 
+                            else if verb.deponent_type() == HcDeponentType::MiddleDeponentHgeomai { " (Middle Deponent with 6th pp)"} 
                             else { "" };
      
                         let verb_section = format!("Verb {}. {}{}", idx, if verb.pps[0] != "—" { verb.pps[0].clone() } else { verb.pps[1].clone() }, partial);
                         println!("\n{}", verb_section);
-                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 76 && idx != 77 && idx != 78 && idx != 91 && idx != 95 { 
+                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 76 && idx != 77 && idx != 78 && idx != 91 && idx != 95 && idx != 118 { 
                             assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
                         }
                         paradigm_line.clear();
@@ -3162,7 +3194,7 @@ mod tests {
 
                                             println!("{}", form_line);
 
-                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 76 && idx != 77 && idx != 78 && idx != 91 && idx != 95 { 
+                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 76 && idx != 77 && idx != 78 && idx != 91 && idx != 95 && idx != 118 { 
                                                 assert_eq!(paradigm_line[0..paradigm_line.len() - 1]/* .nfc().collect::<String>()*/, form_line);
                                             }
                                             paradigm_line.clear();
