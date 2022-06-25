@@ -4,6 +4,7 @@ extern crate rustunicodetests;
 use rustunicodetests::*;
 //use rustunicodetests::hgk_toggle_diacritic_str;
 use rustunicodetests::hgk_strip_diacritics;
+use rustunicodetests::hgk_strip_diacritics_and_replace_circumflex_with_macron;
 use rustunicodetests::hgk_has_diacritics;
 //use rustunicodetests::hgk_transliterate;
 //use rustunicodetests::hgk_convert;
@@ -567,6 +568,11 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         //for contracted verbs remove nu movable for imperfect 3rd sing. active
         if self.tense == HcTense::Imperfect && ( self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") ) && self.person == HcPerson::Third && self.number == HcNumber::Singular && self.voice == HcVoice::Active {
             local_ending = local_ending.replacen("(ν)", "", 1);
+        }
+
+        //add macron to ἀφικνέομαι perfect and pluperfect
+        if self.verb.pps[0].ends_with("ἀφικνέομαι") && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && self.mood == HcMood::Indicative && self.voice != HcVoice::Active {
+            local_stem = local_stem.replacen("ι", "ῑ", 1);
         }
 
         if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") {
@@ -1167,6 +1173,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             // else if local_stem.starts_with("εὑ") {        
             //     local_stem.replacen("εὑ", format!("ε {} εὑ", SEPARATOR).as_str(), 1)
             // }
+            else if local_stem.starts_with("ἀφι") && self.verb.pps[0].starts_with("ἀφικνέομαι") && self.tense == HcTense::Pluperfect {        
+                local_stem.replacen("ἀφι", format!("ἀπο {} ῑ̔", SEPARATOR).as_str(), 1)
+            }
             else if local_stem.starts_with("ἀπολ") {        
                 local_stem.replacen("ἀπολ", format!("ἀπο {} ε {} ολ", SEPARATOR, SEPARATOR).as_str(), 1)
             }
@@ -1541,6 +1550,14 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                     loc = loc.replacen("ἀφει", format!("ἀπο {} ἑ", SEPARATOR).as_str(), 1);
                 }
             }
+            else if loc.starts_with("ἀφῑ") {
+                if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+                    loc = loc.replacen("ἀφῑ", format!("ἀπο {} ε {} ἱ", SEPARATOR, SEPARATOR).as_str(), 1);
+                }
+                else {
+                    loc = loc.replacen("ἀφῑ", format!("ἀπο {} ἱ", SEPARATOR).as_str(), 1);
+                }
+            }
             else if loc.starts_with("ἀνη") {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("ἀνη", format!("ἀνα {} ε {} ε", SEPARATOR, SEPARATOR).as_str(), 1);
@@ -1837,6 +1854,9 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
             }
             else if loc.starts_with("ἀπω") {
                 loc = loc.replacen("ἀπω", "ἀπο", 1);
+            }
+            else if loc.starts_with("ἀφῑ") {
+                loc = loc.replacen("ἀφῑ", "ἀφι", 1);
             }
             else if loc.starts_with("ηὑ") {
                 loc = loc.replacen("ηὑ", "εὑ", 1);
@@ -2142,6 +2162,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     
         //let mut pps_without_ending = Vec::new();
         //strip accent: internally (not as a step)
+        //let f = hgk_strip_diacritics_and_replace_circumflex_with_macron(f, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
         let f = hgk_strip_diacritics(f, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
 
         let mut pps_without_ending = f.split(" / ").map(|e| e.to_string()).collect::<Vec<String>>();
@@ -2805,7 +2826,7 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, t:HcTense, m:H
             for p in PREFIXES {
                 if word.starts_with(p) {
                     area = p.graphemes(true).count();
-                    //println!("area: {} {}", p, area);
+                    println!("area: {} {}", p, area);
                     break;
                 }
             }
@@ -3104,7 +3125,7 @@ mod tests {
         }
     }
 
-    static PREFIXED_VERBS:&[&str; 26] = &["ἀποδέχομαι", "ἀνατίθημι", "ἀποδίδωμι", "ἀφίστημι", "καθίστημι", "καταλῡ́ω", "μεταδίδωμι", "μετανίσταμαι", "ἐπανίσταμαι", "ἐπιδείκνυμαι", "παραγίγνομαι", "παραδίδωμι", "παραμένω", "ὑπακούω", "ὑπομένω", "διαφέρω", "συμφέρω", "ἀναβαίνω", "ἐκπῑ́πτω", "προδίδωμι", "ἀποθνῄσκω", "ἀποκτείνω", "ἀφῑ́ημι", "ἐπιβουλεύω", "συμβουλεύω", "συνῑ́ημι"];
+    static PREFIXED_VERBS:&[&str; 27] = &["ἀποδέχομαι", "ἀνατίθημι", "ἀποδίδωμι", "ἀφίστημι", "καθίστημι", "καταλῡ́ω", "μεταδίδωμι", "μετανίσταμαι", "ἐπανίσταμαι", "ἐπιδείκνυμαι", "παραγίγνομαι", "παραδίδωμι", "παραμένω", "ὑπακούω", "ὑπομένω", "διαφέρω", "συμφέρω", "ἀναβαίνω", "ἐκπῑ́πτω", "προδίδωμι", "ἀποθνῄσκω", "ἀποκτείνω", "ἀφῑ́ημι", "ἐπιβουλεύω", "συμβουλεύω", "συνῑ́ημι", "ἀφικνέομαι"];
     
     #[test]
     fn check_forms() {
@@ -3169,8 +3190,11 @@ mod tests {
                                 for v in [HcVoice::Active,HcVoice::Middle,HcVoice::Passive] { 
                                 for m in [HcMood::Indicative, HcMood::Subjunctive,HcMood::Optative,HcMood::Imperative] {
                                     
-                                    if ((m == HcMood::Subjunctive || m == HcMood::Optative || m == HcMood::Imperative) && (x == HcTense::Imperfect || x == HcTense::Perfect || x == HcTense::Pluperfect)) || x == HcTense::Future && (m == HcMood::Subjunctive || m == HcMood::Imperative) {
-                                        continue;
+                                    if  ((m == HcMood::Subjunctive || m == HcMood::Optative || m == HcMood::Imperative) && (x == HcTense::Imperfect || x == HcTense::Perfect || x == HcTense::Pluperfect)) || x == HcTense::Future && (m == HcMood::Subjunctive || m == HcMood::Imperative) {
+                                        //allow moods for oida, synoida
+                                        if !((m == HcMood::Subjunctive || m == HcMood::Optative || m == HcMood::Imperative )&& x == HcTense::Perfect && v == HcVoice::Active && (verb.pps[0] == "οἶδα" || verb.pps[0] == "σύνοιδα")) {
+                                            continue;
+                                        }
                                     }
 
                                     if paradigm_reader.read_line(&mut paradigm_line).unwrap() == 0 { return; }
