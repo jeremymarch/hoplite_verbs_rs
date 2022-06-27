@@ -262,9 +262,9 @@ pub const MI_VERB                           :u32 = 0x2000;
 
 #[derive(Eq, PartialEq, Debug)]
 pub struct HcGreekVerb {
-    id: u32,
-    pps: Vec<String>,
-    properties: u32,
+    pub id: u32,
+    pub pps: Vec<String>,
+    pub properties: u32,
 }
 
 impl HcGreekVerb {
@@ -280,6 +280,37 @@ impl HcGreekVerb {
         else {
             None
         }
+    }
+
+    pub fn from_string_with_properties(id:u32, ppstring:&str) -> Option<HcGreekVerb> {
+        let mut properties = 0;
+        let mut ll = ppstring.split('%');
+        let pps = ll.next().unwrap();
+        if let Some(s) = ll.next() {
+            if s.contains("CONSONANT_STEM_PERFECT_PI") {
+                properties |= CONSONANT_STEM_PERFECT_PI;
+            }
+            else if s.contains("CONSONANT_STEM_PERFECT_GAMMA") {
+                properties |= CONSONANT_STEM_PERFECT_GAMMA;
+            }
+            else if s.contains("CONSONANT_STEM_PERFECT_CHI") {
+                properties |= CONSONANT_STEM_PERFECT_CHI;
+            }
+            else if s.contains("CONSONANT_STEM_PERFECT_BETA") {
+                properties |= CONSONANT_STEM_PERFECT_BETA;
+            }
+            else if s.contains("CONSONANT_STEM_PERFECT_LAMBDA") {
+                properties |= CONSONANT_STEM_PERFECT_LAMBDA;
+            }
+            else if s.contains("CONSONANT_STEM_PERFECT_NU") {
+                properties |= CONSONANT_STEM_PERFECT_NU;
+            }
+            if s.contains("PREFIXED") {
+                properties |= PREFIXED;
+            }
+        }
+
+        HcGreekVerb::from_string(id, pps, properties)
     }
 
     //page 316 in h&q
@@ -3150,8 +3181,6 @@ mod tests {
             }
         }
     }
-
-    static PREFIXED_VERBS:&[&str; 27] = &["ἀποδέχομαι", "ἀνατίθημι", "ἀποδίδωμι", "ἀφίστημι", "καθίστημι", "καταλῡ́ω", "μεταδίδωμι", "μετανίσταμαι", "ἐπανίσταμαι", "ἐπιδείκνυμαι", "παραγίγνομαι", "παραδίδωμι", "παραμένω", "ὑπακούω", "ὑπομένω", "διαφέρω", "συμφέρω", "ἀναβαίνω", "ἐκπῑ́πτω", "προδίδωμι", "ἀποθνῄσκω", "ἀποκτείνω", "ἀφῑ́ημι", "ἐπιβουλεύω", "συμβουλεύω", "συνῑ́ημι", "ἀφικνέομαι"];
     
     #[test]
     fn check_forms() {
@@ -3164,36 +3193,7 @@ mod tests {
                 for (idx, pp_line) in pp_reader.lines().enumerate() {
                     if let Ok(line) = pp_line {
 
-                        let mut properties = if line.starts_with("θάπτω") || line.starts_with("κλέπτω") || line.starts_with("λείπω") || line.starts_with("ὁράω") || line.starts_with("τρέπω") {
-                            CONSONANT_STEM_PERFECT_PI
-                        }
-                        else if line.starts_with("τάττω") || line.starts_with("πρᾱ́ττω") || line.starts_with("ἄγω") || line.starts_with("λέγω") {
-                            CONSONANT_STEM_PERFECT_GAMMA
-                        }
-                        else if line.starts_with("ἄρχω") || line.starts_with("ἀποδέχομαι") || line.starts_with("δέχομαι") {
-                            CONSONANT_STEM_PERFECT_CHI
-                        }
-                        else if line.starts_with("βλάπτω") || line.starts_with("λαμβάνω") {
-                            CONSONANT_STEM_PERFECT_BETA
-                        }
-                        else if line.starts_with("ἀγγέλλω") {
-                            CONSONANT_STEM_PERFECT_LAMBDA
-                        }
-                        else if line.starts_with("αἰσχῡ́νομαι") || line.starts_with("φαίνω") {
-                            CONSONANT_STEM_PERFECT_NU
-                        }
-                        else {
-                            REGULAR
-                        };
-
-                        for v in PREFIXED_VERBS {
-                            if line.starts_with(v) {
-                                properties |= PREFIXED;
-                                break;
-                            }
-                        }
-
-                        let verb = HcGreekVerb::from_string(idx as u32, &line, properties).unwrap();
+                        let verb = HcGreekVerb::from_string_with_properties(idx as u32, &line).unwrap();
 
                         if paradigm_reader.read_line(&mut paradigm_line).unwrap() == 0 { return; }
                         paradigm_line.clear();
