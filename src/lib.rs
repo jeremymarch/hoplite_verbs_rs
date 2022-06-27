@@ -58,6 +58,14 @@ impl RReplacen for String {
 }
 
 #[derive(Eq, PartialEq, Debug)]
+enum HcFormError {
+    InternalError,
+    DoesNotExist,
+    NotAvailableInUnit,
+    NotImplemented,
+}
+
+#[derive(Eq, PartialEq, Debug)]
 enum HcEndings {
     PresentActiveInd,
     ImperfectActiveInd,
@@ -104,7 +112,7 @@ enum HcEndings {
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
-enum HcPerson {
+pub enum HcPerson {
     First,
     Second,
     Third,
@@ -121,7 +129,7 @@ impl HcPerson {
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
-enum HcNumber {
+pub enum HcNumber {
     Singular,
     Dual,
     Plural,
@@ -138,7 +146,7 @@ impl HcNumber {
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
-enum HcTense {
+pub enum HcTense {
     Present,
     Future,
     Imperfect,
@@ -161,7 +169,7 @@ impl HcTense {
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
-enum HcVoice {
+pub enum HcVoice {
     Active,
     Middle,
     Passive,
@@ -178,7 +186,7 @@ impl HcVoice {
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
-enum HcMood {
+pub enum HcMood {
     Indicative,
     Subjunctive,
     Optative,
@@ -201,14 +209,14 @@ impl HcMood {
 }
 
 #[derive(Eq, PartialEq, Debug)]
-enum HcGender {
+pub enum HcGender {
     Masculine,
     Feminine,
     Neuter,
 }
 
 #[derive(Eq, PartialEq, Debug)]
-enum HcCase {
+pub enum HcCase {
     Nominative,
     Genitive,
     Dative,
@@ -217,7 +225,7 @@ enum HcCase {
 }
 
 #[derive(PartialEq, Debug)]
-enum HcGreekPrincipalParts {
+pub enum HcGreekPrincipalParts {
     First = 1,
     Second = 2,
     Third = 3,
@@ -260,7 +268,7 @@ pub struct HcGreekVerb {
 }
 
 impl HcGreekVerb {
-    fn from_string(id:u32, pps:&str, props:u32) -> Option<HcGreekVerb> {
+    pub fn from_string(id:u32, pps:&str, props:u32) -> Option<HcGreekVerb> {
         let x: Vec<String> = pps.split(',').map(|s| s.trim().to_owned()).collect();
         if x.len() == 6 {
             Some(HcGreekVerb {
@@ -309,27 +317,27 @@ impl HcGreekVerb {
 }
 
 #[derive(Default)]
-struct Step {
-    form: String,
-    explanation: String,
+pub struct Step {
+    pub form: String,
+    pub explanation: String,
 }
 
 #[derive(Eq, PartialEq, Debug)]
 pub struct HcGreekVerbForm<'a> {
-    verb: &'a HcGreekVerb,
-    person: HcPerson,
-    number: HcNumber,
-    tense: HcTense,
-    voice: HcVoice,
-    mood: HcMood,
-    gender: Option<HcGender>,
-    case: Option<HcCase>,
+    pub verb: &'a HcGreekVerb,
+    pub person: HcPerson,
+    pub number: HcNumber,
+    pub tense: HcTense,
+    pub voice: HcVoice,
+    pub mood: HcMood,
+    pub gender: Option<HcGender>,
+    pub case: Option<HcCase>,
 }
 
 static SEPARATOR: &str = "‐";
 static BLANK: &str = "—";
 
-trait HcVerbForms {
+pub trait HcVerbForms {
     fn get_form(&self, decompose:bool) -> Result<Vec<Step>, &str>;
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> Option<String>;
@@ -2101,6 +2109,12 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         stem.to_string()
     }
 
+    // fn get_eimi(&self, decompose:bool) -> String {
+    //     if self.person == HcPerson::First && self.number == HcNumber::Singular {
+
+    //     }
+    // }
+
     fn get_form(&self, decompose:bool) -> Result<Vec<Step>, &str> {
         let mut steps = Vec::new();
         if self.mood == HcMood::Imperative && self.person == HcPerson::First {
@@ -2815,7 +2829,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     }
 }
 
-struct SyllableAnalysis {
+pub struct SyllableAnalysis {
     letters: String,
     is_long: bool,
     index: u8,
