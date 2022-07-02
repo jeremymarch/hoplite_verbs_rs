@@ -60,6 +60,9 @@ impl RReplacen for String {
 #[derive(Eq, PartialEq, Debug)]
 enum HcFormError {
     InternalError,
+    NoPrincipalPartForForm,
+    UnexpectedPrincipalPartEnding,
+    Deponent,
     DoesNotExist,
     NotAvailableInUnit,
     NotImplemented,
@@ -2147,6 +2150,22 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     // }
 
     fn get_form(&self, decompose:bool) -> Result<Vec<Step>, &str> {
+        if self.mood == HcMood::Subjunctive && self.tense != HcTense::Present && self.tense != HcTense::Aorist {
+            if !(self.verb.pps[0].ends_with("δα") && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)) {
+                return Err("Illegal form");
+            }
+        }
+        else if self.mood == HcMood::Optative && self.tense != HcTense::Present && self.tense != HcTense::Aorist && self.tense != HcTense::Future {
+            if !(self.verb.pps[0].ends_with("δα") && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)) {
+                return Err("Illegal form");
+            }
+        }
+        else if self.mood == HcMood::Imperative && self.tense != HcTense::Present && self.tense != HcTense::Aorist {
+            if !(self.verb.pps[0].ends_with("δα") && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)) {
+                return Err("Illegal form");
+            }
+        }
+
         let mut steps = Vec::new();
         if self.mood == HcMood::Imperative && self.person == HcPerson::First {
             steps.push(Step{form:"".to_string(), explanation:"".to_string()});
@@ -2164,7 +2183,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
         if f == BLANK {
             steps.push(Step{form:String::from(""), explanation:String::from("Blank principal part")});
-            return Ok(steps);
+            return Ok(steps); //fix me return blank pp error
         }
 
         if self.voice == HcVoice::Active && self.is_deponent(f) {
