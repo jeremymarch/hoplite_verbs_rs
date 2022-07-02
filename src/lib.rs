@@ -1198,7 +1198,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         if decompose {
             Ok(format!("{} {} {}{}", local_stem, SEPARATOR, future_passive_suffix, local_ending))
         }
-        else { //come take see say find
+        else { //come take see say find: elthe/ labe/ eide/ eipe/ eyre/
             if local_stem == "ἐλθ" && local_ending == "ε" {
                 local_ending = "έ".to_string();
             }
@@ -2183,7 +2183,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
         if f == BLANK {
             steps.push(Step{form:String::from(""), explanation:String::from("Blank principal part")});
-            return Ok(steps); //fix me return blank pp error
+            return Err("Blank pp");//Ok(steps); //fix me return blank pp error
         }
 
         if self.voice == HcVoice::Active && self.is_deponent(f) {
@@ -3257,8 +3257,29 @@ mod tests {
                                         for y in [HcPerson::First, HcPerson::Second, HcPerson::Third] {
 
                                             let form = HcGreekVerbForm {verb:&verb, person:y, number:z, tense:x, voice:v, mood:m, gender:None, case:None};
-                                            let r = if form.get_form(false).unwrap().last().unwrap().form == "" { "NF".to_string() } else { form.get_form(false).unwrap().last().unwrap().form.to_string() };
-                                            let r_d = if form.get_form(true).unwrap().last().unwrap().form == "" { "NDF".to_string() } else { form.get_form(true).unwrap().last().unwrap().form.to_string() };
+                                            let r = match form.get_form(false) {
+                                                Ok(res) => {
+                                                    if res.last().unwrap().form == "" {
+                                                        "NF".to_string() 
+                                                    }
+                                                    else { 
+                                                        res.last().unwrap().form.to_string()
+                                                    }
+                                                },
+                                                Err(_a) => "NF".to_string()
+                                            };
+                                            
+                                            let r_d = match form.get_form(true) {
+                                                Ok(res) => {
+                                                    if res.last().unwrap().form == "" { 
+                                                        "NDF".to_string() 
+                                                    } 
+                                                    else { 
+                                                        res.last().unwrap().form.to_string() 
+                                                    }
+                                                },
+                                                Err(_a) => "NDF".to_string()
+                                            };
 
                                             let form_line = format!("{}{}: {} ; {}", y.value(), z.value(), 
                                                 str::replace(&r, " /", ","),
