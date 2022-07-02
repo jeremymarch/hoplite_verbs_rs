@@ -58,11 +58,12 @@ impl RReplacen for String {
 }
 
 #[derive(Eq, PartialEq, Debug)]
-enum HcFormError {
+pub enum HcFormError {
     InternalError,
-    NoPrincipalPartForForm,
+    BlankPrincipalPartForForm,
     UnexpectedPrincipalPartEnding,
     Deponent,
+    IllegalForm,
     DoesNotExist,
     NotAvailableInUnit,
     NotImplemented,
@@ -372,7 +373,7 @@ static SEPARATOR: &str = "‐";
 static BLANK: &str = "—";
 
 pub trait HcVerbForms {
-    fn get_form(&self, decompose:bool) -> Result<Vec<Step>, &str>;
+    fn get_form(&self, decompose:bool) -> Result<Vec<Step>, HcFormError>;
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> Option<String>;
     fn strip_ending(&self, pp_num:usize, form:String) -> Result<String, &str>;
@@ -2149,27 +2150,27 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
     //     }
     // }
 
-    fn get_form(&self, decompose:bool) -> Result<Vec<Step>, &str> {
+    fn get_form(&self, decompose:bool) -> Result<Vec<Step>, HcFormError> {
         if self.mood == HcMood::Subjunctive && self.tense != HcTense::Present && self.tense != HcTense::Aorist {
             if !(self.verb.pps[0].ends_with("δα") && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)) {
-                return Err("Illegal form");
+                return Err(HcFormError::IllegalForm);
             }
         }
         else if self.mood == HcMood::Optative && self.tense != HcTense::Present && self.tense != HcTense::Aorist && self.tense != HcTense::Future {
             if !(self.verb.pps[0].ends_with("δα") && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)) {
-                return Err("Illegal form");
+                return Err(HcFormError::IllegalForm);
             }
         }
         else if self.mood == HcMood::Imperative && self.tense != HcTense::Present && self.tense != HcTense::Aorist {
             if !(self.verb.pps[0].ends_with("δα") && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)) {
-                return Err("Illegal form");
+                return Err(HcFormError::IllegalForm);
             }
         }
 
         let mut steps = Vec::new();
+        //eliminate first person imperatives
         if self.mood == HcMood::Imperative && self.person == HcPerson::First {
-            steps.push(Step{form:"".to_string(), explanation:"".to_string()});
-            return Ok(steps);
+            return Err(HcFormError::IllegalForm);
         }
 
         let f = self.verb.pps.join(", ");
@@ -2182,51 +2183,41 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         steps.push(Step{form:f.to_string(), explanation:e});
 
         if f == BLANK {
-            steps.push(Step{form:String::from(""), explanation:String::from("Blank principal part")});
-            return Err("Blank pp");//Ok(steps); //fix me return blank pp error
+            return Err(HcFormError::BlankPrincipalPartForForm);
         }
 
         if self.voice == HcVoice::Active && self.is_deponent(f) {
-            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-            return Ok(steps);
+            return Err(HcFormError::Deponent);
         }
 
         //block future passive for passive deponents
         if self.verb.deponent_type() == HcDeponentType::PassiveDeponent && self.tense == HcTense::Future && self.voice == HcVoice::Passive {
-            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-            return Ok(steps);
+            return Err(HcFormError::Deponent);
         }
         
         //abd
         //no passive for middle deponent present or imperfect
         //this does not need to be done for future, aorist because from different pp,
-        if self.voice == HcVoice::Passive && (self.tense == HcTense::Present || self.tense == HcTense::Imperfect) && self.verb.pps[0].ends_with("μαι")
-        {
-            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-            return Ok(steps);
+        if self.voice == HcVoice::Passive && (self.tense == HcTense::Present || self.tense == HcTense::Imperfect) && self.verb.pps[0].ends_with("μαι") {
+            return Err(HcFormError::Deponent);
         }
         
         //for perfect and pluperfect we need to block passive if middle or passive deponent
-        if self.voice == HcVoice::Passive && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent || self.verb.deponent_type() == HcDeponentType::MiddleDeponentHgeomai)
-        {
-            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-            return Ok(steps);
+        if self.voice == HcVoice::Passive && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent || self.verb.deponent_type() == HcDeponentType::MiddleDeponentHgeomai) {
+            return Err(HcFormError::Deponent);
         }
         
         //middle deponents do not have a passive voice.  H&Q page 316
         if self.voice == HcVoice::Passive && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::GignomaiDeponent) {
-            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-            return Ok(steps);
+            return Err(HcFormError::Deponent);
         }
 
         if self.voice == HcVoice::Active && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent)  && !self.verb.pps[2].ends_with("στην") {
-            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-            return Ok(steps);
+            return Err(HcFormError::Deponent);
         }
 
         if self.voice == HcVoice::Active && self.tense != HcTense::Perfect && self.tense != HcTense::Pluperfect && self.verb.deponent_type() == HcDeponentType::GignomaiDeponent {
-            steps.push(Step{form:String::from(""), explanation:String::from("Deponent")});
-            return Ok(steps);
+            return Err(HcFormError::Deponent);
         }
         /* 
         if (vf->voice == PASSIVE && deponentType(vf->verb) == PASSIVE_DEPONENT && (vf->tense == PRESENT || vf->tense == IMPERFECT || vf->tense == PERFECT || vf->tense == PLUPERFECT)) //aorist or future are ok
@@ -2277,7 +2268,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
         for a in pps_without_ending {
             let endings_for_form = self.get_endings(&a);
             if endings_for_form == None {
-                return Err("Illegal form ending");
+                return Err(HcFormError::InternalError);//("Illegal form ending");
             }
             
             for e in endings_for_form.unwrap() {
@@ -2288,7 +2279,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
 
                 let a = self.strip_ending(pp_num, a.to_string());
                 if a.is_err() {
-                    return Err("error stripping ending");
+                    return Err(HcFormError::UnexpectedPrincipalPartEnding);//("error stripping ending");
                 }
                 let a = a.unwrap();
 
@@ -2329,7 +2320,7 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 
                 let y = match y {
                     Ok(y) => y,
-                    _ => return Err("Error adding ending")
+                    _ => return Err(HcFormError::InternalError)//("Error adding ending")
                 };
                 
                 if decompose && self.tense != HcTense::Imperfect && self.tense != HcTense::Pluperfect && self.tense != HcTense::Aorist && !(self.tense == HcTense::Future && self.voice == HcVoice::Passive) {
@@ -2417,7 +2408,10 @@ impl HcVerbForms for HcGreekVerbForm<'_> {
                 add_ending_collector.push(alt);
             }
         }
-
+        
+        if add_ending_collector.len() == 0 { //this catches meanesthn in aorist middle, etc.; fix me? should be better way to catch these
+            return Err(HcFormError::InternalError);
+        }
         let f = add_ending_collector.join(" / ");
         let e = "Add ending".to_string();
         steps.push(Step{form:f, explanation:e});
@@ -3258,26 +3252,12 @@ mod tests {
 
                                             let form = HcGreekVerbForm {verb:&verb, person:y, number:z, tense:x, voice:v, mood:m, gender:None, case:None};
                                             let r = match form.get_form(false) {
-                                                Ok(res) => {
-                                                    if res.last().unwrap().form == "" {
-                                                        "NF".to_string() 
-                                                    }
-                                                    else { 
-                                                        res.last().unwrap().form.to_string()
-                                                    }
-                                                },
+                                                Ok(res) => res.last().unwrap().form.to_string(),
                                                 Err(_a) => "NF".to_string()
                                             };
                                             
                                             let r_d = match form.get_form(true) {
-                                                Ok(res) => {
-                                                    if res.last().unwrap().form == "" { 
-                                                        "NDF".to_string() 
-                                                    } 
-                                                    else { 
-                                                        res.last().unwrap().form.to_string() 
-                                                    }
-                                                },
+                                                Ok(res) => res.last().unwrap().form.to_string(),
                                                 Err(_a) => "NDF".to_string()
                                             };
 
