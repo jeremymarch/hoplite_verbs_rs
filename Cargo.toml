@@ -13,6 +13,9 @@ unicode-segmentation = "1.9.0"
 
 itertools = "0.10.3"
 
+[dev-dependencies]
+criterion = "0.3.5"
+
 [lib]
 doctest = false # don't run Doc-tests for now
 
