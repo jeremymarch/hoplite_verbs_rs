@@ -10,6 +10,8 @@ use rustunicodetests::hgk_has_diacritics;
 //use rustunicodetests::hgk_convert;
 use std::sync::Arc;
 
+use rand::Rng;
+use rand::prelude::SliceRandom;
 use itertools::Itertools;
 
 trait RReplacen {
@@ -390,6 +392,7 @@ pub trait HcVerbForms {
     fn contract_verb(&self, unaccented_form:&str, ending:&str) -> String;
     fn is_deponent(&self, stem:&str) -> bool;
     fn separate_prefix(&self, stem:&str) ->String;
+    fn change_params(&mut self, num:u8, persons:&Vec<HcPerson>, numbers:&Vec<HcNumber>, tenses:&Vec<HcTense>, voices:&Vec<HcVoice>, moods:&Vec<HcMood>);
 }
 
 /*
@@ -2029,8 +2032,31 @@ impl HcVerbForms for HcGreekVerbForm {
             loc
         }
     }
-
-
+    
+    fn change_params(&mut self, num:u8, persons:&Vec<HcPerson>, numbers:&Vec<HcNumber>, tenses:&Vec<HcTense>, voices:&Vec<HcVoice>, moods:&Vec<HcMood>) {
+        let mut params_to_change:Vec<u8> = vec![];
+        let mut rng = rand::thread_rng();
+        
+        //add unique param numbers 0-4
+        while params_to_change.len() < num.into() {
+            let p = rng.gen_range(0..=4);
+            if !params_to_change.contains(&p) {
+                params_to_change.push(p);
+            }
+        }
+        for a in 0..=4 {
+            match a {
+                0 if params_to_change.contains(&0) && persons.len() > 0 => self.person = persons.choose(&mut rand::thread_rng()).unwrap().clone(),
+                1 if params_to_change.contains(&1) && numbers.len() > 0 => self.number = numbers.choose(&mut rand::thread_rng()).unwrap().clone(),
+                2 if params_to_change.contains(&2) && tenses.len() > 0 => self.tense = tenses.choose(&mut rand::thread_rng()).unwrap().clone(),
+                3 if params_to_change.contains(&3) && voices.len() > 0 => self.voice = voices.choose(&mut rand::thread_rng()).unwrap().clone(),
+                4 if params_to_change.contains(&4) && moods.len() > 0 => self.mood = moods.choose(&mut rand::thread_rng()).unwrap().clone(),
+                _ => ()
+            }
+        }
+        // self.person = HcPerson::First;
+        // self.number = HcNumber::Singular;
+    }
 
     fn separate_prefix(&self, stem:&str) ->String {
         // let pre = vec![("ἀπο", vec!["ἀπο"], "")];
@@ -2897,7 +2923,7 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, t:HcTense, m:H
             for p in PREFIXES {
                 if word.starts_with(p) {
                     area = p.graphemes(true).count();
-                    println!("area: {} {}", p, area);
+                    //println!("area: {} {}", p, area);
                     break;
                 }
             }
