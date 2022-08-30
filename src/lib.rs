@@ -2045,12 +2045,13 @@ impl HcVerbForms for HcGreekVerbForm {
             }
         }
         for a in 0..=4 {
+            //remove current value from param vec to be sure it is not re-selected
             match a {
-                0 if params_to_change.contains(&0) && persons.len() > 0 => self.person = persons.choose(&mut rand::thread_rng()).unwrap().clone(),
-                1 if params_to_change.contains(&1) && numbers.len() > 0 => self.number = numbers.choose(&mut rand::thread_rng()).unwrap().clone(),
-                2 if params_to_change.contains(&2) && tenses.len() > 0 => self.tense = tenses.choose(&mut rand::thread_rng()).unwrap().clone(),
-                3 if params_to_change.contains(&3) && voices.len() > 0 => self.voice = voices.choose(&mut rand::thread_rng()).unwrap().clone(),
-                4 if params_to_change.contains(&4) && moods.len() > 0 => self.mood = moods.choose(&mut rand::thread_rng()).unwrap().clone(),
+                0 if params_to_change.contains(&0) && persons.len() > 0 => self.person = *persons.iter().filter(|x| **x != self.person).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap().clone(),
+                1 if params_to_change.contains(&1) && numbers.len() > 0 => self.number = *numbers.iter().filter(|x| **x != self.number).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap().clone(),
+                2 if params_to_change.contains(&2) && tenses.len() > 0 => self.tense = *tenses.iter().filter(|x| **x != self.tense).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap().clone(),
+                3 if params_to_change.contains(&3) && voices.len() > 0 => self.voice = *voices.iter().filter(|x| **x != self.voice).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap().clone(),
+                4 if params_to_change.contains(&4) && moods.len() > 0 => self.mood = *moods.iter().filter(|x| **x != self.mood).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap().clone(),
                 _ => ()
             }
         }
@@ -2058,7 +2059,7 @@ impl HcVerbForms for HcGreekVerbForm {
         // self.number = HcNumber::Singular;
     }
 
-    fn separate_prefix(&self, stem:&str) ->String {
+    fn separate_prefix(&self, stem:&str) -> String {
         // let pre = vec![("ἀπο", vec!["ἀπο"], "")];
         // for p in pre {
         //     if stem.starts_with(p.0) {
