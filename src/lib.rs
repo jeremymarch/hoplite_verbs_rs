@@ -376,6 +376,7 @@ static SEPARATOR: &str = "‐";
 static BLANK: &str = "—";
 
 pub trait HcVerbForms {
+    fn get_description(&self, prev:&HcGreekVerbForm, start:&str, end:&str) -> String;
     fn get_form(&self, decompose:bool) -> Result<Vec<Step>, HcFormError>;
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> Option<String>;
@@ -2177,6 +2178,52 @@ impl HcVerbForms for HcGreekVerbForm {
 
     //     }
     // }
+
+    // fn get_dei(&self) {
+
+    // }
+
+    fn get_description(&self, p:&HcGreekVerbForm, start:&str, end:&str) -> String {
+        let mut desc = String::new();
+        //let start = "<span foreground=\"red\"><b>";
+        //let end = "</b></span>";
+        if p.person != self.person {
+            desc = format!("{} {}{:?}{}", desc, start, self.person, end);
+        }
+        else {
+            desc = format!("{} {:?}", desc, self.person);
+        }
+
+        if p.number != self.number {
+            desc = format!("{} {}{:?}{}", desc, start, self.number, end);
+        }
+        else {
+            desc = format!("{} {:?}", desc, self.number);
+        }
+
+        if p.tense != self.tense {
+            desc = format!("{} {}{:?}{}", desc, start, self.tense, end);
+        }
+        else {
+            desc = format!("{} {:?}", desc, self.tense);
+        }
+
+        if p.mood != self.mood {
+            desc = format!("{} {}{:?}{}", desc, start, self.mood, end);
+        }
+        else {
+            desc = format!("{} {:?}", desc, self.mood);
+        }
+        
+        if p.voice != self.voice {
+            desc = format!("{} {}{:?}{}", desc, start, self.voice, end);
+        }
+        else {
+            desc = format!("{} {:?}", desc, self.voice);
+        }
+
+        desc
+    }
 
     fn get_form(&self, decompose:bool) -> Result<Vec<Step>, HcFormError> {
         if self.mood == HcMood::Subjunctive && self.tense != HcTense::Present && self.tense != HcTense::Aorist {
