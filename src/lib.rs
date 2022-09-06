@@ -274,6 +274,54 @@ pub struct HcGreekVerb {
     pub properties: u32,
 }
 
+fn get_esti(vf:&HcGreekVerbForm, _decompose:bool) -> String {
+    let mut s = String::from("");
+    if  vf.person != HcPerson::Third || vf.number != HcNumber::Singular {
+        return s;
+    }
+    
+    if vf.tense == HcTense::Present {
+        if vf.mood == HcMood::Indicative && vf.voice == HcVoice::Active {
+            s = String::from("ἔστι(ν)");
+        }
+    }
+    else if vf.tense == HcTense::Imperfect && vf.voice == HcVoice::Active {
+        if vf.mood == HcMood::Indicative {
+            s = String::from("ἦν");
+        }
+    }
+    else if vf.tense == HcTense::Future && vf.voice == HcVoice::Middle {
+        if vf.mood == HcMood::Indicative {
+            s = String::from("ἔσται");
+        }
+    }
+    String::from(s)
+}
+
+fn get_exesti(vf:&HcGreekVerbForm, decompose:bool) -> String {
+    let mut s = String::from("");
+    if  vf.person != HcPerson::Third || vf.number != HcNumber::Singular {
+        return s;
+    }
+    
+    if vf.tense == HcTense::Present {
+        if vf.mood == HcMood::Indicative && vf.voice == HcVoice::Active {
+            s = if decompose {format!("ἐξ {} εστι(ν)", SEPARATOR) } else { String::from("ἔξεστι(ν)") };
+        }
+    }
+    else if vf.tense == HcTense::Imperfect && vf.voice == HcVoice::Active {
+        if vf.mood == HcMood::Indicative {
+            s = if decompose {format!("ἐξ {} ην", SEPARATOR) } else { String::from("ἐξῆν") };
+        }
+    }
+    else if vf.tense == HcTense::Future && vf.voice == HcVoice::Middle {
+        if vf.mood == HcMood::Indicative {
+            s = if decompose {format!("ἐξ {} εσεται", SEPARATOR) } else { String::from("ἐξέσται") };
+        }
+    }
+    String::from(s)
+}
+
 fn get_dei(vf:&HcGreekVerbForm, decompose:bool) -> String {
     let mut s = String::from("");
     if vf.voice != HcVoice::Active || vf.person != HcPerson::Third || vf.number != HcNumber::Singular {
@@ -3217,8 +3265,24 @@ impl HcVerbForms for HcGreekVerbForm {
             steps.push(Step{form:fff, explanation:String::from("def")});
             return Ok(steps);
         }
-        if self.verb.pps[0] == "χρή" {          
+        else if self.verb.pps[0] == "χρή" {          
             let fff = get_xrh(&self, decompose);
+            if fff == "" {
+                return Err(HcFormError::IllegalForm);
+            }
+            steps.push(Step{form:fff, explanation:String::from("def")});
+            return Ok(steps);
+        }
+        else if self.verb.pps[0] == "ἔστι(ν)" {          
+            let fff = get_esti(&self, decompose);
+            if fff == "" {
+                return Err(HcFormError::IllegalForm);
+            }
+            steps.push(Step{form:fff, explanation:String::from("def")});
+            return Ok(steps);
+        }
+        else if self.verb.pps[0] == "ἔξεστι(ν)" {          
+            let fff = get_exesti(&self, decompose);
             if fff == "" {
                 return Err(HcFormError::IllegalForm);
             }
@@ -4310,7 +4374,7 @@ mod tests {
      
                         let verb_section = format!("Verb {}. {}{}", idx, if verb.pps[0] != "—" { verb.pps[0].clone() } else { verb.pps[1].clone() }, partial);
                         println!("\n{}", verb_section);
-                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 { 
+                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 /*&& idx != 77 && idx != 78*/ { 
                             assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
                         }
                         paradigm_line.clear();
@@ -4357,7 +4421,7 @@ mod tests {
 
                                             println!("{}", form_line);
 
-                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 { 
+                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 /*&& idx != 77 && idx != 78*/ { 
                                                 assert_eq!(paradigm_line[0..paradigm_line.len() - 1]/* .nfc().collect::<String>()*/, form_line);
                                             }
                                             paradigm_line.clear();
