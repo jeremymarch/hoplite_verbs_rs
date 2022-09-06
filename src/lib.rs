@@ -274,6 +274,41 @@ pub struct HcGreekVerb {
     pub properties: u32,
 }
 
+fn get_dei(vf:&HcGreekVerbForm, decompose:bool) -> String {
+    let mut s = String::from("");
+    if vf.voice != HcVoice::Active || vf.person != HcPerson::Third || vf.number != HcNumber::Singular{
+        return s;
+    }
+    
+    if vf.tense == HcTense::Present {
+        if vf.mood == HcMood::Indicative {
+            s = if decompose {format!("δε {} ει", SEPARATOR) } else { String::from("δεῖ") };
+        }
+        else if vf.mood == HcMood::Subjunctive {
+            s = if decompose {format!("δε {} ῃ", SEPARATOR) } else { String::from("δέῃ") };
+        }
+        else if vf.mood == HcMood::Optative {
+            s = if decompose {format!("δε {} οι", SEPARATOR) } else { String::from("δέοι") };
+        }
+    }
+    else if vf.tense == HcTense::Imperfect {
+        if vf.mood == HcMood::Indicative {
+            s = if decompose {format!("ε {} δε {} ε", SEPARATOR, SEPARATOR) } else { String::from("ἔδει") };
+        }
+    }
+    else if vf.tense == HcTense::Future {
+        if vf.mood == HcMood::Indicative {
+            s = if decompose {format!("δεησ {} ει", SEPARATOR) } else { String::from("δεήσει") };
+        }
+    }
+    else if vf.tense == HcTense::Aorist {
+        if vf.mood == HcMood::Indicative {
+            s = if decompose {format!("ε {} δεησ {} ε(ν)", SEPARATOR, SEPARATOR) } else { String::from("ἐδέησε(ν)") };
+        }
+    }
+    String::from(s)
+}
+
 fn get_eimi(vf:&HcGreekVerbForm, _decompose:bool) -> String {
     if vf.voice != HcVoice::Active {
         return String::from("");
@@ -2853,8 +2888,16 @@ impl HcVerbForms for HcGreekVerbForm {
             return 0;
         }
         */
-        
-        if self.verb.pps[0] == "εἰμί" {
+
+        if self.verb.pps[0] == "δεῖ" {          
+            let fff = get_dei(&self, decompose);
+            if fff == "" {
+                return Err(HcFormError::IllegalForm);
+            }
+            steps.push(Step{form:fff, explanation:String::from("def")});
+            return Ok(steps);
+        }
+        else if self.verb.pps[0] == "εἰμί" {
             if self.tense != HcTense::Future {
                 let fff = get_eimi(&self, decompose);
                 if fff == "" {
@@ -3917,7 +3960,7 @@ mod tests {
      
                         let verb_section = format!("Verb {}. {}{}", idx, if verb.pps[0] != "—" { verb.pps[0].clone() } else { verb.pps[1].clone() }, partial);
                         println!("\n{}", verb_section);
-                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 && idx != 119 && idx != 121 && idx != 122 && idx != 126 { 
+                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 && idx != 119 && idx != 122 && idx != 126 { 
                             assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
                         }
                         paradigm_line.clear();
@@ -3964,7 +4007,7 @@ mod tests {
 
                                             println!("{}", form_line);
 
-                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 && idx != 119 && idx != 121 && idx != 122 && idx != 126 { 
+                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 && idx != 119 && idx != 122 && idx != 126 { 
                                                 assert_eq!(paradigm_line[0..paradigm_line.len() - 1]/* .nfc().collect::<String>()*/, form_line);
                                             }
                                             paradigm_line.clear();
