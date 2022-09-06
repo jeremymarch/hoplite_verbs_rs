@@ -414,6 +414,147 @@ fn get_eimi(vf:&HcGreekVerbForm, decompose:bool) -> String {
     String::from(s)
 }
 
+fn get_fhmi(vf:&HcGreekVerbForm, decompose:bool) -> String {
+    if vf.voice != HcVoice::Active {
+        return String::from("");
+    }
+    let mut s = String::from("");
+    if vf.tense == HcTense::Present {
+        if vf.mood == HcMood::Indicative {
+            if vf.person == HcPerson::First {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("φη {} μι", SEPARATOR) } else { String::from("φημί") };
+                }
+                else {
+                    s = if decompose {format!("φα {} μεν", SEPARATOR) } else { String::from("φαμέν") };
+                }
+            }
+            else if vf.person == HcPerson::Second {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("φῃ {} ς", SEPARATOR) } else { String::from("φῄς") };
+                }
+                else {
+                    s = if decompose {format!("φα {} τε", SEPARATOR) } else { String::from("φατέ") };
+                }
+            }
+            else if vf.person == HcPerson::Third {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("φη {} σι(ν)", SEPARATOR) } else { String::from("φησί(ν)") };
+                }
+                else {
+                    /*fix me?*/
+                    s = if decompose {format!("φα {} ᾱσι(ν)", SEPARATOR) } else { String::from("φᾱσί(ν)") };
+                }
+            }
+        }
+        else if vf.mood == HcMood::Subjunctive {
+            if vf.person == HcPerson::First {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("φε {} ω", SEPARATOR) } else { String::from("φῶ") };
+                }
+                else {
+                    s = if decompose {format!("φε {} ωμεν", SEPARATOR) } else { String::from("φῶμεν") };
+                }
+            }
+            else if vf.person == HcPerson::Second {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("φε {} ῃς", SEPARATOR) } else { String::from("φῇς") };
+                }
+                else {
+                    s = if decompose {format!("φε {} ητε", SEPARATOR) } else { String::from("φῆτε") };
+                }
+            }
+            else if vf.person == HcPerson::Third {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("φε {} ῃ", SEPARATOR) } else { String::from("φῇ") };
+                }
+                else {
+                    s = if decompose {format!("φε {} ωσι(ν)", SEPARATOR) } else { String::from("φῶσι(ν)") };
+                }
+            }
+        }
+        else if vf.mood == HcMood::Optative {
+            if vf.person == HcPerson::First {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("φα {} ιην", SEPARATOR) } else { String::from("φαίην") };
+                }
+                else {
+                    s = if decompose {format!("φα {} ιμεν, φα {} ιημεν", SEPARATOR, SEPARATOR) } else { String::from("φαῖμεν, φαίημεν") };
+                }
+            }
+            else if vf.person == HcPerson::Second {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("φα {} ιης", SEPARATOR) } else { String::from("φαίης") };
+                }
+                else {
+                    s = if decompose {format!("φα {} ιτε, φα {} ιητε", SEPARATOR, SEPARATOR) } else { String::from("φαῖτε, φαίητε") };
+                }
+            }
+            else if vf.person == HcPerson::Third {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("φα {} ιη", SEPARATOR) } else { String::from("φαίη") };
+                }
+                else {
+                    s = if decompose {format!("φα {} ιεν, φα {} ιησαν", SEPARATOR, SEPARATOR) } else { String::from("φαῖεν, φαίησαν") };
+                }
+            }
+        }
+        else if vf.mood == HcMood::Imperative {
+            if vf.person == HcPerson::First {
+                if vf.number == HcNumber::Singular {
+                    s = String::from("");
+                }
+                else {
+                    s = String::from("");
+                }
+            }
+            else if vf.person == HcPerson::Second {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("φα {} θι", SEPARATOR) } else { String::from("φάθι") };
+                }
+                else {
+                    s = if decompose {format!("φα {} τε", SEPARATOR) } else { String::from("φάτε") };
+                }
+            }
+            else if vf.person == HcPerson::Third {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("φα {} τω", SEPARATOR) } else { String::from("φάτω") };
+                }
+                else {
+                    s = if decompose {format!("φα {} ντων", SEPARATOR) } else { String::from("φάντων") };
+                }
+            }
+        }
+    }
+    else if vf.tense == HcTense::Imperfect {
+        if vf.person == HcPerson::First {
+            if vf.number == HcNumber::Singular {
+                s = if decompose {format!("ε {} φη {} ν", SEPARATOR, SEPARATOR) } else { String::from("ἔφην") };
+            }
+            else {
+                s = if decompose {format!("ε {} φα {} μεν", SEPARATOR, SEPARATOR) } else { String::from("ἔφαμεν") };
+            }
+        }
+        else if vf.person == HcPerson::Second {
+            if vf.number == HcNumber::Singular {
+                s = if decompose {format!("ε {} φη {} σθα, ε {} φη {} ς", SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR) } else { String::from("ἔφησθα, ἔφης") };
+            }
+            else {
+                s = if decompose {format!("ε {} φα {} τε", SEPARATOR, SEPARATOR) } else { String::from("ἔφατε") };
+            }
+        }
+        else if vf.person == HcPerson::Third {
+            if vf.number == HcNumber::Singular {
+                s = if decompose {format!("ε {} φη {} ", SEPARATOR, SEPARATOR) } else { String::from("ἔφη") };
+            }
+            else {
+                s = if decompose {format!("ε {} φα {} σαν", SEPARATOR, SEPARATOR) } else { String::from("ἔφασαν") };
+            }
+        }
+    }
+    String::from(s)
+}
+
 impl HcGreekVerb {
     pub fn from_string(id:u32, pps:&str, props:u32) -> Option<HcGreekVerb> {
         let x: Vec<String> = pps.split(',').map(|s| s.trim().to_owned()).collect();
@@ -2449,6 +2590,20 @@ impl HcVerbForms for HcGreekVerbForm {
                 return Ok(steps);
             }
         }
+        else if self.verb.pps[0] == "φημί" {
+            if self.tense == HcTense::Present || self.tense == HcTense::Imperfect {
+                let fff = get_fhmi(&self, decompose);
+                if fff == "" {
+                    return Err(HcFormError::IllegalForm);
+                }
+                steps.push(Step{form:fff, explanation:String::from("def")});
+                return Ok(steps);
+            }
+            else if (self.tense == HcTense::Future || self.tense == HcTense::Aorist) && self.voice == HcVoice::Middle {
+                /*fix me?*/
+                return Err(HcFormError::IllegalForm);
+            }
+        }
 
     
         //let mut pps_without_ending = Vec::new();
@@ -3446,7 +3601,7 @@ mod tests {
      
                         let verb_section = format!("Verb {}. {}{}", idx, if verb.pps[0] != "—" { verb.pps[0].clone() } else { verb.pps[1].clone() }, partial);
                         println!("\n{}", verb_section);
-                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 && idx != 91 && idx != 95 && idx != 118 && idx != 119 && idx != 121 && idx != 122 && idx != 126 { 
+                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 && idx != 95 && idx != 118 && idx != 119 && idx != 121 && idx != 122 && idx != 126 { 
                             assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
                         }
                         paradigm_line.clear();
@@ -3493,7 +3648,7 @@ mod tests {
 
                                             println!("{}", form_line);
 
-                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 && idx != 91 && idx != 95 && idx != 118 && idx != 119 && idx != 121 && idx != 122 && idx != 126 { 
+                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 && idx != 95 && idx != 118 && idx != 119 && idx != 121 && idx != 122 && idx != 126 { 
                                                 assert_eq!(paradigm_line[0..paradigm_line.len() - 1]/* .nfc().collect::<String>()*/, form_line);
                                             }
                                             paradigm_line.clear();
