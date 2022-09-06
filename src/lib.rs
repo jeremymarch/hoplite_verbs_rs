@@ -1040,6 +1040,147 @@ fn get_oida(vf:&HcGreekVerbForm, decompose:bool) -> String {
     String::from(s)
 }
 
+fn get_sunoida(vf:&HcGreekVerbForm, decompose:bool) -> String {
+    if vf.voice != HcVoice::Active {
+        return String::from("");
+    }
+    let mut s = String::from("");
+    if vf.tense == HcTense::Perfect {
+        if vf.mood == HcMood::Indicative {
+            if vf.person == HcPerson::First {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("συν {} οἰδ {} α", SEPARATOR, SEPARATOR) } else { String::from("σύνοιδα") };
+                }
+                else {
+                    s = if decompose {format!("συν {} ἰσ {} μεν", SEPARATOR, SEPARATOR) } else { String::from("σύνισμεν") };
+                }
+            }
+            else if vf.person == HcPerson::Second {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("συν {} οἰσ {} θα", SEPARATOR, SEPARATOR) } else { String::from("σύνοισθα") };
+                }
+                else {
+                    s = if decompose {format!("συν {} ἰσ {} τε", SEPARATOR, SEPARATOR) } else { String::from("σύνιστε") };
+                }
+            }
+            else if vf.person == HcPerson::Third {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("συν {} οἰδ {} ε(ν)", SEPARATOR, SEPARATOR) } else { String::from("σύνοιδε(ν)") };
+                }
+                else {
+                    /*fix me?*/
+                    s = if decompose {format!("συν {} ἰσ {} ᾱσι(ν)", SEPARATOR, SEPARATOR) } else { String::from("συνίσᾱσι(ν)") };
+                }
+            }
+        }
+        else if vf.mood == HcMood::Subjunctive {
+            if vf.person == HcPerson::First {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("συν {} εἰδε {} ω", SEPARATOR, SEPARATOR) } else { String::from("συνειδῶ") };
+                }
+                else {
+                    s = if decompose {format!("συν {} εἰδε {} ωμεν", SEPARATOR, SEPARATOR) } else { String::from("συνειδῶμεν") };
+                }
+            }
+            else if vf.person == HcPerson::Second {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("συν {} εἰδε {} ῃς", SEPARATOR, SEPARATOR) } else { String::from("συνειδῇς") };
+                }
+                else {
+                    s = if decompose {format!("συν {} εἰδε {} ητε", SEPARATOR, SEPARATOR) } else { String::from("συνειδῆτε") };
+                }
+            }
+            else if vf.person == HcPerson::Third {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("συν {} εἰδε {} ῃ", SEPARATOR, SEPARATOR) } else { String::from("συνειδῇ") };
+                }
+                else {
+                    s = if decompose {format!("συν {} εἰδε {} ωσι(ν)", SEPARATOR, SEPARATOR) } else { String::from("συνειδῶσι(ν)") };
+                }
+            }
+        }
+        else if vf.mood == HcMood::Optative {
+            if vf.person == HcPerson::First {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("συν {} εἰδ {} ειην", SEPARATOR, SEPARATOR) } else { String::from("συνειδείην") };
+                }
+                else {
+                    s = if decompose {format!("συν {} εἰδ {} ειμεν, συν {} εἰδ {} ειημεν", SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR) } else { String::from("συνειδεῖμεν, συνειδείημεν") };
+                }
+            }
+            else if vf.person == HcPerson::Second {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("συν {} εἰδ {} ειης", SEPARATOR, SEPARATOR) } else { String::from("συνειδείης") };
+                }
+                else {
+                    s = if decompose {format!("συν {} εἰδ {} ειτε, συν {} εἰδ {} ειητε", SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR) } else { String::from("συνειδεῖτε, συνειδείητε") };
+                }
+            }
+            else if vf.person == HcPerson::Third {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("συν {} εἰδ {} ειη", SEPARATOR, SEPARATOR) } else { String::from("συνειδείη") };
+                }
+                else {
+                    s = if decompose {format!("συν {} εἰδ {} ειεν, συν {} εἰδ {} ειησαν", SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR) } else { String::from("συνειδεῖεν, συνειδείησαν") };
+                }
+            }
+        }
+        else if vf.mood == HcMood::Imperative {
+            if vf.person == HcPerson::First {
+                if vf.number == HcNumber::Singular {
+                    s = String::from("");
+                }
+                else {
+                    s = String::from("");
+                }
+            }
+            else if vf.person == HcPerson::Second {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("συν {} ἰσ {} θι", SEPARATOR, SEPARATOR) } else { String::from("σύνισθι") };
+                }
+                else {
+                    s = if decompose {format!("συν {} ἰσ {} τε", SEPARATOR, SEPARATOR) } else { String::from("σύνιστε") };
+                }
+            }
+            else if vf.person == HcPerson::Third {
+                if vf.number == HcNumber::Singular {
+                    s = if decompose {format!("συν {} ἰσ {} τω", SEPARATOR, SEPARATOR) } else { String::from("συνίστω") };
+                }
+                else {
+                    s = if decompose {format!("συν {} ἰσ {} των", SEPARATOR, SEPARATOR) } else { String::from("συνίστων") };
+                }
+            }
+        }
+    }
+    else if vf.tense == HcTense::Pluperfect {
+        if vf.person == HcPerson::First {
+            if vf.number == HcNumber::Singular {
+                s = if decompose {format!("συν {} ε {} εἰδ {} η, συν {} ε {} εἰδ {} ειν", SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR) } else { String::from("συνῄδη, συνῄδειν") };
+            }
+            else {
+                s = if decompose {format!("συν {} ε {} εἰσ {} μεν, συν {} ε {} εἰδ {} εμεν", SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR) } else { String::from("συνῇσμεν, συνῄδεμεν") };
+            }
+        }
+        else if vf.person == HcPerson::Second {
+            if vf.number == HcNumber::Singular {
+                s = if decompose {format!("συν {} ε {} εἰδ {} ησθα, συν {} ε {} εἰδ {} εις", SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR) } else { String::from("συνῄδησθα, συνῄδεις") };
+            }
+            else {
+                s = if decompose {format!("συν {} ε {} εἰσ {} τε, συν {} ε {} εἰδ {} ετε", SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR) } else { String::from("συνῇστε, συνῄδετε") };
+            }
+        }
+        else if vf.person == HcPerson::Third {
+            if vf.number == HcNumber::Singular {
+                s = if decompose {format!("συν {} ε {} εἰδ {} ει(ν)", SEPARATOR, SEPARATOR, SEPARATOR) } else { String::from("συνῄδει(ν)") };
+            }
+            else {
+                s = if decompose {format!("συν {} ε {} εἰσ {} αν, συν {} ε {} εἰδ {} εσαν", SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR, SEPARATOR) } else { String::from("συνῇσαν, συνῄδεσαν") };
+            }
+        }
+    }
+    String::from(s)
+}
+
 impl HcGreekVerb {
     pub fn from_string(id:u32, pps:&str, props:u32) -> Option<HcGreekVerb> {
         let x: Vec<String> = pps.split(',').map(|s| s.trim().to_owned()).collect();
@@ -2474,6 +2615,14 @@ impl HcVerbForms for HcGreekVerbForm {
                     loc = loc.replacen("συνη", format!("συν {} ε", SEPARATOR).as_str(), 1);
                 }
             }
+            // else if loc.starts_with("συνει") && self.verb.pps[0].ends_with("δα") {
+            //     if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
+            //         loc = loc.replacen("συνει", format!("συν {} ε {} ἐ", SEPARATOR, SEPARATOR).as_str(), 1);
+            //     }
+            //     else {
+            //         loc = loc.replacen("συνει", format!("συν {} ἑ", SEPARATOR).as_str(), 1);
+            //     }
+            // }
             else if loc.starts_with("συνει") {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("συνει", format!("συν {} ε {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1);
@@ -2873,6 +3022,9 @@ impl HcVerbForms for HcGreekVerbForm {
         else if stem.starts_with("συνη") && self.verb.pps[0].ends_with("ῑ́ημι"){
             return stem.replacen("συνη", format!("συν {} ἡ", SEPARATOR).as_str(), 1);
         }
+        else if stem.starts_with("συνει") && self.verb.pps[0].ends_with("δα") {
+            return stem.replacen("συνει", format!("συν {} εἰ", SEPARATOR).as_str(), 1);
+        }
         else if stem.starts_with("συνει") {
             return stem.replacen("συνει", format!("συν {} εἱ", SEPARATOR).as_str(), 1);
         }
@@ -3127,12 +3279,24 @@ impl HcVerbForms for HcGreekVerbForm {
             }
         }
         else if self.verb.pps[0] == "οἶδα" {
-            
             if self.tense == HcTense::Present || self.tense == HcTense::Imperfect || self.tense == HcTense::Aorist {
                 return Err(HcFormError::IllegalForm);
             }
             else if self.tense != HcTense::Future {
                 let fff = get_oida(&self, decompose);
+                if fff == "" {
+                    return Err(HcFormError::IllegalForm);
+                }
+                steps.push(Step{form:fff, explanation:String::from("def")});
+                return Ok(steps);
+            }
+        }
+        else if self.verb.pps[0] == "σύνοιδα" {
+            if self.tense == HcTense::Present || self.tense == HcTense::Imperfect || self.tense == HcTense::Aorist {
+                return Err(HcFormError::IllegalForm);
+            }
+            else if self.tense != HcTense::Future {
+                let fff = get_sunoida(&self, decompose);
                 if fff == "" {
                     return Err(HcFormError::IllegalForm);
                 }
@@ -4146,7 +4310,7 @@ mod tests {
      
                         let verb_section = format!("Verb {}. {}{}", idx, if verb.pps[0] != "—" { verb.pps[0].clone() } else { verb.pps[1].clone() }, partial);
                         println!("\n{}", verb_section);
-                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 && idx != 119 { 
+                        if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 { 
                             assert_eq!(paradigm_line[0..paradigm_line.len() - 1], verb_section);
                         }
                         paradigm_line.clear();
@@ -4193,7 +4357,7 @@ mod tests {
 
                                             println!("{}", form_line);
 
-                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 && idx != 119 { 
+                                            if paradigm_reader.read_line(&mut paradigm_line).unwrap() != 0 && idx != 77 && idx != 78 { 
                                                 assert_eq!(paradigm_line[0..paradigm_line.len() - 1]/* .nfc().collect::<String>()*/, form_line);
                                             }
                                             paradigm_line.clear();
