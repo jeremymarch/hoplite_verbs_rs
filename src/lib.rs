@@ -3681,15 +3681,13 @@ impl HcVerbForms for HcGreekVerbForm {
                 accent = HGK_ACUTE;
                 letter_index = syl[syl.len() - 3].index; //accute on antepenult (ἀδικοιημεν)
             }
+            else if syl.last().unwrap().is_long {
+                accent = HGK_ACUTE;
+                letter_index = syl[syl.len() - 2].index; //accute on penult (ἀδικει present active imperative)
+            }
             else {
-                if syl.last().unwrap().is_long {
-                    accent = HGK_ACUTE;
-                    letter_index = syl[syl.len() - 2].index; //accute on penult (ἀδικει present active imperative)
-                }
-                else {
-                    accent = HGK_CIRCUMFLEX;
-                    letter_index = syl[syl.len() - 2].index; //circumflex on penult (ἀδικουμεν)
-                }
+                accent = HGK_CIRCUMFLEX;
+                letter_index = syl[syl.len() - 2].index; //circumflex on penult (ἀδικουμεν)
             }
         }
         else if orig_syllables.len() > 1 { //uncontracted word has 2 syllables
