@@ -3664,63 +3664,34 @@ impl HcVerbForms for HcGreekVerbForm {
         let esyl = analyze_syllable_quantities(ending, self.person, self.number, self.tense, self.mood, self.verb.properties);
         let accent;
         let letter_index;
-        if orig_syllables.len() > 2 && !orig_syllables.last().unwrap().is_long { //acute on antepenult
-            //println!("AAAAA1 {}", word);
-            //accent = HGK_ACUTE;
-            //letter_index = orig_syllables[0].index;
-            //***was acute on antepenult, now acute on penult
-            if esyl.len() == 3 {
+        if orig_syllables.len() > 2 && !orig_syllables.last().unwrap().is_long {
+            if esyl.len() > 2 { //has 3 or more syllables
                 accent = HGK_ACUTE;
-                letter_index = syl[syl.len() - 3].index;
+                letter_index = syl[syl.len() - 3].index; //accute on antepenult (ἀδικοιημεν)
             }
             else {
                 if syl.last().unwrap().is_long {
                     accent = HGK_ACUTE;
-                    letter_index = syl[syl.len() - 2].index;
+                    letter_index = syl[syl.len() - 2].index; //accute on penult (ἀδικει present active imperative)
                 }
                 else {
                     accent = HGK_CIRCUMFLEX;
-                    letter_index = syl[syl.len() - 2].index;
+                    letter_index = syl[syl.len() - 2].index; //circumflex on penult (ἀδικουμεν)
                 }
             }
         }
-        /* 
-        else if orig_syllables.len() == 2 && orig_syllables[0].is_long && !orig_syllables[1].is_long {
-            //println!("AAAAA2 {}", word);
-            if (orig_syllables[1].letters == "αι" || orig_syllables[1].letters == "οι") && self.mood == HcMood::Optative {
-                accent = HGK_ACUTE; //exception to the exception for optative 3rd singular: acute on penult
-                // ***same?
-            }
-            else {
-                //println!("AAAAA3 {}", word);
-                accent = HGK_CIRCUMFLEX; //circumflex on penult
-                // ***now acute on penult?
-            }
-            letter_index = orig_syllables[].index;
-        }
-        */
-        else if orig_syllables.len() > 1 { //acute on penult
-            //println!("AAAAA4 {}", word);
-            //accent = HGK_ACUTE;
-            //letter_index = orig_syllables[orig_syllables.len() - 2].index;
-            //***now circumflex on ultima
-            if esyl.len() == 2 && esyl[0].is_long && esyl[1].is_long {
+        else if orig_syllables.len() > 1 { //uncontracted word has 2 syllables
+            if esyl.len() == 2 && esyl[1].is_long {
                 accent = HGK_ACUTE;
-                letter_index = syl[syl.len() - 2].index;
-            }
-            else if esyl.len() == 2 && !esyl[0].is_long && esyl[1].is_long {
-                accent = HGK_ACUTE;
-                letter_index = syl[syl.len() - 2].index;
+                letter_index = syl[syl.len() - 2].index; //acute on penult (ἀδικοιην)
             }
             else {
                 accent = HGK_CIRCUMFLEX;
-                letter_index = syl[syl.len() - 1].index;
+                letter_index = syl[syl.len() - 1].index; //circumflex on ultima (ἀδικω)
             }
-
         }
         else {
-            //println!("AAAAA5");
-            return String::from(word);
+            return String::from(word); //(nothing gets here)
         }
 
         self.accent_syllable(word, letter_index, accent)
