@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(clippy::if_same_then_else)]
 
 extern crate rustunicodetests;
 use rustunicodetests::*;
@@ -3013,16 +3014,14 @@ impl HcVerbForms for HcGreekVerbForm {
         for a in 0..=4 {
             //remove current value from param vec to be sure it is not re-selected
             match a {
-                0 if params_to_change.contains(&0) && !persons.is_empty() => self.person = *persons.iter().filter(|x| **x != self.person).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap().clone(),
-                1 if params_to_change.contains(&1) && !numbers.is_empty() => self.number = *numbers.iter().filter(|x| **x != self.number).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap().clone(),
-                2 if params_to_change.contains(&2) && !tenses.is_empty() => self.tense = *tenses.iter().filter(|x| **x != self.tense).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap().clone(),
-                3 if params_to_change.contains(&3) && !voices.is_empty() => self.voice = *voices.iter().filter(|x| **x != self.voice).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap().clone(),
-                4 if params_to_change.contains(&4) && !moods.is_empty() => self.mood = *moods.iter().filter(|x| **x != self.mood).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap().clone(),
+                0 if params_to_change.contains(&0) && persons.len() > 1 => self.person = **persons.iter().filter(|x| **x != self.person).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap(),
+                1 if params_to_change.contains(&1) && numbers.len() > 1 => self.number = **numbers.iter().filter(|x| **x != self.number).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap(),
+                2 if params_to_change.contains(&2) && tenses.len() > 1 => self.tense = **tenses.iter().filter(|x| **x != self.tense).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap(),
+                3 if params_to_change.contains(&3) && voices.len() > 1 => self.voice = **voices.iter().filter(|x| **x != self.voice).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap(),
+                4 if params_to_change.contains(&4) && moods.len() > 1 => self.mood = **moods.iter().filter(|x| **x != self.mood).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap(),
                 _ => ()
             }
         }
-        // self.person = HcPerson::First;
-        // self.number = HcNumber::Singular;
     }
 
     fn separate_prefix(&self, stem:&str) -> String {
