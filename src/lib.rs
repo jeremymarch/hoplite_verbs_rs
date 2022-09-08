@@ -2188,9 +2188,6 @@ impl HcVerbForms for HcGreekVerbForm {
             if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') || local_stem.starts_with("εἰ") || local_stem.starts_with("ῑ̔") {
                 local_stem
             }
-            // else if local_stem.starts_with("εὑ") {        
-            //     local_stem.replacen("εὑ", format!("ε {} εὑ", SEPARATOR).as_str(), 1)
-            // }
             else if local_stem.starts_with("ἀφι") && self.verb.pps[0].starts_with("ἀφικνέομαι") && self.tense == HcTense::Pluperfect {        
                 local_stem.replacen("ἀφι", format!("ἀπο {} ῑ̔", SEPARATOR).as_str(), 1)
             }
@@ -2338,189 +2335,187 @@ impl HcVerbForms for HcGreekVerbForm {
             else {
                 format!("ε {} {}", SEPARATOR, local_stem)
             }
+        } //if not decompose...
+        else if local_stem.starts_with("ἀπολ") {
+            local_stem.replacen("ἀπολ", "ἀπωλ", 1)
         }
-        else {
-            if local_stem.starts_with("ἀπολ") {
-                local_stem.replacen("ἀπολ", "ἀπωλ", 1)
-            }
-            else if local_stem.starts_with("ἀπο") {
-                local_stem.replacen("ἀπο", "ἀπε", 1)
-            }
-            else if local_stem.starts_with("εὑ") {
-                local_stem.replacen("εὑ", "ηὑ", 1)
-            }
-            else if local_stem.starts_with("ηὑ") {
-                local_stem
-            }
-            else if local_stem.starts_with("ἀπεκ") {
-                local_stem
-            }
-            else if local_stem.starts_with('ὁ') {
-                local_stem.replacen('ὁ', "ἑω", 1)
-            }
-            else if local_stem.starts_with("προ") {
-                local_stem.replacen("προ", "προε", 1)
-            }
-            else if local_stem.starts_with("δια") {
-                local_stem.replacen("δια", "διε", 1)
-            }
-            else if local_stem.starts_with("-εἱ") {
-                local_stem
-            }
-            else if local_stem.starts_with("ἐκ") {
-                local_stem.replacen("ἐκ", "ἐξε", 1)
-            }
-            else if local_stem.starts_with("συνε") {
-                local_stem
-            }
-            else if local_stem.starts_with("συνῑ") {
-                local_stem
-            }
-            else if local_stem.starts_with("συμ") {
-                local_stem.replacen("συμ", "συνε", 1)
-            }
-            else if local_stem.starts_with("διε") {
-                local_stem
-            }
-            else if local_stem.starts_with("ὑπο") {
-                local_stem.replacen("ὑπο", "ὑπε", 1)
-            }
-            else if local_stem.starts_with("ὑπα") {
-                local_stem.replacen("ὑπα", "ὑπη", 1)
-            }
-            else if local_stem.starts_with("ἀνα") {
-                local_stem.replacen("ἀνα", "ἀνε", 1)
-            }
-            else if local_stem.starts_with("παρα") {
-                local_stem.replacen("παρα", "παρε", 1)
-            }
-            else if local_stem.starts_with("ἐπιστ") {
-                local_stem.replacen("ἐπιστ", "ἠπιστ", 1)
-            }
-            else if local_stem.starts_with("ἐπι") {
-                local_stem.replacen("ἐπι", "ἐπε", 1)
-            }
-            else if local_stem.starts_with("κατα") {
-                local_stem.replacen("κατα", "κατε", 1)
-            }
-            else if local_stem.starts_with("μετανε") {
-                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
-                    local_stem.replacen("μετανε", "μετανει", 1)
-                }
-                else {
-                    local_stem
-                }
-            }
-            else if local_stem.starts_with("μετανι") {
-                local_stem.replacen("μετανι", "μετανῑ", 1)
-            }
-            else if local_stem.starts_with("ἐπανε") {
-                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
-                    local_stem.replacen("ἐπανε", "ἐπανει", 1)
-                }
-                else {
-                    local_stem
-                }
-            }
-            else if local_stem.starts_with("ἐπανι") {
-                local_stem.replacen("ἐπανι", "ἐπανῑ", 1)
-            }
-            else if local_stem.starts_with("μετα") {
-                local_stem.replacen("μετα", "μετε", 1)
-            }
-            else if local_stem.starts_with("ἀφῑ") {
-                local_stem
-            }
-            else if local_stem.starts_with("ἀφι") {
-                local_stem.replacen("ἀφι", "ἀφῑ", 1)
-            }
-            else if local_stem.starts_with("καθι") {
-                local_stem.replacen("καθι", "καθῑ", 1)
-            }
-            else if local_stem.starts_with("ἀφει") {
-                local_stem
-            }
-            else if local_stem.starts_with("ἀφε") {
-                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
-                    local_stem.replacen("ἀφε", "ἀφει", 1)
-                }
-                else {
-                    local_stem
-                }
-            }
-            else if local_stem.starts_with("καθε") {
-                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
-                    local_stem.replacen("καθε", "καθει", 1)
-                }
-                else {
-                    local_stem
-                }
-            }
-            else if local_stem.starts_with('ᾐ') {
-                local_stem
-            }  
-            else if local_stem.starts_with('ᾑ') {
-                local_stem
-            }   
-            else if local_stem.starts_with('ἁ') {
-                local_stem.replacen('ἁ', "ἡ", 1)
-            }   
-            else if local_stem.starts_with("αἰ") {
-                local_stem.replacen("αἰ", "ᾐ", 1)
-            }   
-            else if local_stem.starts_with("αἱ") {
-                local_stem.replacen("αἱ", "ᾑ", 1)
-            }  
-            else if local_stem.starts_with("ἑο") {
-                local_stem
-            }   
-            else if local_stem.starts_with("ἑω") {
-                local_stem
-            }   
-            else if local_stem.starts_with("-ἐ") {
-                local_stem
-            }   
-            else if local_stem.starts_with('ὠ') {
-                local_stem
-            }   
-            else if local_stem.starts_with('ἑ') {
-                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
-                    local_stem.replacen('ἑ', "εἱ", 1)
-                }
-                else {
-                    local_stem
-                }
-            }
-            else if local_stem.starts_with("εἰ") {
-                local_stem
-            }
-            else if local_stem.starts_with("ἐχ") {
-                local_stem.replacen("ἐχ", "εἰχ", 1)
-            }   
-            else if local_stem.starts_with('ἐ') {
-                if self.tense != HcTense::Pluperfect {
-                    local_stem.replacen('ἐ', "ἠ", 1)
-                }
-                else {
-                    local_stem
-                }
-            }
-            else if local_stem.starts_with("ῑ̔") {
-                local_stem
-            }
-            else if local_stem.starts_with('ἱ') {
-                local_stem.replacen('ἱ', "ῑ̔", 1)
-            }
-            else if (self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ')) && !self.verb.pps[0].starts_with("ἀποθνῄσκω") {
-                local_stem.remove(0);
-                format!("ἠ{}", local_stem)
-            }
-            else if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') {
-                local_stem
+        else if local_stem.starts_with("ἀπο") {
+            local_stem.replacen("ἀπο", "ἀπε", 1)
+        }
+        else if local_stem.starts_with("εὑ") {
+            local_stem.replacen("εὑ", "ηὑ", 1)
+        }
+        else if local_stem.starts_with("ηὑ") {
+            local_stem
+        }
+        else if local_stem.starts_with("ἀπεκ") {
+            local_stem
+        }
+        else if local_stem.starts_with('ὁ') {
+            local_stem.replacen('ὁ', "ἑω", 1)
+        }
+        else if local_stem.starts_with("προ") {
+            local_stem.replacen("προ", "προε", 1)
+        }
+        else if local_stem.starts_with("δια") {
+            local_stem.replacen("δια", "διε", 1)
+        }
+        else if local_stem.starts_with("-εἱ") {
+            local_stem
+        }
+        else if local_stem.starts_with("ἐκ") {
+            local_stem.replacen("ἐκ", "ἐξε", 1)
+        }
+        else if local_stem.starts_with("συνε") {
+            local_stem
+        }
+        else if local_stem.starts_with("συνῑ") {
+            local_stem
+        }
+        else if local_stem.starts_with("συμ") {
+            local_stem.replacen("συμ", "συνε", 1)
+        }
+        else if local_stem.starts_with("διε") {
+            local_stem
+        }
+        else if local_stem.starts_with("ὑπο") {
+            local_stem.replacen("ὑπο", "ὑπε", 1)
+        }
+        else if local_stem.starts_with("ὑπα") {
+            local_stem.replacen("ὑπα", "ὑπη", 1)
+        }
+        else if local_stem.starts_with("ἀνα") {
+            local_stem.replacen("ἀνα", "ἀνε", 1)
+        }
+        else if local_stem.starts_with("παρα") {
+            local_stem.replacen("παρα", "παρε", 1)
+        }
+        else if local_stem.starts_with("ἐπιστ") {
+            local_stem.replacen("ἐπιστ", "ἠπιστ", 1)
+        }
+        else if local_stem.starts_with("ἐπι") {
+            local_stem.replacen("ἐπι", "ἐπε", 1)
+        }
+        else if local_stem.starts_with("κατα") {
+            local_stem.replacen("κατα", "κατε", 1)
+        }
+        else if local_stem.starts_with("μετανε") {
+            if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                local_stem.replacen("μετανε", "μετανει", 1)
             }
             else {
-                format!("ἐ{}", local_stem)
+                local_stem
             }
+        }
+        else if local_stem.starts_with("μετανι") {
+            local_stem.replacen("μετανι", "μετανῑ", 1)
+        }
+        else if local_stem.starts_with("ἐπανε") {
+            if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                local_stem.replacen("ἐπανε", "ἐπανει", 1)
+            }
+            else {
+                local_stem
+            }
+        }
+        else if local_stem.starts_with("ἐπανι") {
+            local_stem.replacen("ἐπανι", "ἐπανῑ", 1)
+        }
+        else if local_stem.starts_with("μετα") {
+            local_stem.replacen("μετα", "μετε", 1)
+        }
+        else if local_stem.starts_with("ἀφῑ") {
+            local_stem
+        }
+        else if local_stem.starts_with("ἀφι") {
+            local_stem.replacen("ἀφι", "ἀφῑ", 1)
+        }
+        else if local_stem.starts_with("καθι") {
+            local_stem.replacen("καθι", "καθῑ", 1)
+        }
+        else if local_stem.starts_with("ἀφει") {
+            local_stem
+        }
+        else if local_stem.starts_with("ἀφε") {
+            if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                local_stem.replacen("ἀφε", "ἀφει", 1)
+            }
+            else {
+                local_stem
+            }
+        }
+        else if local_stem.starts_with("καθε") {
+            if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                local_stem.replacen("καθε", "καθει", 1)
+            }
+            else {
+                local_stem
+            }
+        }
+        else if local_stem.starts_with('ᾐ') {
+            local_stem
+        }  
+        else if local_stem.starts_with('ᾑ') {
+            local_stem
+        }   
+        else if local_stem.starts_with('ἁ') {
+            local_stem.replacen('ἁ', "ἡ", 1)
+        }   
+        else if local_stem.starts_with("αἰ") {
+            local_stem.replacen("αἰ", "ᾐ", 1)
+        }   
+        else if local_stem.starts_with("αἱ") {
+            local_stem.replacen("αἱ", "ᾑ", 1)
+        }  
+        else if local_stem.starts_with("ἑο") {
+            local_stem
+        }   
+        else if local_stem.starts_with("ἑω") {
+            local_stem
+        }   
+        else if local_stem.starts_with("-ἐ") {
+            local_stem
+        }   
+        else if local_stem.starts_with('ὠ') {
+            local_stem
+        }   
+        else if local_stem.starts_with('ἑ') {
+            if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                local_stem.replacen('ἑ', "εἱ", 1)
+            }
+            else {
+                local_stem
+            }
+        }
+        else if local_stem.starts_with("εἰ") {
+            local_stem
+        }
+        else if local_stem.starts_with("ἐχ") {
+            local_stem.replacen("ἐχ", "εἰχ", 1)
+        }   
+        else if local_stem.starts_with('ἐ') {
+            if self.tense != HcTense::Pluperfect {
+                local_stem.replacen('ἐ', "ἠ", 1)
+            }
+            else {
+                local_stem
+            }
+        }
+        else if local_stem.starts_with("ῑ̔") {
+            local_stem
+        }
+        else if local_stem.starts_with('ἱ') {
+            local_stem.replacen('ἱ', "ῑ̔", 1)
+        }
+        else if (self.verb.pps[0].starts_with('ἐ') || self.verb.pps[0].starts_with('ἄ') || self.verb.pps[0].starts_with('ἀ')) && !self.verb.pps[0].starts_with("ἀποθνῄσκω") {
+            local_stem.remove(0);
+            format!("ἠ{}", local_stem)
+        }
+        else if local_stem.starts_with('ἠ') || local_stem.starts_with('ἡ') {
+            local_stem
+        }
+        else {
+            format!("ἐ{}", local_stem)
         }
     }
 
@@ -2666,14 +2661,6 @@ impl HcVerbForms for HcGreekVerbForm {
                     loc = loc.replacen("συνη", format!("συν {} ε", SEPARATOR).as_str(), 1);
                 }
             }
-            // else if loc.starts_with("συνει") && self.verb.pps[0].ends_with("δα") {
-            //     if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
-            //         loc = loc.replacen("συνει", format!("συν {} ε {} ἐ", SEPARATOR, SEPARATOR).as_str(), 1);
-            //     }
-            //     else {
-            //         loc = loc.replacen("συνει", format!("συν {} ἑ", SEPARATOR).as_str(), 1);
-            //     }
-            // }
             else if loc.starts_with("συνει") {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("συνει", format!("συν {} ε {} ἑ", SEPARATOR, SEPARATOR).as_str(), 1);
@@ -3447,10 +3434,8 @@ impl HcVerbForms for HcGreekVerbForm {
                             continue;
                         }
                     }
-                    else {
-                        if e == "ητι" {
+                    else if e == "ητι" {
                             continue;
-                        }
                     }
                 }
 
