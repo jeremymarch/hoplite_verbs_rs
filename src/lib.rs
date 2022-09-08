@@ -1331,6 +1331,8 @@ static SEPARATOR: &str = "‐";
 static BLANK: &str = "—";
 
 pub trait HcVerbForms {
+    fn is_legal_form(&self) -> bool;
+    fn is_legal_deponent(&self, pp:&str) -> bool;
     fn get_description(&self, prev:&HcGreekVerbForm, start:&str, end:&str) -> String;
     fn get_form(&self, decompose:bool) -> Result<Vec<Step>, HcFormError>;
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
@@ -3181,28 +3183,75 @@ impl HcVerbForms for HcGreekVerbForm {
         desc
     }
 
+    fn is_legal_form(&self) -> bool {
+        //eliminate first person imperatives
+        //eliminate subjunctive and imperative outside of the present and aorist
+        //and optative outside of the present and aorist and future
+        //except for oida in perfect tense
+        if self.mood == HcMood::Imperative && self.person == HcPerson::First {
+            false
+        }
+        else if (self.mood == HcMood::Subjunctive || self.mood == HcMood::Imperative) && self.tense != HcTense::Present && self.tense != HcTense::Aorist && !(self.verb.pps[0].ends_with("δα") && self.tense == HcTense::Perfect) {
+            false
+        }
+        else if self.mood == HcMood::Optative && self.tense != HcTense::Present && self.tense != HcTense::Aorist && self.tense != HcTense::Future && !(self.verb.pps[0].ends_with("δα") && self.tense == HcTense::Perfect) {
+            false
+        }
+        else {
+            true
+        }
+    }
+
+    fn is_legal_deponent(&self, pp:&str) -> bool {
+        if self.voice == HcVoice::Active && self.is_deponent(pp) {
+            return false;
+        }
+
+        //block future passive for passive deponents
+        if self.verb.deponent_type() == HcDeponentType::PassiveDeponent && self.tense == HcTense::Future && self.voice == HcVoice::Passive {
+            return false;
+        }
+        
+        //abd
+        //no passive for middle deponent present or imperfect
+        //this does not need to be done for future, aorist because from different pp,
+        if self.voice == HcVoice::Passive && (self.tense == HcTense::Present || self.tense == HcTense::Imperfect) && self.verb.pps[0].ends_with("μαι") {
+            return false;
+        }
+
+        //for perfect and pluperfect we need to block passive if middle or passive deponent
+        if self.voice == HcVoice::Passive && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent || self.verb.deponent_type() == HcDeponentType::MiddleDeponentHgeomai) {
+            return false;
+        }
+        
+        //middle deponents do not have a passive voice.  H&Q page 316
+        if self.voice == HcVoice::Passive && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::GignomaiDeponent) {
+            return false;
+        }
+
+        if self.voice == HcVoice::Active && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent)  && !self.verb.pps[2].ends_with("στην") {
+            return false;
+        }
+
+        if self.voice == HcVoice::Active && self.tense != HcTense::Perfect && self.tense != HcTense::Pluperfect && self.verb.deponent_type() == HcDeponentType::GignomaiDeponent {
+            return false;
+        }
+        /* 
+        if (vf->voice == PASSIVE && deponentType(vf->verb) == PASSIVE_DEPONENT && (vf->tense == PRESENT || vf->tense == IMPERFECT || vf->tense == PERFECT || vf->tense == PLUPERFECT)) //aorist or future are ok
+        {
+            return 0;
+        }
+        */
+        true
+    }
+
     fn get_form(&self, decompose:bool) -> Result<Vec<Step>, HcFormError> {
-        if self.mood == HcMood::Subjunctive && self.tense != HcTense::Present && self.tense != HcTense::Aorist {
-            if !(self.verb.pps[0].ends_with("δα") && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)) {
-                return Err(HcFormError::IllegalForm);
-            }
-        }
-        else if self.mood == HcMood::Optative && self.tense != HcTense::Present && self.tense != HcTense::Aorist && self.tense != HcTense::Future {
-            if !(self.verb.pps[0].ends_with("δα") && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)) {
-                return Err(HcFormError::IllegalForm);
-            }
-        }
-        else if self.mood == HcMood::Imperative && self.tense != HcTense::Present && self.tense != HcTense::Aorist {
-            if !(self.verb.pps[0].ends_with("δα") && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)) {
-                return Err(HcFormError::IllegalForm);
-            }
+        
+        if !self.is_legal_form() {
+            return Err(HcFormError::IllegalForm);
         }
 
         let mut steps = Vec::new();
-        //eliminate first person imperatives
-        if self.mood == HcMood::Imperative && self.person == HcPerson::First {
-            return Err(HcFormError::IllegalForm);
-        }
 
         let f = self.verb.pps.join(", ");
         let e = "Principal Parts".to_string();
@@ -3217,45 +3266,9 @@ impl HcVerbForms for HcGreekVerbForm {
             return Err(HcFormError::BlankPrincipalPartForForm);
         }
 
-        if self.voice == HcVoice::Active && self.is_deponent(f) {
+        if !self.is_legal_deponent(f) {
             return Err(HcFormError::Deponent);
         }
-
-        //block future passive for passive deponents
-        if self.verb.deponent_type() == HcDeponentType::PassiveDeponent && self.tense == HcTense::Future && self.voice == HcVoice::Passive {
-            return Err(HcFormError::Deponent);
-        }
-        
-        //abd
-        //no passive for middle deponent present or imperfect
-        //this does not need to be done for future, aorist because from different pp,
-        if self.voice == HcVoice::Passive && (self.tense == HcTense::Present || self.tense == HcTense::Imperfect) && self.verb.pps[0].ends_with("μαι") {
-            return Err(HcFormError::Deponent);
-        }
-
-        //for perfect and pluperfect we need to block passive if middle or passive deponent
-        if self.voice == HcVoice::Passive && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect) && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent || self.verb.deponent_type() == HcDeponentType::MiddleDeponentHgeomai) {
-            return Err(HcFormError::Deponent);
-        }
-        
-        //middle deponents do not have a passive voice.  H&Q page 316
-        if self.voice == HcVoice::Passive && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::GignomaiDeponent) {
-            return Err(HcFormError::Deponent);
-        }
-
-        if self.voice == HcVoice::Active && (self.verb.deponent_type() == HcDeponentType::MiddleDeponent || self.verb.deponent_type() == HcDeponentType::PassiveDeponent)  && !self.verb.pps[2].ends_with("στην") {
-            return Err(HcFormError::Deponent);
-        }
-
-        if self.voice == HcVoice::Active && self.tense != HcTense::Perfect && self.tense != HcTense::Pluperfect && self.verb.deponent_type() == HcDeponentType::GignomaiDeponent {
-            return Err(HcFormError::Deponent);
-        }
-        /* 
-        if (vf->voice == PASSIVE && deponentType(vf->verb) == PASSIVE_DEPONENT && (vf->tense == PRESENT || vf->tense == IMPERFECT || vf->tense == PERFECT || vf->tense == PLUPERFECT)) //aorist or future are ok
-        {
-            return 0;
-        }
-        */
 
         if self.verb.pps[0] == "δεῖ" {          
             let fff = get_dei(self, decompose);
@@ -4240,10 +4253,49 @@ mod tests {
     }
 
     #[test]
+    fn illegal_verb_forms() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
+        let illegal = HcGreekVerbForm {verb:luwverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Subjunctive, gender:None, case:None};
+        assert_ne!(illegal.is_legal_form(), true);
+
+        let illegal = HcGreekVerbForm {verb:luwverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Imperative, gender:None, case:None};
+        assert_ne!(illegal.is_legal_form(), true);
+
+        let illegal = HcGreekVerbForm {verb:luwverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Optative, gender:None, case:None};
+        assert_eq!(illegal.is_legal_form(), true);
+
+        let oida = "οἶδα, εἴσομαι, —, —, —, —";
+        let oidaverb = Arc::new(HcGreekVerb::from_string(1, oida, REGULAR).unwrap());
+        let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Subjunctive, gender:None, case:None};
+        assert_eq!(legaloidaperf.is_legal_form(), true);
+        let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Optative, gender:None, case:None};
+        assert_eq!(legaloidaperf.is_legal_form(), true);
+        let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Imperative, gender:None, case:None};
+        assert_eq!(legaloidaperf.is_legal_form(), true);
+        let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Subjunctive, gender:None, case:None};
+        assert_ne!(legaloidaperf.is_legal_form(), true);
+        let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Imperative, gender:None, case:None};
+        assert_ne!(legaloidaperf.is_legal_form(), true);
+        let illegaloidaplup = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Active, mood:HcMood::Subjunctive, gender:None, case:None};
+        assert_ne!(illegaloidaplup.is_legal_form(), true);
+        let illegaloidaplup = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Active, mood:HcMood::Optative, gender:None, case:None};
+        assert_ne!(illegaloidaplup.is_legal_form(), true);
+        let illegaloidaplup = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Active, mood:HcMood::Imperative, gender:None, case:None};
+        assert_ne!(illegaloidaplup.is_legal_form(), true);
+
+        let illegaloidaplup = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Optative, gender:None, case:None};
+        assert_eq!(illegaloidaplup.is_legal_form(), true);
+
+        let illegaloidaplup = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Imperative, gender:None, case:None};
+        assert_ne!(illegaloidaplup.is_legal_form(), true);
+    }
+
+    #[test]
     fn it_works() {
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
         let blaptw = "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην";
-
+        
         let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
         let a1 = Arc::new(HcGreekVerb {id:1,pps:vec!["λω".to_string(), "λσω".to_string(), "ἔλῡσα".to_string(), "λέλυκα".to_string(), "λέλυμαι".to_string(), "ἐλύθην".to_string()],properties: REGULAR});
         assert_eq!(luwverb, a1);
@@ -4251,7 +4303,7 @@ mod tests {
         let b = HcGreekVerbForm {verb:luwverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         let c = HcGreekVerbForm {verb:luwverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b, c);
-        
+
         assert_eq!(b.get_form(false).unwrap()[0].form, luw);
         assert_eq!(b.get_form(false).unwrap()[1].form, "ἔλῡσα");
         
