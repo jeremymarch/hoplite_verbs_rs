@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-#![allow(clippy::if_same_then_else)]
+#![allow(clippy::if_same_then_else)] //for clarity let's leave these
 
 extern crate rustunicodetests;
 use rustunicodetests::*;
@@ -3012,7 +3012,7 @@ impl HcVerbForms for HcGreekVerbForm {
             }
         }
         for a in 0..=4 {
-            //remove current value from param vec to be sure it is not re-selected
+            //remove current value from param vec to be sure it is not re-selected; must be at least two values to change
             match a {
                 0 if params_to_change.contains(&0) && persons.len() > 1 => self.person = **persons.iter().filter(|x| **x != self.person).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap(),
                 1 if params_to_change.contains(&1) && numbers.len() > 1 => self.number = **numbers.iter().filter(|x| **x != self.number).collect::<Vec<_>>().choose(&mut rand::thread_rng()).unwrap(),
@@ -4075,68 +4075,61 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, t:HcTense, m:H
     let mut last_letter = '\u{0000}';
     let mut res = Vec::new();
     let word_len = word.graphemes(true).count();
-    loop {
-        match letters.next_back() {
-            Some(x) => { 
-                //println!("letter: {:?}", x);
-                match x.letter_type() {
-                    HgkLetterType::HgkLongVowel => {
-                        if last_letter == 'υ' && x.letter == 'η' {
-                            res.pop();
-                            let mut s = String::from(x.letter);
-                            s.push(last_letter);
+    while let Some(x) = letters.next_back() {
+        //println!("letter: {:?}", x);
+        match x.letter_type() {
+            HgkLetterType::HgkLongVowel => {
+                if last_letter == 'υ' && x.letter == 'η' {
+                    res.pop();
+                    let mut s = String::from(x.letter);
+                    s.push(last_letter);
+                    res.push(SyllableAnalysis {letters: s, is_long: true, index: letter_num - 1});
+                }
+                else {
+                    last_letter = '\u{0000}';
+                    res.push(SyllableAnalysis {letters: x.to_string(HgkUnicodeMode::Precomposed), is_long: true, index: letter_num});
+                }
+            },
+            HgkLetterType::HgkShortVowel => {
+                if x.letter == 'υ' || x.letter == 'ι' && (x.diacritics & HGK_DIAERESIS) != HGK_DIAERESIS {
+                    last_letter = x.letter;
+                    //res.push((x.letter.to_string(), false, letter_num)); //add short, might be replaced by diphthong
+                    res.push(SyllableAnalysis {letters: x.letter.to_string(), is_long: false, index: letter_num});
+                }
+                else {
+                    if last_letter != '\u{0000}' && (x.letter == 'ε' || x.letter == 'α' || x.letter == 'ο') {
+                        res.pop();
+                        let mut s = String::from(x.letter);
+                        s.push(last_letter);
+
+                        let is_short = letter_num == 1 && (x.letter == 'α' || x.letter == 'ο') && last_letter == 'ι';//final diphthongs short accent
+                        if is_short && p == HcPerson::Third && n == HcNumber::Singular && m == HcMood::Optative {
+                            //res.push((s, true, letter_num - 1));
                             res.push(SyllableAnalysis {letters: s, is_long: true, index: letter_num - 1});
                         }
                         else {
-                            last_letter = '\u{0000}';
-                            res.push(SyllableAnalysis {letters: x.to_string(HgkUnicodeMode::Precomposed), is_long: true, index: letter_num});
+                            //res.push((s, !is_short, letter_num - 1));
+                            res.push(SyllableAnalysis {letters: s, is_long: !is_short, index: letter_num - 1});
                         }
-                    },
-                    HgkLetterType::HgkShortVowel => {
-                        if x.letter == 'υ' || x.letter == 'ι' && (x.diacritics & HGK_DIAERESIS) != HGK_DIAERESIS {
-                            last_letter = x.letter;
-                            //res.push((x.letter.to_string(), false, letter_num)); //add short, might be replaced by diphthong
-                            res.push(SyllableAnalysis {letters: x.letter.to_string(), is_long: false, index: letter_num});
-                        }
-                        else {
-                            if last_letter != '\u{0000}' && (x.letter == 'ε' || x.letter == 'α' || x.letter == 'ο') {
-                                res.pop();
-                                let mut s = String::from(x.letter);
-                                s.push(last_letter);
-
-                                let is_short = letter_num == 1 && (x.letter == 'α' || x.letter == 'ο') && last_letter == 'ι';//final diphthongs short accent
-                                if is_short && p == HcPerson::Third && n == HcNumber::Singular && m == HcMood::Optative {
-                                    //res.push((s, true, letter_num - 1));
-                                    res.push(SyllableAnalysis {letters: s, is_long: true, index: letter_num - 1});
-                                }
-                                else {
-                                    //res.push((s, !is_short, letter_num - 1));
-                                    res.push(SyllableAnalysis {letters: s, is_long: !is_short, index: letter_num - 1});
-                                }
-                            }
-                            else {
-                                //res.push((x.letter.to_string(), false, letter_num));
-                                res.push(SyllableAnalysis {letters: x.letter.to_string(), is_long: false, index: letter_num});
-                            }
-                            last_letter = '\u{0000}';
-                        }
-                    },
-                    _ => {
-                        last_letter = '\u{0000}';
                     }
-                }
-                if res.len() > 2 {
-                    break;
-                }
-                letter_num += 1;
-                //println!("len {}, num {}, area {}", word_len, letter_num, area);
-                if word_len - letter_num as usize == area {
-                    break;
+                    else {
+                        //res.push((x.letter.to_string(), false, letter_num));
+                        res.push(SyllableAnalysis {letters: x.letter.to_string(), is_long: false, index: letter_num});
+                    }
+                    last_letter = '\u{0000}';
                 }
             },
-            None => {
-                break;
-            },
+            _ => {
+                last_letter = '\u{0000}';
+            }
+        }
+        if res.len() > 2 {
+            break;
+        }
+        letter_num += 1;
+        //println!("len {}, num {}, area {}", word_len, letter_num, area);
+        if word_len - letter_num as usize == area {
+            break;
         }
     }
     res.reverse();
