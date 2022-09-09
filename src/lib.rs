@@ -1481,21 +1481,27 @@ impl HcVerbForms for HcGreekVerbForm {
             1..=2 => {
                 if form.ends_with('ω') {
                     if self.tense == HcTense::Future && self.voice != HcVoice::Passive && (self.verb.pps[1].ends_with('ῶ') || (form.starts_with("ἐρ") && self.verb.pps[1].starts_with("ἐρῶ"))) {
-                        // contracted future
-                        if self.verb.pps[1].ends_with("ἐλῶ") {
-                            return Ok(format!("{}α", form.strip_suffix('ω').unwrap()));
+                        
+                        if self.verb.pps[1].ends_with("ἐλῶ") { // alpha contracted future: TODO add option to verb, so this is more general
+                            if let Some(f) = form.strip_suffix('ω') {
+                                return Ok(format!("{}α", f));
+                            }
                         }
                         else {
-                            return Ok(format!("{}ε", form.strip_suffix('ω').unwrap()));
+                            if let Some(f) = form.strip_suffix('ω') { // epsilon contracted future
+                                return Ok(format!("{}ε", f));
+                            }
                         }
                     }
                     else {
-                        return Ok(form.strip_suffix('ω').unwrap().to_string());
+                        if let Some(f) = form.strip_suffix('ω') {
+                            return Ok(f.to_string());
+                        }
                     }
                 }
                 else if form.ends_with("ουμαι") && self.verb.pps[1].ends_with("οῦμαι") {
                     // contracted future
-                    return Ok(format!("{}ε", form.strip_suffix("ουμαι").unwrap()));
+                    return Ok(form.replacen("ουμαι", "ε", 1));
                 }
                 else if let Some(f) = form.strip_suffix("ομαι") {
                     return Ok(f.to_string());
@@ -1506,8 +1512,8 @@ impl HcVerbForms for HcGreekVerbForm {
                 else if let Some(f) = form.strip_suffix("μι") {
                     return Ok(f.to_string());
                 }
-                else if form.ends_with("στι(ν)") {
-                    return Ok(form.strip_suffix("τι(ν)").unwrap().to_string());
+                else if let Some(f) = form.strip_suffix("τι(ν)") {
+                    return Ok(f.to_string());
                 }
                 else if let Some(f) = form.strip_suffix("ται") {
                     return Ok(f.to_string());
