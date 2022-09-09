@@ -3425,12 +3425,10 @@ impl HcVerbForms for HcGreekVerbForm {
                     continue;
                 }
 
-                let a = self.strip_ending(pp_num, a.to_string());
-                if a.is_err() {
-                    return Err(HcFormError::UnexpectedPrincipalPartEnding);//("error stripping ending");
-                }
-                let a = a.unwrap();
-
+                let a = match self.strip_ending(pp_num, a.to_string()) {
+                    Ok(res) => res,
+                    Err(_) => return Err(HcFormError::UnexpectedPrincipalPartEnding),//("error stripping ending");
+                };
                 // let f = a.join(" / ");
                 // let e = "Remove ending from Principal Part".to_string();
                 // steps.push(Step{form:f, explanation:e});
