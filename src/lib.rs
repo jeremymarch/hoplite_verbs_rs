@@ -1308,7 +1308,7 @@ impl HcGreekVerb {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, PartialEq, Eq, Debug)]
 pub struct Step {
     pub form: String,
     pub explanation: String,
@@ -4191,6 +4191,14 @@ mod tests {
     //     }
     // }
 
+    #[test]
+    fn test_strip_ending() {
+        let luw = "λω, λσωd, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
+        let b = HcGreekVerbForm {verb:a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
+        assert_eq!(b.get_form(false), Err(HcFormError::UnexpectedPrincipalPartEnding));
+    }
+    
     #[test]
     fn test_rreplacen() {
         let s = "f2o f2o 123 foo".to_string();
