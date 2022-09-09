@@ -1488,16 +1488,12 @@ impl HcVerbForms for HcGreekVerbForm {
                                 return Ok(format!("{}α", f));
                             }
                         }
-                        else {
-                            if let Some(f) = form.strip_suffix('ω') { // epsilon contracted future
-                                return Ok(format!("{}ε", f));
-                            }
+                        else if let Some(f) = form.strip_suffix('ω') { // epsilon contracted future
+                            return Ok(format!("{}ε", f));
                         }
                     }
-                    else {
-                        if let Some(f) = form.strip_suffix('ω') {
-                            return Ok(f.to_string());
-                        }
+                    else if let Some(f) = form.strip_suffix('ω') {
+                        return Ok(f.to_string());
                     }
                 }
                 else if form.ends_with("ουμαι") && self.verb.pps[1].ends_with("οῦμαι") {
