@@ -3414,12 +3414,12 @@ impl HcVerbForms for HcGreekVerbForm {
         let mut add_ending_collector = Vec::new();
         let mut add_accent_collector = Vec::new();
         for a in pps_without_ending {
-            let endings_for_form = self.get_endings(&a);
-            if endings_for_form == None {
-                return Err(HcFormError::InternalError);//("Illegal form ending");
-            }
+            let endings_for_form = match self.get_endings(&a) {
+                Some(e) => e,
+                None => return Err(HcFormError::InternalError) //("Illegal form ending");,
+            };
             
-            for e in endings_for_form.unwrap() {
+            for e in endings_for_form {
 
                 if a.ends_with("ομην") && self.voice == HcVoice::Active {
                     continue;
