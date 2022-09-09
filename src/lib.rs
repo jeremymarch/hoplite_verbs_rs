@@ -1497,20 +1497,20 @@ impl HcVerbForms for HcGreekVerbForm {
                     // contracted future
                     return Ok(format!("{}ε", form.strip_suffix("ουμαι").unwrap()));
                 }
-                else if form.ends_with("ομαι") {
-                    return Ok(form.strip_suffix("ομαι").unwrap().to_string());
+                else if let Some(f) = form.strip_suffix("ομαι") {
+                    return Ok(f.to_string());
                 }
-                else if form.ends_with("μαι") {
-                    return Ok(form.strip_suffix("μαι").unwrap().to_string());
+                else if let Some(f) = form.strip_suffix("μαι") {
+                    return Ok(f.to_string());
                 }
-                else if form.ends_with("μι") {
-                    return Ok(form.strip_suffix("μι").unwrap().to_string());
+                else if let Some(f) = form.strip_suffix("μι") {
+                    return Ok(f.to_string());
                 }
                 else if form.ends_with("στι(ν)") {
                     return Ok(form.strip_suffix("τι(ν)").unwrap().to_string());
                 }
-                else if form.ends_with("ται") {
-                    return Ok(form.strip_suffix("ται").unwrap().to_string());
+                else if let Some(f) = form.strip_suffix("ται") {
+                    return Ok(f.to_string());
                 }
                 else if form.ends_with("οἰδα") || form.ends_with("οιδα") {
                     return Ok("οἰδ".to_string());
@@ -1526,39 +1526,40 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
             },
             3 => {
-                if form.ends_with("αμην") {
-                    return Ok(form.strip_suffix("αμην").unwrap().to_string());
+
+                if let Some(f) = form.strip_suffix("αμην") {
+                    return Ok(f.to_string());
                 }
-                else if form.ends_with('α') {
-                    return Ok(form.strip_suffix('α').unwrap().to_string());
+                else if let Some(f) = form.strip_suffix('α') {
+                    return Ok(f.to_string());
                 }
-                else if form.ends_with("ον") {
-                    return Ok(form.strip_suffix("ον").unwrap().to_string());
+                else if let Some(f) = form.strip_suffix("ον") {
+                    return Ok(f.to_string());
                 }
-                else if form.ends_with("ομην") {
-                    return Ok(form.strip_suffix("ομην").unwrap().to_string());
-                }    
-                else if form.ends_with('ν') {
-                    return Ok(form.strip_suffix('ν').unwrap().to_string());
-                }  
-                else if form.ends_with("ε(ν)") {
-                    return Ok(form.strip_suffix("ε(ν)").unwrap().to_string());
-                }              
+                else if let Some(f) = form.strip_suffix("ομην") {
+                    return Ok(f.to_string());
+                }
+                else if let Some(f) = form.strip_suffix('ν') {
+                    return Ok(f.to_string());
+                }
+                else if let Some(f) = form.strip_suffix("ε(ν)") {
+                    return Ok(f.to_string());
+                }             
             },
             4 => {
-                if form.ends_with('α') {
-                    return Ok(form.strip_suffix('α').unwrap().to_string());
-                }               
+                if let Some(f) = form.strip_suffix('α') {
+                    return Ok(f.to_string());
+                }
             },
             5 => {
-                if form.ends_with("μαι") {
-                    return Ok(form.strip_suffix("μαι").unwrap().to_string());
-                }               
+                if let Some(f) = form.strip_suffix("μαι") {
+                    return Ok(f.to_string());
+                }
             },
             6 => {
-                if form.ends_with("ην") {
-                    return Ok(form.strip_suffix("ην").unwrap().to_string());
-                }               
+                if let Some(f) = form.strip_suffix("ην") {
+                    return Ok(f.to_string());
+                }
             },
             _ => { return Err("error stripping ending 1"); }
         }
