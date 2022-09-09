@@ -1249,32 +1249,33 @@ impl HcGreekVerb {
     pub fn from_string_with_properties(id:u32, ppstring:&str) -> Option<HcGreekVerb> {
         let mut properties = 0;
         let mut ll = ppstring.split('%');
-        let pps = ll.next().unwrap();
-        if let Some(s) = ll.next() {
-            if s.contains("CONSONANT_STEM_PERFECT_PI") {
-                properties |= CONSONANT_STEM_PERFECT_PI;
+        if let Some(pps) = ll.next() {
+            if let Some(s) = ll.next() {
+                if s.contains("CONSONANT_STEM_PERFECT_PI") {
+                    properties |= CONSONANT_STEM_PERFECT_PI;
+                }
+                else if s.contains("CONSONANT_STEM_PERFECT_GAMMA") {
+                    properties |= CONSONANT_STEM_PERFECT_GAMMA;
+                }
+                else if s.contains("CONSONANT_STEM_PERFECT_CHI") {
+                    properties |= CONSONANT_STEM_PERFECT_CHI;
+                }
+                else if s.contains("CONSONANT_STEM_PERFECT_BETA") {
+                    properties |= CONSONANT_STEM_PERFECT_BETA;
+                }
+                else if s.contains("CONSONANT_STEM_PERFECT_LAMBDA") {
+                    properties |= CONSONANT_STEM_PERFECT_LAMBDA;
+                }
+                else if s.contains("CONSONANT_STEM_PERFECT_NU") {
+                    properties |= CONSONANT_STEM_PERFECT_NU;
+                }
+                if s.contains("PREFIXED") {
+                    properties |= PREFIXED;
+                }
             }
-            else if s.contains("CONSONANT_STEM_PERFECT_GAMMA") {
-                properties |= CONSONANT_STEM_PERFECT_GAMMA;
-            }
-            else if s.contains("CONSONANT_STEM_PERFECT_CHI") {
-                properties |= CONSONANT_STEM_PERFECT_CHI;
-            }
-            else if s.contains("CONSONANT_STEM_PERFECT_BETA") {
-                properties |= CONSONANT_STEM_PERFECT_BETA;
-            }
-            else if s.contains("CONSONANT_STEM_PERFECT_LAMBDA") {
-                properties |= CONSONANT_STEM_PERFECT_LAMBDA;
-            }
-            else if s.contains("CONSONANT_STEM_PERFECT_NU") {
-                properties |= CONSONANT_STEM_PERFECT_NU;
-            }
-            if s.contains("PREFIXED") {
-                properties |= PREFIXED;
-            }
+            return HcGreekVerb::from_string(id, pps, properties);
         }
-
-        HcGreekVerb::from_string(id, pps, properties)
+        None
     }
 
     //page 316 in h&q
@@ -3386,7 +3387,7 @@ impl HcVerbForms for HcGreekVerbForm {
         //     if y.is_err() {
         //         return Err("error stripping ending");
         //     }
-        //     pps_without_ending.push(y.unwrap());
+        //     pps_without_ending.push(y.unwra p());
         // }
 
         // let f = pps_without_ending.join(" / ");
