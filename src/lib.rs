@@ -2667,35 +2667,37 @@ impl HcVerbForms for HcGreekVerbForm {
     }
 
     fn accent_verb(&self, word:&str) -> String {
-        let syl = analyze_syllable_quantities(word, self.person, self.number, self.tense, self.mood, self.verb.properties);
+        let syllables = analyze_syllable_quantities(word, self.person, self.number, self.tense, self.mood, self.verb.properties);
 
         let accent;
         let letter_index;
-        if syl.len() > 2 && !syl.last().unwrap().is_long { //acute on antepenult
+        if syllables.len() > 2 && !syllables.last().unwrap().is_long { //acute on antepenult (παιδεύομεν)
             accent = HGK_ACUTE;
-            letter_index = syl[0].index;
+            letter_index = syllables[0].index;
         }
-        else if syl.len() == 2 && syl[0].is_long && !syl[1].is_long {
-            if (syl[1].letters == "αι" || syl[1].letters == "οι") && self.mood == HcMood::Optative {
+        else if syllables.len() == 2 && syllables[0].is_long && !syllables[1].is_long {
+            if (syllables[1].letters == "αι" || syllables[1].letters == "οι") && self.mood == HcMood::Optative {
+                //***we never get here because analyze_syllable_quantities marks optative ai and oi as long
                 accent = HGK_ACUTE; //exception to the exception for optative 3rd singular: acute on penult
             }
             else {
-                accent = HGK_CIRCUMFLEX; //circumflex on penult
+                accent = HGK_CIRCUMFLEX; //circumflex on penult (λῦε present active imperative)
             }
-            letter_index = syl[0].index;
+            letter_index = syllables[0].index;
         }
-        else if syl.len() > 1 { //acute on penult
+        else if syllables.len() > 1 { //acute on penult (παιδεύω)
             accent = HGK_ACUTE;
-            letter_index = syl[syl.len() - 2].index;
+            letter_index = syllables[syllables.len() - 2].index;
         }
-        else if syl.len() == 1 { //acute on ultima. e.g. do/s
-            if syl[0].is_long {
-                accent = HGK_CIRCUMFLEX;
+        else if syllables.len() == 1 { 
+
+            if syllables[0].is_long {
+                accent = HGK_CIRCUMFLEX; //circumflex on ultima. e.g. (δοῦ)
             }
             else {
-                accent = HGK_ACUTE;
+                accent = HGK_ACUTE; //acute on ultima. e.g. do/s (δός)
             }
-            letter_index = syl[0].index;
+            letter_index = syllables[0].index;
         }
         else {
             return String::from(word);
@@ -3135,7 +3137,7 @@ fn analyze_syllable_quantities(word:&str, p:HcPerson, n:HcNumber, t:HcTense, m:H
                         s.push(last_letter);
 
                         let is_short = letter_num == 1 && (x.letter == 'α' || x.letter == 'ο') && last_letter == 'ι';//final diphthongs short accent
-                        if is_short && p == HcPerson::Third && n == HcNumber::Singular && m == HcMood::Optative {
+                        if is_short && p == HcPerson::Third && n == HcNumber::Singular && m == HcMood::Optative { //exception to the exception for optative 3rd sing.
                             //res.push((s, true, letter_num - 1));
                             res.push(SyllableAnalysis {letters: s, is_long: true, index: letter_num - 1});
                         }
