@@ -1,14 +1,14 @@
 [package]
 name = "hoplite_verbs_rs"
-version = "0.2.0"
+version = "0.3.1"
 authors = ["jeremymarch <jmarch@gradcenter.cuny.edu>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rustunicodetests = { path = "../rustunicodetests" }
-#rustunicodetests = { git = "https://github.com/jeremymarch/rustunicodetests", version = "0.1.0" }
+#rustunicodetests = { path = "../rustunicodetests" }
+rustunicodetests = { git = "https://github.com/jeremymarch/rustunicodetests", version = "0.3.1" }
 unicode-normalization = { version = "0.1.21", default-features = false }
 unicode-segmentation = "1.9.0"
 
