@@ -137,6 +137,14 @@ impl HcPerson {
             HcPerson::Third => "3",
         }
     }
+    pub fn from_u8(value: u8) -> HcPerson {
+        match value {
+            0 => HcPerson::First,
+            1 => HcPerson::Second,
+            2 => HcPerson::Third,
+            _ => panic!("Unknown value: {}", value),
+        }
+    }
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
@@ -154,13 +162,20 @@ impl HcNumber {
             HcNumber::Plural => "p",
         }
     }
+    pub fn from_u8(value: u8) -> HcNumber {
+        match value {
+            0 => HcNumber::Singular,
+            1 => HcNumber::Plural,
+            _ => panic!("Unknown value: {}", value),
+        }
+    }
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub enum HcTense {
     Present,
-    Future,
     Imperfect,
+    Future,
     Aorist,
     Perfect,
     Pluperfect,
@@ -170,11 +185,22 @@ impl HcTense {
     fn value(&self) -> &str {
         match *self {
             HcTense::Present => "Present",
-            HcTense::Future => "Future",
             HcTense::Imperfect => "Imperfect",
+            HcTense::Future => "Future",
             HcTense::Aorist => "Aorist",
             HcTense::Perfect => "Perfect",
             HcTense::Pluperfect => "Pluperfect",
+        }
+    }
+    pub fn from_u8(value: u8) -> HcTense {
+        match value {
+            0 => HcTense::Present,
+            1 => HcTense::Imperfect,
+            2 => HcTense::Future,
+            3 => HcTense::Aorist,
+            4 => HcTense::Perfect,
+            5 => HcTense::Pluperfect,
+            _ => panic!("Unknown value: {}", value),
         }
     }
 }
@@ -192,6 +218,14 @@ impl HcVoice {
             HcVoice::Active => "Active",
             HcVoice::Middle => "Middle",
             HcVoice::Passive => "Passive",
+        }
+    }
+    pub fn from_u8(value: u8) -> HcVoice {
+        match value {
+            0 => HcVoice::Active,
+            1 => HcVoice::Middle,
+            2 => HcVoice::Passive,
+            _ => panic!("Unknown value: {}", value),
         }
     }
 }
@@ -215,6 +249,17 @@ impl HcMood {
             HcMood::Imperative => "Imperative",
             HcMood::Infinitive => "Infinitive",
             HcMood::Participle => "Participle",
+        }
+    }
+    pub fn from_u8(value: u8) -> HcMood {
+        match value {
+            0 => HcMood::Indicative,
+            1 => HcMood::Subjunctive,
+            2 => HcMood::Optative,
+            3 => HcMood::Imperative,
+            4 => HcMood::Infinitive,
+            5 => HcMood::Participle,
+            _ => panic!("Unknown value: {}", value),
         }
     }
 }
@@ -276,16 +321,18 @@ pub struct HcGreekVerb {
     pub id: u32,
     pub pps: Vec<String>,
     pub properties: u32,
+    pub hq_unit: u32,
 }
 
 impl HcGreekVerb {
-    pub fn from_string(id:u32, pps:&str, props:u32) -> Option<HcGreekVerb> {
+    pub fn from_string(id:u32, pps:&str, props:u32, hq_unit:u32) -> Option<HcGreekVerb> {
         let x: Vec<String> = pps.split(',').map(|s| s.trim().to_owned()).collect();
         if x.len() == 6 {
             Some(HcGreekVerb {
                 id,
                 pps: x,
-                properties: props
+                properties: props,
+                hq_unit,
             })
         }
         else {
@@ -296,7 +343,13 @@ impl HcGreekVerb {
     pub fn from_string_with_properties(id:u32, ppstring:&str) -> Option<HcGreekVerb> {
         let mut properties = 0;
         let mut ll = ppstring.split('%');
+        let mut hq_unit = 0;
+        
         if let Some(pps) = ll.next() {
+            if let Some(s) = ll.next() {
+                hq_unit = s.trim().parse::<u32>().unwrap();
+            }
+
             if let Some(s) = ll.next() {
                 if s.contains("CONSONANT_STEM_PERFECT_PI") {
                     properties |= CONSONANT_STEM_PERFECT_PI;
@@ -320,7 +373,7 @@ impl HcGreekVerb {
                     properties |= PREFIXED;
                 }
             }
-            return HcGreekVerb::from_string(id, pps, properties);
+            return HcGreekVerb::from_string(id, pps, properties, hq_unit);
         }
         None
     }
@@ -3240,7 +3293,7 @@ mod tests {
     #[test]
     fn test_strip_ending() {
         let luw = "λω, λσωd, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
-        let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
+        let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {verb:a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form(false), Err(HcFormError::UnexpectedPrincipalPartEnding));
     }
@@ -3255,7 +3308,7 @@ mod tests {
     #[test]
     fn accent_tests() {
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
-        let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
+        let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {verb:a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form(false).unwrap()[1].form, "ἔλῡσα");
         assert_eq!(b.accent_verb("λελυμαι"), "λέλυμαι");
@@ -3289,7 +3342,7 @@ mod tests {
     #[test]
     fn illegal_verb_forms() {
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
-        let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
+        let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
         let illegal = HcGreekVerbForm {verb:luwverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Subjunctive, gender:None, case:None};
         assert_ne!(illegal.is_legal_form(), true);
 
@@ -3300,7 +3353,7 @@ mod tests {
         assert_eq!(illegal.is_legal_form(), true);
 
         let oida = "οἶδα, εἴσομαι, —, —, —, —";
-        let oidaverb = Arc::new(HcGreekVerb::from_string(1, oida, REGULAR).unwrap());
+        let oidaverb = Arc::new(HcGreekVerb::from_string(1, oida, REGULAR, 0).unwrap());
         let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Subjunctive, gender:None, case:None};
         assert_eq!(legaloidaperf.is_legal_form(), true);
         let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Optative, gender:None, case:None};
@@ -3330,8 +3383,8 @@ mod tests {
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
         let blaptw = "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην";
         
-        let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
-        let a1 = Arc::new(HcGreekVerb {id:1,pps:vec!["λω".to_string(), "λσω".to_string(), "ἔλῡσα".to_string(), "λέλυκα".to_string(), "λέλυμαι".to_string(), "ἐλύθην".to_string()],properties: REGULAR});
+        let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
+        let a1 = Arc::new(HcGreekVerb {id:1,pps:vec!["λω".to_string(), "λσω".to_string(), "ἔλῡσα".to_string(), "λέλυκα".to_string(), "λέλυμαι".to_string(), "ἐλύθην".to_string()],properties: REGULAR, hq_unit:0});
         assert_eq!(luwverb, a1);
         
         let b = HcGreekVerbForm {verb:luwverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
@@ -3349,7 +3402,7 @@ mod tests {
         assert_eq!(b.verb.pps[b.get_pp_num() as usize - 1], "ἔλῡσα");
         assert_eq!(b.get_pp(), Some(String::from("ἔλῡσα")));
 
-        let a = Arc::new(HcGreekVerb::from_string(1, blaptw, REGULAR).unwrap());
+        let a = Arc::new(HcGreekVerb::from_string(1, blaptw, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {verb:a.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Aorist, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form(false).unwrap()[2].form, "ἐβλαβην / ἐβλαφθην"); 
         let b = HcGreekVerbForm {verb:a.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
