@@ -2,14 +2,14 @@
 #![allow(clippy::if_same_then_else)] //for clarity let's leave these
 #![allow(clippy::collapsible_if)]
 
-extern crate rustunicodetests;
-use rustunicodetests::*;
-//use rustunicodetests::hgk_toggle_diacritic_str;
-use rustunicodetests::hgk_strip_diacritics;
-//use rustunicodetests::hgk_strip_diacritics_and_replace_circumflex_with_macron;
-use rustunicodetests::hgk_has_diacritics;
-//use rustunicodetests::hgk_transliterate;
-//use rustunicodetests::hgk_convert;
+extern crate polytonic_greek;
+use polytonic_greek::*;
+//use polytonic_greek::hgk_toggle_diacritic_str;
+use polytonic_greek::hgk_strip_diacritics;
+//use polytonic_greek::hgk_strip_diacritics_and_replace_circumflex_with_macron;
+use polytonic_greek::hgk_has_diacritics;
+//use polytonic_greek::hgk_transliterate;
+//use polytonic_greek::hgk_convert;
 use std::sync::Arc;
 
 use rand::Rng;
