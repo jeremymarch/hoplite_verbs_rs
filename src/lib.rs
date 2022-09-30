@@ -145,6 +145,13 @@ impl HcPerson {
             _ => panic!("Unknown value: {}", value),
         }
     }
+    pub fn to_u8(&self) -> u8 {
+        match *self {
+            HcPerson::First => 0,
+            HcPerson::Second => 1,
+            HcPerson::Third => 2,
+        }
+    }
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
@@ -167,6 +174,13 @@ impl HcNumber {
             0 => HcNumber::Singular,
             1 => HcNumber::Plural,
             _ => panic!("Unknown value: {}", value),
+        }
+    }
+    pub fn to_u8(&self) -> u8 {
+        match *self {
+            HcNumber::Singular => 0,
+            HcNumber::Dual => 2,
+            HcNumber::Plural => 1,
         }
     }
 }
@@ -203,6 +217,16 @@ impl HcTense {
             _ => panic!("Unknown value: {}", value),
         }
     }
+    pub fn to_u8(&self) -> u8 {
+        match *self {
+            HcTense::Present => 0,
+            HcTense::Imperfect => 1,
+            HcTense::Future => 2,
+            HcTense::Aorist => 3,
+            HcTense::Perfect => 4,
+            HcTense::Pluperfect => 5,
+        }
+    }
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
@@ -226,6 +250,13 @@ impl HcVoice {
             1 => HcVoice::Middle,
             2 => HcVoice::Passive,
             _ => panic!("Unknown value: {}", value),
+        }
+    }
+    pub fn to_u8(&self) -> u8 {
+        match *self {
+            HcVoice::Active => 0,
+            HcVoice::Middle => 1,
+            HcVoice::Passive => 2,
         }
     }
 }
@@ -260,6 +291,16 @@ impl HcMood {
             4 => HcMood::Infinitive,
             5 => HcMood::Participle,
             _ => panic!("Unknown value: {}", value),
+        }
+    }
+    pub fn to_u8(&self) -> u8 {
+        match *self {
+            HcMood::Indicative => 0,
+            HcMood::Subjunctive => 1,
+            HcMood::Optative => 2,
+            HcMood::Imperative => 3,
+            HcMood::Infinitive => 4,
+            HcMood::Participle => 5,
         }
     }
 }
