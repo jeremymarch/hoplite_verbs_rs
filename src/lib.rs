@@ -137,7 +137,7 @@ impl HcPerson {
             HcPerson::Third => "3",
         }
     }
-    pub fn from_i32(value: i32) -> HcPerson {
+    pub fn from_i16(value: i16) -> HcPerson {
         match value {
             0 => HcPerson::First,
             1 => HcPerson::Second,
@@ -145,7 +145,7 @@ impl HcPerson {
             _ => panic!("Unknown value: {}", value),
         }
     }
-    pub fn to_i32(&self) -> i32 {
+    pub fn to_i16(&self) -> i16 {
         match *self {
             HcPerson::First => 0,
             HcPerson::Second => 1,
@@ -169,14 +169,14 @@ impl HcNumber {
             HcNumber::Plural => "p",
         }
     }
-    pub fn from_i32(value: i32) -> HcNumber {
+    pub fn from_i16(value: i16) -> HcNumber {
         match value {
             0 => HcNumber::Singular,
             1 => HcNumber::Plural,
             _ => panic!("Unknown value: {}", value),
         }
     }
-    pub fn to_i32(&self) -> i32 {
+    pub fn to_i16(&self) -> i16 {
         match *self {
             HcNumber::Singular => 0,
             HcNumber::Dual => 2,
@@ -206,7 +206,7 @@ impl HcTense {
             HcTense::Pluperfect => "Pluperfect",
         }
     }
-    pub fn from_i32(value: i32) -> HcTense {
+    pub fn from_i16(value: i16) -> HcTense {
         match value {
             0 => HcTense::Present,
             1 => HcTense::Imperfect,
@@ -217,7 +217,7 @@ impl HcTense {
             _ => panic!("Unknown value: {}", value),
         }
     }
-    pub fn to_i32(&self) -> i32 {
+    pub fn to_i16(&self) -> i16 {
         match *self {
             HcTense::Present => 0,
             HcTense::Imperfect => 1,
@@ -244,7 +244,7 @@ impl HcVoice {
             HcVoice::Passive => "Passive",
         }
     }
-    pub fn from_i32(value: i32) -> HcVoice {
+    pub fn from_i16(value: i16) -> HcVoice {
         match value {
             0 => HcVoice::Active,
             1 => HcVoice::Middle,
@@ -252,7 +252,7 @@ impl HcVoice {
             _ => panic!("Unknown value: {}", value),
         }
     }
-    pub fn to_i32(&self) -> i32 {
+    pub fn to_i16(&self) -> i16 {
         match *self {
             HcVoice::Active => 0,
             HcVoice::Middle => 1,
@@ -282,7 +282,7 @@ impl HcMood {
             HcMood::Participle => "Participle",
         }
     }
-    pub fn from_i32(value: i32) -> HcMood {
+    pub fn from_i16(value: i16) -> HcMood {
         match value {
             0 => HcMood::Indicative,
             1 => HcMood::Subjunctive,
@@ -293,7 +293,7 @@ impl HcMood {
             _ => panic!("Unknown value: {}", value),
         }
     }
-    pub fn to_i32(&self) -> i32 {
+    pub fn to_i16(&self) -> i16 {
         match *self {
             HcMood::Indicative => 0,
             HcMood::Subjunctive => 1,
