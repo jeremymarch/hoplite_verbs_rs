@@ -710,7 +710,8 @@ impl HcVerbForms for HcGreekVerbForm {
         Err("error stripping ending 2")
     }
 
-    fn is_deponent(&self, stem:&str) -> bool {   
+    fn is_deponent(&self, stem:&str) -> bool {
+        #[allow(clippy::needless_bool)]
         if (self.tense == HcTense::Present || self.tense == HcTense::Imperfect || self.tense == HcTense::Future) && stem.ends_with("μαι") {
             true
         }
@@ -800,26 +801,24 @@ impl HcVerbForms for HcGreekVerbForm {
                                 local_ending = String::from(""); // fix me
                             }
                         }
-                        else {
-                            if self.person == HcPerson::Second && self.number == HcNumber::Singular {
-                                if self.verb.pps[0].ends_with("ωμι") {
-                                    local_ending = String::from("υ");
-                                }
-                                else if self.verb.pps[0].ends_with("στημι") { 
-                                    local_stem.pop();
-                                    local_ending = String::from("η");
-                                }
-                                else if self.verb.pps[0].ends_with("ῡμι") { 
-                                    local_stem = local_stem.replacen('υ', "ῡ", 1);
-                                    local_ending = String::from("");
-                                }
-                                else {
-                                    local_ending = String::from("ι");
-                                }
+                        else if self.person == HcPerson::Second && self.number == HcNumber::Singular {
+                            if self.verb.pps[0].ends_with("ωμι") {
+                                local_ending = String::from("υ");
+                            }
+                            else if self.verb.pps[0].ends_with("στημι") { 
+                                local_stem.pop();
+                                local_ending = String::from("η");
+                            }
+                            else if self.verb.pps[0].ends_with("ῡμι") { 
+                                local_stem = local_stem.replacen('υ', "ῡ", 1);
+                                local_ending = String::from("");
                             }
                             else {
-                                local_ending.remove(0);
+                                local_ending = String::from("ι");
                             }
+                        }
+                        else {
+                            local_ending.remove(0);
                         }
                     }
                     else if self.verb.pps[0].ends_with("στημι") && self.person == HcPerson::Third && self.number == HcNumber::Plural &&self.mood == HcMood::Indicative && !decompose {
@@ -926,15 +925,14 @@ impl HcVerbForms for HcGreekVerbForm {
                         if self.verb.pps[0].ends_with("ῑ́ημι") && !decompose && (self.number == HcNumber::Plural || self.voice != HcVoice::Active) {
                             local_stem = local_stem.replacen("ηκ", "ει", 1);
                         }
+                        else if self.verb.pps[0].ends_with("ῑ̔́ημι") && !decompose {
+                            local_stem = local_stem.replacen("ἡκ", "εἱ", 1);
+                        }
                         else {
-                            if self.verb.pps[0].ends_with("ῑ̔́ημι") && !decompose {
-                                local_stem = local_stem.replacen("ἡκ", "εἱ", 1);
-                            }
-                            else {
-                                local_stem = local_stem.replacen("ηκ", "ε", 1);
-                            }
+                            local_stem = local_stem.replacen("ηκ", "ε", 1);
                         }
                     }
+                    
 
                     if self.mood == HcMood::Subjunctive && !decompose && self.voice != HcVoice::Passive {
                         local_stem.pop();
@@ -2319,6 +2317,7 @@ impl HcVerbForms for HcGreekVerbForm {
         //eliminate subjunctive and imperative outside of the present and aorist
         //and optative outside of the present and aorist and future
         //except for oida in perfect tense
+        #[allow(clippy::needless_bool)]
         if self.mood == HcMood::Imperative && self.person == HcPerson::First {
             false
         }
@@ -2924,7 +2923,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         match self.mood {
                             HcMood::Indicative => if self.verb.pps[0].ends_with("μι") { HcEndings::PresentActiveIndicativeMi } else { HcEndings::PresentActiveInd },
                             HcMood::Subjunctive => if self.verb.pps[0].ends_with("μι") && !self.verb.pps[0].ends_with("ῡμι") { HcEndings::AoristPassiveSubj } else { HcEndings::PresentActiveSubj },
-                            HcMood::Optative => if self.verb.pps[0].ends_with("μι") && !self.verb.pps[0].ends_with("ῡμι") { HcEndings::PresentActiveOptMi } else { if self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") { HcEndings::PresentActiveOptEContracted} else { HcEndings::PresentActiveOpt } },
+                            HcMood::Optative => if self.verb.pps[0].ends_with("μι") && !self.verb.pps[0].ends_with("ῡμι") { HcEndings::PresentActiveOptMi } else if self.verb.pps[0].ends_with("άω") || self.verb.pps[0].ends_with("έω") || self.verb.pps[0].ends_with("όω") { HcEndings::PresentActiveOptEContracted } else { HcEndings::PresentActiveOpt },
                             HcMood::Imperative => HcEndings::PresentActiveImperative,
                             HcMood::Infinitive => HcEndings::NotImplemented,
                             HcMood::Participle => HcEndings::NotImplemented,
@@ -3385,38 +3384,38 @@ mod tests {
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
         let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
         let illegal = HcGreekVerbForm {verb:luwverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Subjunctive, gender:None, case:None};
-        assert_ne!(illegal.is_legal_form(), true);
+        assert!(!illegal.is_legal_form());
 
         let illegal = HcGreekVerbForm {verb:luwverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Imperative, gender:None, case:None};
-        assert_ne!(illegal.is_legal_form(), true);
+        assert!(!illegal.is_legal_form());
 
-        let illegal = HcGreekVerbForm {verb:luwverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Optative, gender:None, case:None};
-        assert_eq!(illegal.is_legal_form(), true);
+        let illegal = HcGreekVerbForm {verb:luwverb, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Optative, gender:None, case:None};
+        assert!(illegal.is_legal_form());
 
         let oida = "οἶδα, εἴσομαι, —, —, —, —";
         let oidaverb = Arc::new(HcGreekVerb::from_string(1, oida, REGULAR, 0).unwrap());
         let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Subjunctive, gender:None, case:None};
-        assert_eq!(legaloidaperf.is_legal_form(), true);
+        assert!(legaloidaperf.is_legal_form());
         let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Optative, gender:None, case:None};
-        assert_eq!(legaloidaperf.is_legal_form(), true);
+        assert!(legaloidaperf.is_legal_form());
         let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Imperative, gender:None, case:None};
-        assert_eq!(legaloidaperf.is_legal_form(), true);
+        assert!(legaloidaperf.is_legal_form());
         let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Subjunctive, gender:None, case:None};
-        assert_ne!(legaloidaperf.is_legal_form(), true);
+        assert!(!legaloidaperf.is_legal_form());
         let legaloidaperf = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Imperative, gender:None, case:None};
-        assert_ne!(legaloidaperf.is_legal_form(), true);
+        assert!(!legaloidaperf.is_legal_form());
         let illegaloidaplup = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Active, mood:HcMood::Subjunctive, gender:None, case:None};
-        assert_ne!(illegaloidaplup.is_legal_form(), true);
+        assert!(!illegaloidaplup.is_legal_form());
         let illegaloidaplup = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Active, mood:HcMood::Optative, gender:None, case:None};
-        assert_ne!(illegaloidaplup.is_legal_form(), true);
+        assert!(!illegaloidaplup.is_legal_form());
         let illegaloidaplup = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Active, mood:HcMood::Imperative, gender:None, case:None};
-        assert_ne!(illegaloidaplup.is_legal_form(), true);
+        assert!(!illegaloidaplup.is_legal_form());
 
         let illegaloidaplup = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Optative, gender:None, case:None};
-        assert_eq!(illegaloidaplup.is_legal_form(), true);
+        assert!(illegaloidaplup.is_legal_form());
 
-        let illegaloidaplup = HcGreekVerbForm {verb:oidaverb.clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Imperative, gender:None, case:None};
-        assert_ne!(illegaloidaplup.is_legal_form(), true);
+        let illegaloidaplup = HcGreekVerbForm {verb:oidaverb, person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Future, voice:HcVoice::Active, mood:HcMood::Imperative, gender:None, case:None};
+        assert!(!illegaloidaplup.is_legal_form());
     }
 
     #[test]
@@ -3472,7 +3471,7 @@ mod tests {
         let b = HcGreekVerbForm {verb:a.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form(false).unwrap()[2].form, "βεβλαμμαι");
 
-        let b = HcGreekVerbForm {verb:a.clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
+        let b = HcGreekVerbForm {verb:a, person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Pluperfect, voice:HcVoice::Passive, mood:HcMood::Indicative, gender:None, case:None};
         assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "ἐβεβλάμμην");
 
         for v in [HcVoice::Active,HcVoice::Middle,HcVoice::Passive] {
