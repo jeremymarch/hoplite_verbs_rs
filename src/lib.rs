@@ -2,7 +2,7 @@
 #![allow(clippy::if_same_then_else)] //for clarity let's leave these
 #![allow(clippy::collapsible_if)]
 
-extern crate polytonic_greek;
+pub extern crate polytonic_greek;
 use polytonic_greek::*;
 //use polytonic_greek::hgk_toggle_diacritic_str;
 use polytonic_greek::hgk_strip_diacritics;
