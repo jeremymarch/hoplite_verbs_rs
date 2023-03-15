@@ -498,6 +498,16 @@ pub trait HcVerbForms {
         voices: &[HcVoice],
         moods: &[HcMood],
     );
+    fn random_form(
+        &self,
+        num: u8,
+        persons: &[HcPerson],
+        numbers: &[HcNumber],
+        tenses: &[HcTense],
+        voices: &[HcVoice],
+        moods: &[HcMood],
+    ) -> HcGreekVerbForm;
+    fn block_middle_passive(&self, new_form: &HcGreekVerbForm) -> bool;
 }
 
 /*
@@ -2209,6 +2219,51 @@ impl HcVerbForms for HcGreekVerbForm {
             }
             loc
         }
+    }
+
+    // if middle or passive do not change voice to passive or middle unless tense is aorist or future
+    // true to block change, false to allow change
+    // AND before OR
+    fn block_middle_passive(&self, new_form: &HcGreekVerbForm) -> bool {
+        (self.voice == HcVoice::Middle && new_form.voice == HcVoice::Passive
+            || self.voice == HcVoice::Passive && new_form.voice == HcVoice::Middle)
+            && new_form.tense != HcTense::Aorist
+            && new_form.tense != HcTense::Future
+            && self.tense != HcTense::Aorist
+            && self.tense != HcTense::Future
+    }
+
+    // add param for top unit
+    fn random_form(
+        &self,
+        num: u8,
+        persons: &[HcPerson],
+        numbers: &[HcNumber],
+        tenses: &[HcTense],
+        voices: &[HcVoice],
+        moods: &[HcMood],
+    ) -> HcGreekVerbForm {
+        let mut pf: HcGreekVerbForm;
+        loop {
+            pf = self.clone();
+
+            pf.change_params(num, persons, numbers, tenses, voices, moods);
+            let vf = pf.get_form(false);
+            match vf {
+                Ok(res) => {
+                    if res.last().unwrap().form == "—" || self.block_middle_passive(&pf) {
+                        continue;
+                    } else {
+                        break;
+                    }
+                } //only 3rd pl consonant stem perfects/pluperfects return - now
+                Err(_e) => {
+                    /*println!("continue {:?}", e);*/
+                    continue;
+                }
+            }
+        }
+        pf
     }
 
     fn change_params(
@@ -4121,6 +4176,242 @@ mod tests {
             case: None,
         };
         assert!(!illegaloidaplup.is_legal_form());
+    }
+
+    #[test]
+    fn block_middle_passive() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
+
+        let a = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Aorist,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Aorist,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        // no change of voice: not blocked
+        assert!(!a.block_middle_passive(&b));
+
+        let a = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Middle,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Passive,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        // middle to passive, both present tense: blocked
+        assert!(a.block_middle_passive(&b));
+
+        let a = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Passive,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Middle,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        // passive to middle, both present tense: blocked
+        assert!(a.block_middle_passive(&b));
+
+        let a = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Aorist,
+            voice: HcVoice::Passive,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Middle,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        // passive to middle, first one is aorist: not blocked
+        assert!(!a.block_middle_passive(&b));
+
+        let a = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Passive,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Aorist,
+            voice: HcVoice::Middle,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        // passive to middle, second one is aorist: not blocked
+        assert!(!a.block_middle_passive(&b));
+
+        let a = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Future,
+            voice: HcVoice::Passive,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Middle,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        // passive to middle, first one is future: not blocked
+        assert!(!a.block_middle_passive(&b));
+
+        let a = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Passive,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Future,
+            voice: HcVoice::Middle,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        // passive to middle, second one is future: not blocked
+        assert!(!a.block_middle_passive(&b));
+
+        let a = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Future,
+            voice: HcVoice::Passive,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Future,
+            voice: HcVoice::Middle,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        // passive to middle, both future: not blocked
+        assert!(!a.block_middle_passive(&b));
+
+        let a = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Passive,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        // passive to active, both present: not blocked
+        assert!(!a.block_middle_passive(&b));
+
+        let a = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: luwverb,
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Passive,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        // active to passive, both present: not blocked
+        assert!(!a.block_middle_passive(&b));
     }
 
     #[test]

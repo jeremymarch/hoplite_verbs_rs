@@ -1,6 +1,6 @@
 [package]
 name = "hoplite_verbs_rs"
-version = "0.3.7"
+version = "0.3.8"
 authors = ["jeremymarch <jmarch@gradcenter.cuny.edu>"]
 edition = "2021"
 
