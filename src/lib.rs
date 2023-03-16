@@ -57,6 +57,14 @@ impl RReplacen for String {
     }
 }
 
+pub struct VerbParameters {
+    pub persons: Vec<HcPerson>,
+    pub numbers: Vec<HcNumber>,
+    pub tenses: Vec<HcTense>,
+    pub voices: Vec<HcVoice>,
+    pub moods: Vec<HcMood>,
+}
+
 #[derive(Eq, PartialEq, Debug)]
 pub enum HcFormError {
     InternalError,
@@ -441,6 +449,14 @@ impl HcGreekVerb {
             HcDeponentType::NotDeponent
         }
     }
+    fn is_consonant_stem(&self) -> bool {
+        self.properties & CONSONANT_STEM_PERFECT_PI == CONSONANT_STEM_PERFECT_PI
+            || self.properties & CONSONANT_STEM_PERFECT_GAMMA == CONSONANT_STEM_PERFECT_GAMMA
+            || self.properties & CONSONANT_STEM_PERFECT_CHI == CONSONANT_STEM_PERFECT_CHI
+            || self.properties & CONSONANT_STEM_PERFECT_BETA == CONSONANT_STEM_PERFECT_BETA
+            || self.properties & CONSONANT_STEM_PERFECT_LAMBDA == CONSONANT_STEM_PERFECT_LAMBDA
+            || self.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU
+    }
 }
 
 #[derive(Default, PartialEq, Eq, Debug)]
@@ -489,25 +505,15 @@ pub trait HcVerbForms {
     fn contract_verb(&self, unaccented_form: &str, ending: &str) -> String;
     fn is_deponent(&self, stem: &str) -> bool;
     fn separate_prefix(&self, stem: &str) -> String;
-    fn change_params(
-        &mut self,
-        num: u8,
-        persons: &[HcPerson],
-        numbers: &[HcNumber],
-        tenses: &[HcTense],
-        voices: &[HcVoice],
-        moods: &[HcMood],
-    );
+    fn change_params(&mut self, num: u8, parameters: &VerbParameters);
     fn random_form(
         &self,
         num: u8,
-        persons: &[HcPerson],
-        numbers: &[HcNumber],
-        tenses: &[HcTense],
-        voices: &[HcVoice],
-        moods: &[HcMood],
+        highest_unit: u8,
+        parameters: &VerbParameters,
     ) -> HcGreekVerbForm;
     fn block_middle_passive(&self, new_form: &HcGreekVerbForm) -> bool;
+    fn block_for_hq_unit(&self, unit: u8) -> bool;
 }
 
 /*
@@ -2233,25 +2239,109 @@ impl HcVerbForms for HcGreekVerbForm {
             && self.tense != HcTense::Future
     }
 
+    fn block_for_hq_unit(&self, unit: u8) -> bool {
+        let is_mi_verb = self.verb.pps[0].ends_with("μι");
+        let is_isthmi = self.verb.pps[0].ends_with("στημι");
+
+        let is_isthmi_perf = is_isthmi
+            && (self.tense == HcTense::Aorist
+                || self.tense == HcTense::Perfect
+                || self.tense == HcTense::Pluperfect);
+
+        let is_future_optative = self.tense == HcTense::Future && self.mood == HcMood::Optative;
+
+        let is_consonant_stem_third_plural = self.verb.is_consonant_stem()
+            && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
+            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)
+            && self.person == HcPerson::Third
+            && self.number == HcNumber::Plural;
+
+        if unit <= 2 {
+            //2 and under active indicative and not perfect or pluperfect
+            if self.tense == HcTense::Perfect
+                || self.tense == HcTense::Pluperfect
+                || self.voice != HcVoice::Active
+                || self.mood != HcMood::Indicative
+                || is_mi_verb
+            {
+                return true;
+            }
+        } else if unit <= 4 {
+            //4 and under must be active, no imperatives, no future optative
+            if self.voice != HcVoice::Active
+                || self.mood == HcMood::Imperative
+                || is_mi_verb
+                || is_future_optative
+            {
+                return true;
+            }
+        } else if unit <= 6 {
+            //6 and under can't be middle, no imperatives, no future optative
+            if self.voice == HcVoice::Middle
+                || self.mood == HcMood::Imperative
+                || is_mi_verb
+                || is_future_optative
+                || is_consonant_stem_third_plural
+            {
+                return true;
+            }
+        } else if unit <= 10 {
+            //10 and under no imperatives, no future optative
+            if self.mood == HcMood::Imperative
+                || is_mi_verb
+                || is_future_optative
+                || is_consonant_stem_third_plural
+            {
+                return true;
+            }
+        } else if unit <= 11 {
+            //11 and under no aorists of mi verbs, no perf/plup of isthmi, no future optative
+            if is_mi_verb || is_future_optative || is_consonant_stem_third_plural {
+                return true;
+            }
+        } else if unit <= 12 {
+            //12 and under no aorists of mi verbs, no perf/plup of isthmi, no future optative
+            if (is_mi_verb && self.tense == HcTense::Aorist)
+                || is_isthmi_perf
+                || is_future_optative
+                || is_consonant_stem_third_plural
+            {
+                return true;
+            }
+            // todo deiknumi verbs?
+        } else if unit <= 15 {
+            //15 and under no future optative
+            if is_future_optative || is_consonant_stem_third_plural {
+                return true;
+            }
+        } else if unit <= 19 {
+            //19 and under no 3rd plural of consonant stem perf/plup mid/pass
+            if is_consonant_stem_third_plural {
+                return true;
+            }
+        }
+        false
+    }
+
     // add param for top unit
     fn random_form(
         &self,
         num: u8,
-        persons: &[HcPerson],
-        numbers: &[HcNumber],
-        tenses: &[HcTense],
-        voices: &[HcVoice],
-        moods: &[HcMood],
+        highest_unit: u8,
+        parameters: &VerbParameters,
     ) -> HcGreekVerbForm {
         let mut pf: HcGreekVerbForm;
         loop {
             pf = self.clone();
 
-            pf.change_params(num, persons, numbers, tenses, voices, moods);
+            pf.change_params(num, parameters);
             let vf = pf.get_form(false);
             match vf {
                 Ok(res) => {
-                    if res.last().unwrap().form == "—" || self.block_middle_passive(&pf) {
+                    if res.last().unwrap().form == "—"
+                        || self.block_middle_passive(&pf)
+                        || self.block_for_hq_unit(highest_unit)
+                    {
                         continue;
                     } else {
                         break;
@@ -2266,15 +2356,7 @@ impl HcVerbForms for HcGreekVerbForm {
         pf
     }
 
-    fn change_params(
-        &mut self,
-        num: u8,
-        persons: &[HcPerson],
-        numbers: &[HcNumber],
-        tenses: &[HcTense],
-        voices: &[HcVoice],
-        moods: &[HcMood],
-    ) {
+    fn change_params(&mut self, num: u8, parameters: &VerbParameters) {
         let mut params_to_change: Vec<u8> = vec![];
         let mut rng = rand::thread_rng();
 
@@ -2288,40 +2370,45 @@ impl HcVerbForms for HcGreekVerbForm {
         for a in 0..=4 {
             //remove current value from param vec to be sure it is not re-selected; must be at least two values to change
             match a {
-                0 if params_to_change.contains(&0) && persons.len() > 1 => {
-                    self.person = **persons
+                0 if params_to_change.contains(&0) && parameters.persons.len() > 1 => {
+                    self.person = **parameters
+                        .persons
                         .iter()
                         .filter(|x| **x != self.person)
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
                         .unwrap()
                 }
-                1 if params_to_change.contains(&1) && numbers.len() > 1 => {
-                    self.number = **numbers
+                1 if params_to_change.contains(&1) && parameters.numbers.len() > 1 => {
+                    self.number = **parameters
+                        .numbers
                         .iter()
                         .filter(|x| **x != self.number)
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
                         .unwrap()
                 }
-                2 if params_to_change.contains(&2) && tenses.len() > 1 => {
-                    self.tense = **tenses
+                2 if params_to_change.contains(&2) && parameters.tenses.len() > 1 => {
+                    self.tense = **parameters
+                        .tenses
                         .iter()
                         .filter(|x| **x != self.tense)
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
                         .unwrap()
                 }
-                3 if params_to_change.contains(&3) && voices.len() > 1 => {
-                    self.voice = **voices
+                3 if params_to_change.contains(&3) && parameters.voices.len() > 1 => {
+                    self.voice = **parameters
+                        .voices
                         .iter()
                         .filter(|x| **x != self.voice)
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
                         .unwrap()
                 }
-                4 if params_to_change.contains(&4) && moods.len() > 1 => {
-                    self.mood = **moods
+                4 if params_to_change.contains(&4) && parameters.moods.len() > 1 => {
+                    self.mood = **parameters
+                        .moods
                         .iter()
                         .filter(|x| **x != self.mood)
                         .collect::<Vec<_>>()
@@ -4176,6 +4263,227 @@ mod tests {
             case: None,
         };
         assert!(!illegaloidaplup.is_legal_form());
+    }
+
+    #[test]
+    fn block_for_hq_unit() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
+
+        let vf = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        // block perfects for unit 2
+        assert!(vf.block_for_hq_unit(2));
+        // allow perfects for unit 3
+        assert!(!vf.block_for_hq_unit(3));
+
+        // subjunctive/optative in unit 3
+        let vf = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Subjunctive,
+            gender: None,
+            case: None,
+        };
+        assert!(vf.block_for_hq_unit(2));
+        assert!(!vf.block_for_hq_unit(3));
+
+        // subjunctive/optative in unit 3
+        let vf = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Optative,
+            gender: None,
+            case: None,
+        };
+        assert!(vf.block_for_hq_unit(2));
+        assert!(!vf.block_for_hq_unit(3));
+
+        // passive voice in unit 5
+        let vf = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Passive,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        assert!(vf.block_for_hq_unit(4));
+        assert!(!vf.block_for_hq_unit(5));
+
+        // middle voice in unit 7
+        let vf = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Middle,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        assert!(vf.block_for_hq_unit(6));
+        assert!(!vf.block_for_hq_unit(7));
+
+        // imperatives in unit 11
+        let vf = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Imperative,
+            gender: None,
+            case: None,
+        };
+        assert!(vf.block_for_hq_unit(10));
+        assert!(!vf.block_for_hq_unit(11));
+
+        // block mi verbs until unit 12
+        let isthmi = "ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην";
+        let isthmi_verb = Arc::new(HcGreekVerb::from_string(1, isthmi, REGULAR, 0).unwrap());
+        let vf = HcGreekVerbForm {
+            verb: isthmi_verb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        assert!(vf.block_for_hq_unit(2));
+        assert!(vf.block_for_hq_unit(3));
+        assert!(vf.block_for_hq_unit(4));
+        assert!(vf.block_for_hq_unit(5));
+        assert!(vf.block_for_hq_unit(6));
+        assert!(vf.block_for_hq_unit(7));
+        assert!(vf.block_for_hq_unit(8));
+        assert!(vf.block_for_hq_unit(9));
+        assert!(vf.block_for_hq_unit(10));
+        assert!(vf.block_for_hq_unit(11));
+        assert!(!vf.block_for_hq_unit(12));
+
+        // block aorist of mi verbs until unit 13
+        let vf = HcGreekVerbForm {
+            verb: isthmi_verb.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Aorist,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        assert!(vf.block_for_hq_unit(12));
+        assert!(!vf.block_for_hq_unit(13));
+
+        // block perfect of isthmi until unit 13
+        let vf = HcGreekVerbForm {
+            verb: isthmi_verb,
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        assert!(vf.block_for_hq_unit(12));
+        assert!(!vf.block_for_hq_unit(13));
+
+        // future optative, not until unit 16
+        let vf = HcGreekVerbForm {
+            verb: luwverb,
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Future,
+            voice: HcVoice::Active,
+            mood: HcMood::Optative,
+            gender: None,
+            case: None,
+        };
+        assert!(vf.block_for_hq_unit(2));
+        assert!(vf.block_for_hq_unit(3));
+        assert!(vf.block_for_hq_unit(4));
+        assert!(vf.block_for_hq_unit(5));
+        assert!(vf.block_for_hq_unit(6));
+        assert!(vf.block_for_hq_unit(7));
+        assert!(vf.block_for_hq_unit(8));
+        assert!(vf.block_for_hq_unit(9));
+        assert!(vf.block_for_hq_unit(10));
+        assert!(vf.block_for_hq_unit(11));
+        assert!(vf.block_for_hq_unit(12));
+        assert!(vf.block_for_hq_unit(13));
+        assert!(vf.block_for_hq_unit(14));
+        assert!(vf.block_for_hq_unit(15));
+        assert!(!vf.block_for_hq_unit(16));
+
+        // 3rd plural consonant stem perfects
+        let blaptw = "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην";
+        let cons_stem_verb =
+            Arc::new(HcGreekVerb::from_string(1, blaptw, CONSONANT_STEM_PERFECT_PI, 0).unwrap());
+        let vf = HcGreekVerbForm {
+            verb: cons_stem_verb.clone(),
+            person: HcPerson::Third,
+            number: HcNumber::Plural,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Middle,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        assert!(cons_stem_verb.is_consonant_stem());
+
+        assert!(vf.block_for_hq_unit(2));
+        assert!(vf.block_for_hq_unit(3));
+        assert!(vf.block_for_hq_unit(4));
+        assert!(vf.block_for_hq_unit(5));
+        assert!(vf.block_for_hq_unit(6));
+        assert!(vf.block_for_hq_unit(7));
+        assert!(vf.block_for_hq_unit(8));
+        assert!(vf.block_for_hq_unit(9));
+        assert!(vf.block_for_hq_unit(10));
+        assert!(vf.block_for_hq_unit(11));
+        assert!(vf.block_for_hq_unit(12));
+        assert!(vf.block_for_hq_unit(13));
+        assert!(vf.block_for_hq_unit(14));
+        assert!(vf.block_for_hq_unit(15));
+        assert!(vf.block_for_hq_unit(16));
+        assert!(vf.block_for_hq_unit(17));
+        assert!(vf.block_for_hq_unit(18));
+        assert!(vf.block_for_hq_unit(19));
+        assert!(!vf.block_for_hq_unit(20));
+
+        // but perfect active of consonant stems is ok
+        let vf = HcGreekVerbForm {
+            verb: cons_stem_verb,
+            person: HcPerson::Third,
+            number: HcNumber::Plural,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        assert!(vf.block_for_hq_unit(2));
+        assert!(!vf.block_for_hq_unit(3));
     }
 
     #[test]
