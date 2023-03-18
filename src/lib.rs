@@ -509,11 +509,11 @@ pub trait HcVerbForms {
     fn random_form(
         &self,
         num_changes: u8,
-        highest_unit: Option<i32>,
+        highest_unit: Option<i16>,
         parameters: &VerbParameters,
     ) -> HcGreekVerbForm;
     fn block_middle_passive(&self, new_form: &HcGreekVerbForm) -> bool;
-    fn block_for_hq_unit(&self, unit: Option<i32>) -> bool;
+    fn block_for_hq_unit(&self, unit: Option<i16>) -> bool;
 }
 
 /*
@@ -2239,7 +2239,7 @@ impl HcVerbForms for HcGreekVerbForm {
             && self.tense != HcTense::Future
     }
 
-    fn block_for_hq_unit(&self, unit: Option<i32>) -> bool {
+    fn block_for_hq_unit(&self, unit: Option<i16>) -> bool {
         match unit {
             Some(unit) => {
                 let is_mi_verb = self.verb.pps[0].ends_with("μι");
@@ -2333,21 +2333,26 @@ impl HcVerbForms for HcGreekVerbForm {
     fn random_form(
         &self,
         num_changes: u8,
-        highest_unit: Option<i32>,
+        highest_unit: Option<i16>,
         parameters: &VerbParameters,
     ) -> HcGreekVerbForm {
         let mut pf: HcGreekVerbForm;
+        let mut num_skipped = 0;
         loop {
             pf = self.clone();
-
             pf.change_params(num_changes, parameters);
             let vf = pf.get_form(false);
+            if num_skipped > 2000 {
+                break;
+            }
+            num_skipped += 1;
             match vf {
                 Ok(res) => {
                     if res.last().unwrap().form == "—"
                         || self.block_middle_passive(&pf)
-                        || self.block_for_hq_unit(highest_unit)
+                        || pf.block_for_hq_unit(highest_unit)
                     {
+                        //println!("rand4: {:?} {:?} {:?} {:?}", res.last().unwrap().form, self.block_middle_passive(&pf), pf.block_for_hq_unit(highest_unit), highest_unit);
                         continue;
                     } else {
                         break;
