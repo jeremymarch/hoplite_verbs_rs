@@ -82,9 +82,10 @@ impl VerbParameters {
             .split(',')
             .map(|s| s.trim())
             .filter(|s| !s.is_empty() && s.parse::<u32>().is_ok())
-            .map(|s| s.parse().unwrap())
+            .map(|s| s.parse().unwrap_or(0))
             .unique()
             .collect();
+
         for p in param_vec {
             match p {
                 1 => persons.push(HcPerson::First),
@@ -107,6 +108,34 @@ impl VerbParameters {
                 18 => voices.push(HcVoice::Passive),
                 _ => (),
             }
+        }
+        if persons.is_empty() {
+            persons.push(HcPerson::First);
+            persons.push(HcPerson::Second);
+            persons.push(HcPerson::Third);
+        }
+        if numbers.is_empty() {
+            numbers.push(HcNumber::Singular);
+            numbers.push(HcNumber::Plural);
+        }
+        if tenses.is_empty() {
+            tenses.push(HcTense::Present);
+            tenses.push(HcTense::Imperfect);
+            tenses.push(HcTense::Future);
+            tenses.push(HcTense::Aorist);
+            tenses.push(HcTense::Perfect);
+            tenses.push(HcTense::Pluperfect);
+        }
+        if voices.is_empty() {
+            voices.push(HcVoice::Active);
+            voices.push(HcVoice::Middle);
+            voices.push(HcVoice::Passive);
+        }
+        if moods.is_empty() {
+            moods.push(HcMood::Indicative);
+            moods.push(HcMood::Subjunctive);
+            moods.push(HcMood::Optative);
+            moods.push(HcMood::Imperative);
         }
         VerbParameters {
             persons,
