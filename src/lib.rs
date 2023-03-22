@@ -67,82 +67,100 @@ pub struct VerbParameters {
 
 impl VerbParameters {
     pub fn from_option(param_str: Option<String>) -> VerbParameters {
-        let mut persons: Vec<HcPerson> = vec![];
-        let mut numbers: Vec<HcNumber> = vec![];
-        let mut tenses: Vec<HcTense> = vec![];
-        let mut voices: Vec<HcVoice> = vec![];
-        let mut moods: Vec<HcMood> = vec![];
+        match param_str {
+            Some(s) => {
+                let mut persons: Vec<HcPerson> = vec![];
+                let mut numbers: Vec<HcNumber> = vec![];
+                let mut tenses: Vec<HcTense> = vec![];
+                let mut voices: Vec<HcVoice> = vec![];
+                let mut moods: Vec<HcMood> = vec![];
 
-        let param_string: String = match param_str {
-            Some(s) => s,
-            None => String::from("1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18"),
-        };
+                let param_vec: Vec<u32> = s
+                    .split(',')
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty() && s.parse::<u32>().is_ok())
+                    .map(|s| s.parse().unwrap_or(0))
+                    .unique()
+                    .collect();
 
-        let param_vec: Vec<u32> = param_string
-            .split(',')
-            .map(|s| s.trim())
-            .filter(|s| !s.is_empty() && s.parse::<u32>().is_ok())
-            .map(|s| s.parse().unwrap_or(0))
-            .unique()
-            .collect();
-
-        for p in param_vec {
-            match p {
-                1 => persons.push(HcPerson::First),
-                2 => persons.push(HcPerson::Second),
-                3 => persons.push(HcPerson::Third),
-                4 => numbers.push(HcNumber::Singular),
-                5 => numbers.push(HcNumber::Plural),
-                6 => tenses.push(HcTense::Present),
-                7 => tenses.push(HcTense::Imperfect),
-                8 => tenses.push(HcTense::Future),
-                9 => tenses.push(HcTense::Aorist),
-                10 => tenses.push(HcTense::Perfect),
-                11 => tenses.push(HcTense::Pluperfect),
-                12 => moods.push(HcMood::Indicative),
-                13 => moods.push(HcMood::Subjunctive),
-                14 => moods.push(HcMood::Optative),
-                15 => moods.push(HcMood::Imperative),
-                16 => voices.push(HcVoice::Active),
-                17 => voices.push(HcVoice::Middle),
-                18 => voices.push(HcVoice::Passive),
-                _ => (),
+                for p in param_vec {
+                    match p {
+                        1 => persons.push(HcPerson::First),
+                        2 => persons.push(HcPerson::Second),
+                        3 => persons.push(HcPerson::Third),
+                        4 => numbers.push(HcNumber::Singular),
+                        5 => numbers.push(HcNumber::Plural),
+                        6 => tenses.push(HcTense::Present),
+                        7 => tenses.push(HcTense::Imperfect),
+                        8 => tenses.push(HcTense::Future),
+                        9 => tenses.push(HcTense::Aorist),
+                        10 => tenses.push(HcTense::Perfect),
+                        11 => tenses.push(HcTense::Pluperfect),
+                        12 => moods.push(HcMood::Indicative),
+                        13 => moods.push(HcMood::Subjunctive),
+                        14 => moods.push(HcMood::Optative),
+                        15 => moods.push(HcMood::Imperative),
+                        16 => voices.push(HcVoice::Active),
+                        17 => voices.push(HcVoice::Middle),
+                        18 => voices.push(HcVoice::Passive),
+                        _ => (),
+                    }
+                }
+                if persons.is_empty() {
+                    persons.push(HcPerson::First);
+                    persons.push(HcPerson::Second);
+                    persons.push(HcPerson::Third);
+                }
+                if numbers.is_empty() {
+                    numbers.push(HcNumber::Singular);
+                    numbers.push(HcNumber::Plural);
+                }
+                if tenses.is_empty() {
+                    tenses.push(HcTense::Present);
+                    tenses.push(HcTense::Imperfect);
+                    tenses.push(HcTense::Future);
+                    tenses.push(HcTense::Aorist);
+                    tenses.push(HcTense::Perfect);
+                    tenses.push(HcTense::Pluperfect);
+                }
+                if voices.is_empty() {
+                    voices.push(HcVoice::Active);
+                    voices.push(HcVoice::Middle);
+                    voices.push(HcVoice::Passive);
+                }
+                if moods.is_empty() {
+                    moods.push(HcMood::Indicative);
+                    moods.push(HcMood::Subjunctive);
+                    moods.push(HcMood::Optative);
+                    moods.push(HcMood::Imperative);
+                }
+                VerbParameters {
+                    persons,
+                    numbers,
+                    tenses,
+                    voices,
+                    moods,
+                }
             }
-        }
-        if persons.is_empty() {
-            persons.push(HcPerson::First);
-            persons.push(HcPerson::Second);
-            persons.push(HcPerson::Third);
-        }
-        if numbers.is_empty() {
-            numbers.push(HcNumber::Singular);
-            numbers.push(HcNumber::Plural);
-        }
-        if tenses.is_empty() {
-            tenses.push(HcTense::Present);
-            tenses.push(HcTense::Imperfect);
-            tenses.push(HcTense::Future);
-            tenses.push(HcTense::Aorist);
-            tenses.push(HcTense::Perfect);
-            tenses.push(HcTense::Pluperfect);
-        }
-        if voices.is_empty() {
-            voices.push(HcVoice::Active);
-            voices.push(HcVoice::Middle);
-            voices.push(HcVoice::Passive);
-        }
-        if moods.is_empty() {
-            moods.push(HcMood::Indicative);
-            moods.push(HcMood::Subjunctive);
-            moods.push(HcMood::Optative);
-            moods.push(HcMood::Imperative);
-        }
-        VerbParameters {
-            persons,
-            numbers,
-            tenses,
-            voices,
-            moods,
+            None => VerbParameters {
+                persons: vec![HcPerson::First, HcPerson::Second, HcPerson::Third],
+                numbers: vec![HcNumber::Singular, HcNumber::Plural],
+                tenses: vec![
+                    HcTense::Present,
+                    HcTense::Imperfect,
+                    HcTense::Future,
+                    HcTense::Aorist,
+                    HcTense::Perfect,
+                    HcTense::Pluperfect,
+                ],
+                voices: vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive],
+                moods: vec![
+                    HcMood::Indicative,
+                    HcMood::Subjunctive,
+                    HcMood::Optative,
+                    HcMood::Imperative,
+                ],
+            },
         }
     }
 }
