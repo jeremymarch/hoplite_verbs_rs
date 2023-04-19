@@ -57,6 +57,7 @@ impl RReplacen for String {
     }
 }
 
+#[derive(Debug)]
 pub struct VerbParameters {
     pub persons: Vec<HcPerson>,
     pub numbers: Vec<HcNumber>,
@@ -2467,64 +2468,98 @@ impl HcVerbForms for HcGreekVerbForm {
         pf
     }
 
+    // num params to change must be equal or less than num params with more than one value
     fn change_params(&mut self, num: u8, parameters: &VerbParameters) {
-        let mut params_to_change: Vec<u8> = vec![];
+        let mut num_with_one = 0;
+        if parameters.persons.len() == 1 {
+            self.person = parameters.persons[0];
+            num_with_one += 1;
+        }
+        if parameters.numbers.len() == 1 {
+            self.number = parameters.numbers[0];
+            num_with_one += 1;
+        }
+        if parameters.tenses.len() == 1 {
+            self.tense = parameters.tenses[0];
+            num_with_one += 1;
+        }
+        if parameters.moods.len() == 1 {
+            self.mood = parameters.moods[0];
+            num_with_one += 1;
+        }
+        if parameters.voices.len() == 1 {
+            self.voice = parameters.voices[0];
+            num_with_one += 1;
+        }
+
+        //prevent endless loop
+        let max_params = 5;
+        let real_num = if num_with_one + num >= max_params {
+            max_params - num_with_one
+        } else {
+            num
+        };
+
+        let mut params_changed: Vec<u8> = vec![];
         let mut rng = rand::thread_rng();
 
-        //add unique param numbers 0-4
-        while params_to_change.len() < num.into() {
+        while params_changed.len() < real_num.into() {
             let p = rng.gen_range(0..=4);
-            if !params_to_change.contains(&p) {
-                params_to_change.push(p);
+            if params_changed.contains(&p) {
+                continue;
             }
-        }
-        for a in 0..=4 {
+
             //remove current value from param vec to be sure it is not re-selected; must be at least two values to change
-            match a {
-                0 if params_to_change.contains(&0) && parameters.persons.len() > 1 => {
+            match p {
+                0 if parameters.persons.len() > 1 => {
                     self.person = **parameters
                         .persons
                         .iter()
                         .filter(|x| **x != self.person)
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
-                        .unwrap()
+                        .unwrap();
+                    params_changed.push(p);
                 }
-                1 if params_to_change.contains(&1) && parameters.numbers.len() > 1 => {
+                1 if parameters.numbers.len() > 1 => {
                     self.number = **parameters
                         .numbers
                         .iter()
                         .filter(|x| **x != self.number)
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
-                        .unwrap()
+                        .unwrap();
+                    params_changed.push(p);
                 }
-                2 if params_to_change.contains(&2) && parameters.tenses.len() > 1 => {
+                2 if parameters.tenses.len() > 1 => {
                     self.tense = **parameters
                         .tenses
                         .iter()
                         .filter(|x| **x != self.tense)
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
-                        .unwrap()
+                        .unwrap();
+                    params_changed.push(p);
                 }
-                3 if params_to_change.contains(&3) && parameters.voices.len() > 1 => {
+                3 if parameters.voices.len() > 1 => {
                     self.voice = **parameters
                         .voices
                         .iter()
                         .filter(|x| **x != self.voice)
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
-                        .unwrap()
+                        .unwrap();
+                    params_changed.push(p);
                 }
-                4 if params_to_change.contains(&4) && parameters.moods.len() > 1 => {
+                4 if parameters.moods.len() > 1 => {
                     self.mood = **parameters
                         .moods
                         .iter()
                         .filter(|x| **x != self.mood)
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
-                        .unwrap()
+                        .unwrap();
+                    params_changed.push(p);
                 }
                 _ => (),
             }
