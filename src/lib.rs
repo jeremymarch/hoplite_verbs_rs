@@ -4082,11 +4082,11 @@ fn analyze_syllable_quantities(
 
 static ENDINGS: &[[&str; 6]; 38] = &[
     ["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"], //, "Present Active Indicative" },
-    ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"],       //, "Imperfect Active Indicative" },
-    ["α", "ας", "ε(ν)", "αμεν", "ατε", "αν"],         //, "Aorist Active Indicative" },
+    ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"],    //, "Imperfect Active Indicative" },
+    ["α", "ας", "ε(ν)", "αμεν", "ατε", "αν"],     //, "Aorist Active Indicative" },
     ["α", "ας", "ε(ν)", "αμεν", "ατε", "ᾱσι(ν)"], //, "Perfect Active Indicative" },
-    ["η", "ης", "ει(ν)", "εμεν", "ετε", "εσαν"],   //, "Pluperfect Active Indicative" },
-    ["ω", "ῃς", "ῃ", "ωμεν", "ητε", "ωσι(ν)"],     //, "Present Active Subjunctive" },
+    ["η", "ης", "ει(ν)", "εμεν", "ετε", "εσαν"],  //, "Pluperfect Active Indicative" },
+    ["ω", "ῃς", "ῃ", "ωμεν", "ητε", "ωσι(ν)"],    //, "Present Active Subjunctive" },
     ["οιμι", "οις", "οι", "οιμεν", "οιτε", "οιεν"], //, "Present Active Optative" },
     [
         "αιμι",
@@ -4098,9 +4098,9 @@ static ENDINGS: &[[&str; 6]; 38] = &[
     ], //, "Aorist Active Optative" },
     ["ομαι", "ει,ῃ", "εται", "ομεθα", "εσθε", "ονται"], //, "Present Middle/Passive Indicative" },
     ["ομην", "ου", "ετο", "ομεθα", "εσθε", "οντο"], //, "Imperfect Middle/Passive Indicative" },
-    ["ην", "ης", "η", "ημεν", "ητε", "ησαν"],       //, "Aorist Passive Indicative" },
+    ["ην", "ης", "η", "ημεν", "ητε", "ησαν"],     //, "Aorist Passive Indicative" },
     ["αμην", "ω", "ατο", "αμεθα", "ασθε", "αντο"], //, "Aorist Middle Indicative" },
-    ["ῶ", "ῇς", "ῇ", "ῶμεν", "ῆτε", "ῶσι(ν)"], //***, "Aorist Passive Subjunctive" },
+    ["ῶ", "ῇς", "ῇ", "ῶμεν", "ῆτε", "ῶσι(ν)"],    //***, "Aorist Passive Subjunctive" },
     [
         "ειην",
         "ειης",
@@ -4111,14 +4111,14 @@ static ENDINGS: &[[&str; 6]; 38] = &[
     ], //, "Aorist Passive Optative" },
     ["αιμην", "αιο", "αιτο", "αιμεθα", "αισθε", "αιντο"], //, "Aorist Middle Optative" },
     ["μαι", "σαι", "ται", "μεθα", "σθε", "νται"], //, "Perfect Middle/Passive Indicative" },
-    ["μην", "σο", "το", "μεθα", "σθε", "ντο"],     //, "Pluperfect Middle/Passive Indicative" },
+    ["μην", "σο", "το", "μεθα", "σθε", "ντο"],    //, "Pluperfect Middle/Passive Indicative" },
     ["ωμαι", "ῃ", "ηται", "ωμεθα", "ησθε", "ωνται"], //, "Present Middle/Passive Subjunctive" },
     ["οιμην", "οιο", "οιτο", "οιμεθα", "οισθε", "οιντο"], //, "Present Middle/Passive Optative" },
-    ["", "ε", "ετω", "", "ετε", "οντων"],               //, "Present Active Imperative" },
-    ["", "ου", "εσθω", "", "εσθε", "εσθων"],         //, "Present Middle/Passive Imperative" },
-    ["", "ον", "ατω", "", "ατε", "αντων"],             //, "Aorist Active Imperative" },
-    ["", "αι", "ασθω", "", "ασθε", "ασθων"],         //, "Aorist Middle Imperative" },
-    ["", "ητι,ηθι", "ητω", "", "ητε", "εντων"],    //, "Aorist Passive Imperative" },
+    ["", "ε", "ετω", "", "ετε", "οντων"],         //, "Present Active Imperative" },
+    ["", "ου", "εσθω", "", "εσθε", "εσθων"],      //, "Present Middle/Passive Imperative" },
+    ["", "ον", "ατω", "", "ατε", "αντων"],        //, "Aorist Active Imperative" },
+    ["", "αι", "ασθω", "", "ασθε", "ασθων"],      //, "Aorist Middle Imperative" },
+    ["", "ητι,ηθι", "ητω", "", "ητε", "εντων"],   //, "Aorist Passive Imperative" },
     [
         "οιμι,οιην",
         "οις,οιης",
@@ -4127,11 +4127,11 @@ static ENDINGS: &[[&str; 6]; 38] = &[
         "οιτε,οιητε",
         "οιεν,οιησαν",
     ], //, "" },//pres act opt e
-    ["μι", "ς", "σι(ν)", "μεν", "τε", "ᾱσι(ν)"],   //, "" },   //mi
-    ["", "ς", "τω", "", "τε", "ντων"],                     //, "" },//mi aorist active imperatives
-    ["", "θι", "τω", "", "τε", "ντων"], //", "" },//mi root aorist active imperatives
+    ["μι", "ς", "σι(ν)", "μεν", "τε", "ᾱσι(ν)"],  //, "" },   //mi
+    ["", "ς", "τω", "", "τε", "ντων"],            //, "" },//mi aorist active imperatives
+    ["", "θι", "τω", "", "τε", "ντων"],           //", "" },//mi root aorist active imperatives
     ["", "ο", "σθω", "", "σθε", "σθων"], //, "Root Aorist Middle Imperative" },//mi root aorist middle imperatives
-    ["ν", "ς", "", "μεν", "τε", "σαν"],   //, "Root Aorist Indicative" },//mi root aorist indicative
+    ["ν", "ς", "", "μεν", "τε", "σαν"],  //, "Root Aorist Indicative" },//mi root aorist indicative
     ["", "οῦ", "εσθω", "", "εσθε", "εσθων"], //, "Present Middle/Passive Imperative" }, //second aorist middle/passive imperatives
     [
         "ιμην",
