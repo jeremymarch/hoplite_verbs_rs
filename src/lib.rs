@@ -591,6 +591,7 @@ pub trait HcVerbForms {
     fn strip_ending(&self, pp_num: usize, form: String) -> Result<String, &str>;
     fn add_ending(&self, stem: &str, ending: &str, decompose: bool) -> Result<String, &str>;
     fn get_endings(&self, stem: &str) -> Option<Vec<&str>>;
+    fn get_infinitive_endings(&self, _stem: &str) -> Option<Vec<&str>>;
     fn accent_verb(&self, form: &str) -> String;
     fn accent_verb_contracted(
         &self,
@@ -598,6 +599,7 @@ pub trait HcVerbForms {
         orig_syllables: Vec<SyllableAnalysis>,
         ending: &str,
     ) -> String;
+    fn accent_verb_persistent(&self, word: &str) -> String;
     fn accent_syllable(&self, word: &str, syllable: u8, accent: u32) -> String;
     fn accent_syllable_start(&self, word: &str, letter_index_from_end: u8, accent: u32) -> String;
     fn get_label(&self) -> String;
@@ -2807,6 +2809,7 @@ impl HcVerbForms for HcGreekVerbForm {
     }
 
     fn get_form(&self, decompose: bool) -> Result<Vec<Step>, HcFormError> {
+        //0 is form valid?
         if !self.is_legal_form() {
             return Err(HcFormError::IllegalForm);
         }
@@ -2820,6 +2823,7 @@ impl HcVerbForms for HcGreekVerbForm {
             explanation: e,
         });
 
+        //1 get pp
         let pp_num = self.get_pp_num() as usize;
         let f = &self.verb.pps[pp_num - 1];
         let e = "Choose Principal Part".to_string();
@@ -2832,10 +2836,12 @@ impl HcVerbForms for HcGreekVerbForm {
             return Err(HcFormError::BlankPrincipalPartForForm);
         }
 
+        //2 is legal deponent?
         if !self.is_legal_deponent(f) {
             return Err(HcFormError::Deponent);
         }
 
+        //3 special verb?
         if self.verb.pps[0] == "δεῖ" {
             let fff = special_verbs::get_dei(self, decompose);
             if fff.is_empty() {
@@ -3003,14 +3009,14 @@ impl HcVerbForms for HcGreekVerbForm {
         // steps.push(Step{form:f, explanation:e});
 
         let mut pps_add_augment = Vec::new();
-        //add augment
+        //add augment to imperfect or pluperfect
         if self.tense == HcTense::Imperfect || self.tense == HcTense::Pluperfect {
             for a in &pps_without_ending {
                 pps_add_augment.push(self.add_augment(a, decompose));
             }
             pps_without_ending = pps_add_augment;
         }
-        /* remove augment */
+        /* remove augment from non-indicative aorists and future passives */
         else if (self.tense == HcTense::Aorist && self.mood == HcMood::Indicative && decompose)
             || (self.tense == HcTense::Aorist && self.mood != HcMood::Indicative)
             || (self.tense == HcTense::Future && self.voice == HcVoice::Passive)
@@ -3024,12 +3030,20 @@ impl HcVerbForms for HcGreekVerbForm {
         let mut add_ending_collector = Vec::new();
         let mut add_accent_collector = Vec::new();
         for a in pps_without_ending {
-            let endings_for_form = match self.get_endings(&a) {
-                Some(e) => e,
-                None => return Err(HcFormError::InternalError), //("Illegal form ending");,
+            let endings_for_form = if self.mood == HcMood::Infinitive {
+                match self.get_infinitive_endings(&a) {
+                    Some(e) => e,
+                    None => return Err(HcFormError::InternalError), //("Illegal form ending");,
+                }
+            } else {
+                match self.get_endings(&a) {
+                    Some(e) => e,
+                    None => return Err(HcFormError::InternalError), //("Illegal form ending");,
+                }
             };
 
             for e in endings_for_form {
+                //skip middle deponent pp if voice is active
                 if a.ends_with("ομην") && self.voice == HcVoice::Active {
                     continue;
                 }
@@ -3038,6 +3052,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     Ok(res) => res,
                     Err(_) => return Err(HcFormError::UnexpectedPrincipalPartEnding), //("error stripping ending");
                 };
+
                 // let f = a.join(" / ");
                 // let e = "Remove ending from Principal Part".to_string();
                 // steps.push(Step{form:f, explanation:e});
@@ -3068,6 +3083,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     continue;
                 }
 
+                //attic greek does not form future passive from βλάπτω's βλαφθ 6th pp stem
                 if self.verb.pps[0].starts_with("βλάπτω")
                     && a == "βλαφθ"
                     && self.tense == HcTense::Future
@@ -3091,6 +3107,20 @@ impl HcVerbForms for HcGreekVerbForm {
                 } else {
                     e.to_string()
                 };
+
+                if self.mood == HcMood::Infinitive {
+                    //println!("HEREHEREHERE {} {} {} {}", pp_num, a, e, format!("{}{}", a, e));
+                    let fff = self.accent_verb_persistent(format!("{}{}", a, e).as_str());
+
+                    steps.push(Step {
+                        form: fff,
+                        explanation: String::from("def"),
+                    });
+                    return Ok(steps);
+                }
+
+                //if self.mood == HcMood::Participle {}
+
                 let stem = if decompose
                     && self.tense == HcTense::Aorist
                     && self.voice == HcVoice::Passive
@@ -3360,6 +3390,98 @@ impl HcVerbForms for HcGreekVerbForm {
         Ok(steps)
     }
 
+    //contracted
+    //first aorist
+    //consonant stem perfects
+    //mi verbs
+    //exceptions apothnhskw alternates, etc
+    fn accent_verb_persistent(&self, word: &str) -> String {
+        let mut syllables = analyze_syllable_quantities(
+            word,
+            self.person,
+            self.number,
+            self.tense,
+            self.mood,
+            self.verb.properties,
+        );
+        syllables.reverse();
+
+        const ULTIMA: usize = 0;
+        const PENULT: usize = 1;
+        const ANTEPENULT: usize = 2;
+        let accent;
+        let accent_position = match self.tense {
+            HcTense::Present | HcTense::Future => match self.voice {
+                HcVoice::Active => {
+                    if syllables.len() > 1 {
+                        PENULT
+                    } else {
+                        ULTIMA
+                    }
+                }
+                _ => {
+                    if syllables.len() > 2 {
+                        ANTEPENULT
+                    } else {
+                        PENULT
+                    }
+                }
+            },
+            HcTense::Aorist => match self.voice {
+                HcVoice::Active => {
+                    if syllables.len() > 1 {
+                        PENULT
+                    } else {
+                        ULTIMA
+                    }
+                }
+                HcVoice::Middle => {
+                    if syllables.len() > 2 {
+                        ANTEPENULT
+                    } else {
+                        PENULT
+                    }
+                }
+                HcVoice::Passive => {
+                    if syllables.len() > 1 {
+                        PENULT
+                    } else {
+                        ULTIMA
+                    }
+                }
+            },
+            HcTense::Perfect => {
+                if syllables.len() > 1 {
+                    PENULT
+                } else {
+                    ULTIMA
+                }
+            }
+            _ => return String::new(),
+        };
+
+        if syllables.len() > 2
+            && !syllables.first().unwrap().is_long
+            && syllables[1].is_long
+            && accent_position == PENULT
+        {
+            accent = HGK_CIRCUMFLEX;
+        } else if syllables.len() > 2 && syllables.first().unwrap().is_long {
+            accent = HGK_ACUTE;
+        } else if syllables.len() == 2
+            && !syllables.first().unwrap().is_long
+            && syllables[1].is_long
+            && accent_position == PENULT
+        {
+            accent = HGK_CIRCUMFLEX;
+        } else {
+            accent = HGK_ACUTE;
+        }
+
+        let letter_index = syllables[accent_position].index;
+        self.accent_syllable(word, letter_index, accent)
+    }
+
     fn accent_verb(&self, word: &str) -> String {
         let syllables = analyze_syllable_quantities(
             word,
@@ -3547,10 +3669,36 @@ impl HcVerbForms for HcGreekVerbForm {
         }
     }
 
+    fn get_infinitive_endings(&self, _stem: &str) -> Option<Vec<&str>> {
+        match self.tense {
+            HcTense::Present | HcTense::Future => match self.voice {
+                HcVoice::Active => Some(vec!["ειν"]),
+                _ => Some(vec!["εσθαι"]),
+            },
+            HcTense::Aorist => match self.voice {
+                HcVoice::Active => Some(vec!["αι"]),
+                HcVoice::Middle => Some(vec!["ασθαι"]),
+                _ => Some(vec!["ηναι"]),
+            },
+            HcTense::Perfect => match self.voice {
+                HcVoice::Active => Some(vec!["εναι"]),
+                _ => Some(vec!["σθαι"]),
+            },
+            _ => None,
+        }
+    }
+
     fn get_endings(&self, stem: &str) -> Option<Vec<&str>> {
         let ending = match self.tense {
             HcTense::Present => match self.voice {
                 HcVoice::Active => match self.mood {
+                    // HcMood::Infinitive => {
+                    //     if self.verb.pps[0].ends_with("μι") {
+                    //         HcEndings::PresentActiveIndicativeMi
+                    //     } else {
+                    //         HcEndings::PresentActiveInd
+                    //     }
+                    // }
                     HcMood::Indicative => {
                         if self.verb.pps[0].ends_with("μι") {
                             HcEndings::PresentActiveIndicativeMi
@@ -4169,6 +4317,95 @@ mod tests {
     //         }
     //     }
     // }
+
+    #[test]
+    fn test_infinitives() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λῡ́ειν");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λῡ́εσθαι");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Aorist,
+            voice: HcVoice::Active,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λῦσαι");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Aorist,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λῡ́σασθαι");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Aorist,
+            voice: HcVoice::Passive,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λυθῆναι");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Active,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λελυκέναι");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λελύσθαι");
+    }
 
     #[test]
     fn test_strip_ending() {
