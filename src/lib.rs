@@ -3109,8 +3109,96 @@ impl HcVerbForms for HcGreekVerbForm {
                 };
 
                 if self.mood == HcMood::Infinitive {
-                    //println!("HEREHEREHERE {} {} {} {}", pp_num, a, e, format!("{}{}", a, e));
-                    let fff = self.accent_verb_persistent(format!("{}{}", a, e).as_str());
+                    let mut new_stem = a;
+                    let infinitive = if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && self.verb.properties & CONSONANT_STEM_PERFECT_PHI
+                            == CONSONANT_STEM_PERFECT_PHI
+                    {
+                        new_stem.pop();
+                        format!("{}{}", new_stem, "φθαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && self.verb.properties & CONSONANT_STEM_PERFECT_MU_PI
+                            == CONSONANT_STEM_PERFECT_MU_PI
+                    {
+                        format!("{}{}", new_stem, "φθαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && self.verb.properties & CONSONANT_STEM_PERFECT_KAPPA
+                            == CONSONANT_STEM_PERFECT_KAPPA
+                    {
+                        new_stem.pop();
+                        format!("{}{}", new_stem, "χθαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && self.verb.properties & CONSONANT_STEM_PERFECT_SIGMA
+                            == CONSONANT_STEM_PERFECT_SIGMA
+                    {
+                        format!("{}{}", new_stem, "φθαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && self.verb.properties & CONSONANT_STEM_PERFECT_SIGMA_2
+                            == CONSONANT_STEM_PERFECT_SIGMA_2
+                    {
+                        format!("{}{}", new_stem, "φθαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && self.verb.properties & CONSONANT_STEM_PERFECT_LAMBDA
+                            == CONSONANT_STEM_PERFECT_LAMBDA
+                    {
+                        format!("{}{}", new_stem, "θαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && self.verb.properties & CONSONANT_STEM_PERFECT_PI
+                            == CONSONANT_STEM_PERFECT_PI
+                    {
+                        new_stem.pop();
+                        format!("{}{}", new_stem, "φθαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && self.verb.properties & CONSONANT_STEM_PERFECT_BETA
+                            == CONSONANT_STEM_PERFECT_BETA
+                    {
+                        new_stem.pop();
+                        format!("{}{}", new_stem, "φθαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && self.verb.properties & CONSONANT_STEM_PERFECT_GAMMA
+                            == CONSONANT_STEM_PERFECT_GAMMA
+                    {
+                        new_stem.pop();
+                        format!("{}{}", new_stem, "χθαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && self.verb.properties & CONSONANT_STEM_PERFECT_CHI
+                            == CONSONANT_STEM_PERFECT_CHI
+                    {
+                        new_stem.pop();
+                        format!("{}{}", new_stem, "χθαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && self.verb.properties & CONSONANT_STEM_PERFECT_NU
+                            == CONSONANT_STEM_PERFECT_NU
+                    {
+                        new_stem.pop();
+                        format!("{}{}", new_stem, "νθαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && new_stem.ends_with("πεπεμ")
+                    {
+                        format!("{}{}", new_stem, "φθαι")
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice != HcVoice::Active
+                        && new_stem.ends_with('σ')
+                    {
+                        new_stem.pop();
+                        format!("{}{}", new_stem, "σθαι")
+                    } else {
+                        format!("{}{}", new_stem, e)
+                    };
+
+                    let fff = self.accent_verb_persistent(infinitive.as_str());
 
                     steps.push(Step {
                         form: fff,
@@ -3390,11 +3478,6 @@ impl HcVerbForms for HcGreekVerbForm {
         Ok(steps)
     }
 
-    //contracted
-    //first aorist
-    //consonant stem perfects
-    //mi verbs
-    //exceptions apothnhskw alternates, etc
     fn accent_verb_persistent(&self, word: &str) -> String {
         let mut syllables = analyze_syllable_quantities(
             word,
@@ -4320,6 +4403,11 @@ mod tests {
 
     #[test]
     fn test_infinitives() {
+        //*consonant stem perfects
+        //contracted
+        //first aorist
+        //mi verbs
+        //exceptions apothnhskw alternates, etc
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
         let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
@@ -4405,6 +4493,149 @@ mod tests {
             case: None,
         };
         assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λελύσθαι");
+
+        let consonant_stem = "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην";
+        let a = Arc::new(
+            HcGreekVerb::from_string(1, consonant_stem, CONSONANT_STEM_PERFECT_BETA, 0).unwrap(),
+        );
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "βεβλάφθαι");
+
+        let consonant_stem = "πέμπω, πέμψω, ἔπεμψα, πέπομφα, πέπεμμαι, ἐπέμφθην";
+        let a = Arc::new(
+            HcGreekVerb::from_string(1, consonant_stem, CONSONANT_STEM_PERFECT_MU_PI, 0).unwrap(),
+        );
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "πεπέμφθαι");
+
+        let consonant_stem = "θάπτω, θάψω, ἔθαψα, —, τέθαμμαι, ἐτάφην";
+        let a = Arc::new(
+            HcGreekVerb::from_string(1, consonant_stem, CONSONANT_STEM_PERFECT_PI, 0).unwrap(),
+        );
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "τεθάφθαι");
+
+        let consonant_stem = "τάττω, τάξω, ἔταξα, τέταχα, τέταγμαι, ἐτάχθην";
+        let a = Arc::new(
+            HcGreekVerb::from_string(1, consonant_stem, CONSONANT_STEM_PERFECT_GAMMA, 0).unwrap(),
+        );
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "τετάχθαι");
+
+        let consonant_stem = "ἄρχω, ἄρξω, ἦρξα, ἦρχα, ἦργμαι, ἤρχθην";
+        let a = Arc::new(
+            HcGreekVerb::from_string(1, consonant_stem, CONSONANT_STEM_PERFECT_CHI, 0).unwrap(),
+        );
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "ἦρχθαι");
+
+        let consonant_stem = "ἀγγέλλω, ἀγγελῶ, ἤγγειλα, ἤγγελκα, ἤγγελμαι, ἠγγέλθην";
+        let a = Arc::new(
+            HcGreekVerb::from_string(1, consonant_stem, CONSONANT_STEM_PERFECT_LAMBDA, 0).unwrap(),
+        );
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "ἠγγέλθαι");
+
+        let consonant_stem = "φαίνω, φανῶ, ἔφηνα, πέφηνα, πέφασμαι, ἐφάνην";
+        let a = Arc::new(
+            HcGreekVerb::from_string(1, consonant_stem, CONSONANT_STEM_PERFECT_NU, 0).unwrap(),
+        );
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "πεφάνθαι");
+
+        let consonant_stem = "κελεύω, κελεύσω, ἐκέλευσα, κεκέλευκα, κεκέλευσμαι, ἐκελεύσθην";
+        let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(
+            b.get_form(false).unwrap().last().unwrap().form,
+            "κεκελεῦσθαι"
+        );
+
+        let consonant_stem = "πέμπω, πέμψω, ἔπεμψα, πέπομφα, πέπεμμαι, ἐπέμφθην";
+        let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Perfect,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "πεπέμφθαι");
     }
 
     #[test]
