@@ -3194,11 +3194,65 @@ impl HcVerbForms for HcGreekVerbForm {
                     {
                         new_stem.pop();
                         format!("{}{}", new_stem, "σθαι")
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("άω") {
+                        if self.voice == HcVoice::Active {
+                            new_stem.pop();
+                            format!("{}{}", new_stem, "ᾶν")
+                        } else {
+                            new_stem.pop();
+                            format!("{}{}", new_stem, "ᾶσθαι")
+                        }
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("έω") {
+                        if self.voice == HcVoice::Active {
+                            new_stem.pop();
+                            format!("{}{}", new_stem, "εῖν")
+                        } else {
+                            new_stem.pop();
+                            format!("{}{}", new_stem, "εῖσθαι")
+                        }
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("όω") {
+                        if self.voice == HcVoice::Active {
+                            new_stem.pop();
+                            format!("{}{}", new_stem, "οῦν")
+                        } else {
+                            new_stem.pop();
+                            format!("{}{}", new_stem, "οῦσθαι")
+                        }
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("άομαι")
+                    {
+                        format!("{}{}", new_stem, "ᾶσθαι")
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("έομαι")
+                    {
+                        format!("{}{}", new_stem, "εῖσθαι")
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("όομαι")
+                    {
+                        format!("{}{}", new_stem, "οῦσθαι")
+                    } else if self.tense == HcTense::Future
+                        && self.voice != HcVoice::Passive
+                        && self.verb.pps[0].ends_with('ῶ')
+                    {
+                        format!("{}{}", new_stem, "ᾶν")
+                    } else if self.tense == HcTense::Future
+                        && self.voice != HcVoice::Passive
+                        && self.verb.pps[0].ends_with("οῦμαι")
+                    {
+                        format!("{}{}", new_stem, "ᾶν")
+                    } else if self.tense == HcTense::Future
+                        && self.verb.pps[1].starts_with("ἐρῶ")
+                        && new_stem.starts_with("ἐρ")
+                    {
+                        format!("{}{}", new_stem, "ᾶν")
                     } else {
                         format!("{}{}", new_stem, e)
                     };
 
-                    let fff = self.accent_verb_persistent(infinitive.as_str());
+                    let fff =
+                        if !hgk_has_diacritics(&infinitive, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE)
+                        {
+                            self.accent_verb_persistent(infinitive.as_str())
+                        } else {
+                            infinitive
+                        };
 
                     steps.push(Step {
                         form: fff,
@@ -4404,7 +4458,7 @@ mod tests {
     #[test]
     fn test_infinitives() {
         //*consonant stem perfects
-        //contracted
+        //*contracted
         //first aorist
         //mi verbs
         //exceptions apothnhskw alternates, etc
@@ -4636,6 +4690,32 @@ mod tests {
             case: None,
         };
         assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "πεπέμφθαι");
+
+        let consonant_stem = "τῑμάω, τῑμήσω, ἐτῑ́μησα, τετῑ́μηκα, τετῑ́μημαι, ἐτῑμήθην";
+        let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "τῑμᾶν");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Present,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "τῑμᾶσθαι");
     }
 
     #[test]
