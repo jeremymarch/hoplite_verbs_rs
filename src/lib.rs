@@ -3231,17 +3231,37 @@ impl HcVerbForms for HcGreekVerbForm {
                         && self.voice != HcVoice::Passive
                         && self.verb.pps[0].ends_with('ῶ')
                     {
-                        format!("{}{}", new_stem, "ᾶν")
+                        if self.verb.pps[1].ends_with("ἐλῶ") {
+                            if self.voice == HcVoice::Active {
+                                new_stem.pop();
+                                format!("{}{}", new_stem, "ᾶν")
+                            } else {
+                                new_stem.pop();
+                                format!("{}{}", new_stem, "ᾶσθαι")
+                            }
+                        } else if self.voice == HcVoice::Active {
+                            new_stem.pop();
+                            format!("{}{}", new_stem, "εῖν")
+                        } else {
+                            new_stem.pop();
+                            format!("{}{}", new_stem, "εῖσθαι")
+                        }
                     } else if self.tense == HcTense::Future
                         && self.voice != HcVoice::Passive
                         && self.verb.pps[0].ends_with("οῦμαι")
                     {
-                        format!("{}{}", new_stem, "ᾶν")
+                        format!("{}{}", new_stem, "εῖσθαι")
                     } else if self.tense == HcTense::Future
                         && self.verb.pps[1].starts_with("ἐρῶ")
                         && new_stem.starts_with("ἐρ")
                     {
-                        format!("{}{}", new_stem, "ᾶν")
+                        if self.voice == HcVoice::Active {
+                            new_stem.pop();
+                            format!("{}{}", new_stem, "εῖν")
+                        } else {
+                            new_stem.pop();
+                            format!("{}{}", new_stem, "εῖσθαι")
+                        }
                     } else {
                         format!("{}{}", new_stem, e)
                     };
