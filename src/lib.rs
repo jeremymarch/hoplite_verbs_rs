@@ -3262,6 +3262,15 @@ impl HcVerbForms for HcGreekVerbForm {
                             new_stem.pop();
                             format!("{}{}", new_stem, "εῖσθαι")
                         }
+                    } else if self.tense == HcTense::Aorist
+                        && self.voice != HcVoice::Passive
+                        && (self.verb.pps[2].ends_with("ον") || self.verb.pps[2].ends_with("όμην"))
+                    {
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, "εῖν")
+                        } else {
+                            format!("{}{}", new_stem, "έσθαι")
+                        }
                     } else {
                         format!("{}{}", new_stem, e)
                     };
@@ -4736,6 +4745,46 @@ mod tests {
             case: None,
         };
         assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "τῑμᾶσθαι");
+
+        let consonant_stem = "λείπω, λείψω, ἔλιπον, λέλοιπα, λέλειμμαι, ἐλείφθην";
+        let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Aorist,
+            voice: HcVoice::Active,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λιπεῖν");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Aorist,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λιπέσθαι");
+
+        let consonant_stem = "γίγνομαι, γενήσομαι, ἐγενόμην, γέγονα, γεγένημαι, —";
+        let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: HcPerson::First,
+            number: HcNumber::Singular,
+            tense: HcTense::Aorist,
+            voice: HcVoice::Middle,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "γενέσθαι");
     }
 
     #[test]
