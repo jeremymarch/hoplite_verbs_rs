@@ -496,6 +496,8 @@ impl HcGreekVerb {
                     properties |= CONSONANT_STEM_PERFECT_PI;
                 } else if s.contains("CONSONANT_STEM_PERFECT_GAMMA") {
                     properties |= CONSONANT_STEM_PERFECT_GAMMA;
+                } else if s.contains("CONSONANT_STEM_PERFECT_KAPPA") {
+                    properties |= CONSONANT_STEM_PERFECT_KAPPA;
                 } else if s.contains("CONSONANT_STEM_PERFECT_CHI") {
                     properties |= CONSONANT_STEM_PERFECT_CHI;
                 } else if s.contains("CONSONANT_STEM_PERFECT_BETA") {
@@ -553,6 +555,7 @@ impl HcGreekVerb {
     fn is_consonant_stem(&self) -> bool {
         self.properties & CONSONANT_STEM_PERFECT_PI == CONSONANT_STEM_PERFECT_PI
             || self.properties & CONSONANT_STEM_PERFECT_GAMMA == CONSONANT_STEM_PERFECT_GAMMA
+            || self.properties & CONSONANT_STEM_PERFECT_KAPPA == CONSONANT_STEM_PERFECT_KAPPA
             || self.properties & CONSONANT_STEM_PERFECT_CHI == CONSONANT_STEM_PERFECT_CHI
             || self.properties & CONSONANT_STEM_PERFECT_BETA == CONSONANT_STEM_PERFECT_BETA
             || self.properties & CONSONANT_STEM_PERFECT_LAMBDA == CONSONANT_STEM_PERFECT_LAMBDA
@@ -1477,6 +1480,7 @@ impl HcVerbForms for HcGreekVerbForm {
             }
         }
 
+        //future passive
         let future_passive_suffix =
             if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
                 if decompose {
@@ -3271,7 +3275,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         format!("{}{}", new_stem, "οῦσθαι")
                     } else if self.tense == HcTense::Future
                         && self.voice != HcVoice::Passive
-                        && self.verb.pps[0].ends_with('ῶ')
+                        && self.verb.pps[1].ends_with('ῶ')
                     {
                         if self.verb.pps[1].ends_with("ἐλῶ") {
                             if self.voice == HcVoice::Active {
@@ -3290,7 +3294,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         }
                     } else if self.tense == HcTense::Future
                         && self.voice != HcVoice::Passive
-                        && self.verb.pps[0].ends_with("οῦμαι")
+                        && self.verb.pps[1].ends_with("οῦμαι")
                     {
                         format!("{}{}", new_stem, "εῖσθαι")
                     } else if self.tense == HcTense::Future
@@ -3313,6 +3317,32 @@ impl HcVerbForms for HcGreekVerbForm {
                         } else {
                             format!("{}{}", new_stem, "έσθαι")
                         }
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("τίθημι")
+                    {
+                        new_stem.pop();
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, "έναι")
+                        } else {
+                            format!("{}{}", new_stem, "εσθαι")
+                        }
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("δίδωμι")
+                    {
+                        new_stem.pop();
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, "όναι")
+                        } else {
+                            format!("{}{}", new_stem, "οσθαι")
+                        }
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("ἵστημι")
+                    {
+                        new_stem.pop();
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, "άναι")
+                        } else {
+                            format!("{}{}", new_stem, "ασθαι")
+                        }
+                    } else if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
+                        format!("{}ησ{}", new_stem, e)
                     } else {
                         format!("{}{}", new_stem, e)
                     };
@@ -4832,19 +4862,19 @@ mod tests {
         };
         assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "γενέσθαι");
 
-        // let consonant_stem = "τίθημι, θήσω, ἔθηκα, τέθηκα, τέθειμαι, ἐτέθην";
-        // let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
-        // let b = HcGreekVerbForm {
-        //     verb: a.clone(),
-        //     person: Some(HcPerson::First),
-        //     number: Some(HcNumber::Singular),
-        //     tense: HcTense::Aorist,
-        //     voice: HcVoice::Active,
-        //     mood: HcMood::Infinitive,
-        //     gender: None,
-        //     case: None,
-        // };
-        // assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "τιθέναι");
+        let consonant_stem = "τίθημι, θήσω, ἔθηκα, τέθηκα, τέθειμαι, ἐτέθην";
+        let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "τιθέναι");
     }
 
     #[test]
@@ -5789,6 +5819,87 @@ mod tests {
                         }
                     }
                     println!("{}", line.join(", "));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn check_infinitives() {
+        if let Ok(pp_file) = File::open("testdata/pp.txt") {
+            let pp_reader = BufReader::new(pp_file);
+
+            for (idx, pp_line) in pp_reader.lines().enumerate() {
+                if let Ok(line) = pp_line {
+                    let verb = Arc::new(
+                        HcGreekVerb::from_string_with_properties(idx as u32, &line).unwrap(),
+                    );
+
+                    for x in [
+                        HcTense::Present,
+                        /*HcTense::Imperfect,*/
+                        HcTense::Future,
+                        HcTense::Aorist,
+                        HcTense::Perfect,
+                        /*HcTense::Pluperfect,*/
+                    ] {
+                        //for v in [HcVoice::Active, HcVoice::Middle, HcVoice::Passive] {
+                        let forma = HcGreekVerbForm {
+                            verb: verb.clone(),
+                            person: None,
+                            number: None,
+                            tense: x,
+                            voice: HcVoice::Active,
+                            mood: HcMood::Infinitive,
+                            gender: None,
+                            case: None,
+                        };
+                        let ra = match forma.get_form(false) {
+                            Ok(res) => res.last().unwrap().form.to_string(),
+                            Err(_a) => "NF".to_string(),
+                        };
+
+                        let formm = HcGreekVerbForm {
+                            verb: verb.clone(),
+                            person: None,
+                            number: None,
+                            tense: x,
+                            voice: HcVoice::Middle,
+                            mood: HcMood::Infinitive,
+                            gender: None,
+                            case: None,
+                        };
+                        let rm = match formm.get_form(false) {
+                            Ok(res) => res.last().unwrap().form.to_string(),
+                            Err(_a) => "NF".to_string(),
+                        };
+
+                        let formp = HcGreekVerbForm {
+                            verb: verb.clone(),
+                            person: None,
+                            number: None,
+                            tense: x,
+                            voice: HcVoice::Passive,
+                            mood: HcMood::Infinitive,
+                            gender: None,
+                            case: None,
+                        };
+                        let rp = match formp.get_form(false) {
+                            Ok(res) => res.last().unwrap().form.to_string(),
+                            Err(_a) => "NF".to_string(),
+                        };
+                        println!(
+                            "{} {} {}\t{}: {}, {}, {}",
+                            verb.hq_unit,
+                            verb.id,
+                            x.value(),
+                            verb.pps[0],
+                            ra,
+                            rm,
+                            rp
+                        );
+                        //}
+                    }
                 }
             }
         }
