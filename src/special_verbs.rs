@@ -2,7 +2,7 @@ use super::*;
 
 pub fn get_esti(vf: &HcGreekVerbForm, _decompose: bool) -> String {
     let mut s = String::from("");
-    if vf.person != HcPerson::Third || vf.number != HcNumber::Singular {
+    if vf.person != Some(HcPerson::Third) || vf.number != Some(HcNumber::Singular) {
         return s;
     }
 
@@ -24,7 +24,7 @@ pub fn get_esti(vf: &HcGreekVerbForm, _decompose: bool) -> String {
 
 pub fn get_exesti(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
-    if vf.person != HcPerson::Third || vf.number != HcNumber::Singular {
+    if vf.person != Some(HcPerson::Third) || vf.number != Some(HcNumber::Singular) {
         return s;
     }
 
@@ -59,8 +59,8 @@ pub fn get_exesti(vf: &HcGreekVerbForm, decompose: bool) -> String {
 pub fn get_dei(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
     if vf.voice != HcVoice::Active
-        || vf.person != HcPerson::Third
-        || vf.number != HcNumber::Singular
+        || vf.person != Some(HcPerson::Third)
+        || vf.number != Some(HcNumber::Singular)
     {
         return s;
     }
@@ -116,8 +116,8 @@ pub fn get_dei(vf: &HcGreekVerbForm, decompose: bool) -> String {
 pub fn get_xrh(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
     if vf.voice != HcVoice::Active
-        || vf.person != HcPerson::Third
-        || vf.number != HcNumber::Singular
+        || vf.person != Some(HcPerson::Third)
+        || vf.number != Some(HcNumber::Singular)
     {
         return s;
     }
@@ -169,80 +169,80 @@ pub fn get_eimi(vf: &HcGreekVerbForm, _decompose: bool) -> String {
     let mut s = String::from("");
     if vf.tense == HcTense::Present {
         if vf.mood == HcMood::Indicative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("εἰμί");
                 } else {
                     s = String::from("ἐσμέν");
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("εἶ");
                 } else {
                     s = String::from("ἐστέ");
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("ἐστί(ν)");
                 } else {
                     s = String::from("εἰσί(ν)");
                 }
             }
         } else if vf.mood == HcMood::Subjunctive {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("ὦ");
                 } else {
                     s = String::from("ὦμεν");
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("ᾖς");
                 } else {
                     s = String::from("ἦτε");
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("ᾖ");
                 } else {
                     s = String::from("ὦσι(ν)");
                 }
             }
         } else if vf.mood == HcMood::Optative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("εἴην");
                 } else {
                     s = String::from("εἶμεν, εἴημεν");
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("εἴης");
                 } else {
                     s = String::from("εἶτε, εἴητε");
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("εἴη");
                 } else {
                     s = String::from("εἶεν, εἴησαν");
                 }
             }
         } else if vf.mood == HcMood::Imperative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("");
                 } else {
                     s = String::from("");
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("ἴσθι");
                 } else {
                     s = String::from("ἔστε");
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("ἔστω");
                 } else {
                     s = String::from("ἔστων, ὄντων");
@@ -250,20 +250,20 @@ pub fn get_eimi(vf: &HcGreekVerbForm, _decompose: bool) -> String {
             }
         }
     } else if vf.tense == HcTense::Imperfect {
-        if vf.person == HcPerson::First {
-            if vf.number == HcNumber::Singular {
+        if vf.person == Some(HcPerson::First) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = String::from("ἦ, ἦν");
             } else {
                 s = String::from("ἦμεν");
             }
-        } else if vf.person == HcPerson::Second {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Second) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = String::from("ἦσθα");
             } else {
                 s = String::from("ἦτε");
             }
-        } else if vf.person == HcPerson::Third {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Third) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = String::from("ἦν");
             } else {
                 s = String::from("ἦσαν");
@@ -277,8 +277,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
     if vf.tense == HcTense::Present {
         if vf.mood == HcMood::Indicative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("κει {} μαι", SEPARATOR)
                     } else {
@@ -291,8 +291,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("κείμεθα")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("κει {} σαι", SEPARATOR)
                     } else {
@@ -305,8 +305,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("κεῖσθε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("κει {} ται", SEPARATOR)
                     } else {
@@ -322,8 +322,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Subjunctive {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("κε {} ωμαι", SEPARATOR)
                     } else {
@@ -336,8 +336,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("κεώμεθα")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("κε {} ῃ", SEPARATOR)
                     } else {
@@ -350,8 +350,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("κέησθε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("κε {} ηται", SEPARATOR)
                     } else {
@@ -366,8 +366,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Optative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("κε {} οιμην", SEPARATOR)
                     } else {
@@ -380,8 +380,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("κεοίμεθα")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("κε {} οιο", SEPARATOR)
                     } else {
@@ -394,8 +394,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("κέοισθε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("κε {} οιτο", SEPARATOR)
                     } else {
@@ -410,14 +410,14 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Imperative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("");
                 } else {
                     s = String::from("");
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("κει {} σο", SEPARATOR)
                     } else {
@@ -430,8 +430,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("κεῖσθε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("κει {} σθω", SEPARATOR)
                     } else {
@@ -447,8 +447,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
             }
         }
     } else if vf.tense == HcTense::Imperfect {
-        if vf.person == HcPerson::First {
-            if vf.number == HcNumber::Singular {
+        if vf.person == Some(HcPerson::First) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!("ε {} κει {} μην", SEPARATOR, SEPARATOR)
                 } else {
@@ -461,8 +461,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                     String::from("ἐκείμεθα")
                 };
             }
-        } else if vf.person == HcPerson::Second {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Second) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!("ε {} κει {} σο", SEPARATOR, SEPARATOR)
                 } else {
@@ -475,8 +475,8 @@ pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
                     String::from("ἔκεισθε")
                 };
             }
-        } else if vf.person == HcPerson::Third {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Third) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!("ε {} κει {} το", SEPARATOR, SEPARATOR)
                 } else {
@@ -501,8 +501,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
     if vf.tense == HcTense::Present {
         if vf.mood == HcMood::Indicative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("φη {} μι", SEPARATOR)
                     } else {
@@ -515,8 +515,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("φαμέν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("φῃ {} ς", SEPARATOR)
                     } else {
@@ -529,8 +529,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("φατέ")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("φη {} σι(ν)", SEPARATOR)
                     } else {
@@ -546,8 +546,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Subjunctive {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("φε {} ω", SEPARATOR)
                     } else {
@@ -560,8 +560,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("φῶμεν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("φε {} ῃς", SEPARATOR)
                     } else {
@@ -574,8 +574,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("φῆτε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("φε {} ῃ", SEPARATOR)
                     } else {
@@ -590,8 +590,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Optative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("φα {} ιην", SEPARATOR)
                     } else {
@@ -604,8 +604,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("φαῖμεν, φαίημεν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("φα {} ιης", SEPARATOR)
                     } else {
@@ -618,8 +618,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("φαῖτε, φαίητε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("φα {} ιη", SEPARATOR)
                     } else {
@@ -634,14 +634,14 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Imperative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("");
                 } else {
                     s = String::from("");
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("φα {} θι", SEPARATOR)
                     } else {
@@ -654,8 +654,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("φάτε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("φα {} τω", SEPARATOR)
                     } else {
@@ -671,8 +671,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
             }
         }
     } else if vf.tense == HcTense::Imperfect {
-        if vf.person == HcPerson::First {
-            if vf.number == HcNumber::Singular {
+        if vf.person == Some(HcPerson::First) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!("ε {} φη {} ν", SEPARATOR, SEPARATOR)
                 } else {
@@ -685,8 +685,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                     String::from("ἔφαμεν")
                 };
             }
-        } else if vf.person == HcPerson::Second {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Second) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!(
                         "ε {} φη {} σθα, ε {} φη {} ς",
@@ -702,8 +702,8 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
                     String::from("ἔφατε")
                 };
             }
-        } else if vf.person == HcPerson::Third {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Third) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!("ε {} φη {} ", SEPARATOR, SEPARATOR)
                 } else {
@@ -728,8 +728,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
     if vf.tense == HcTense::Present {
         if vf.mood == HcMood::Indicative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("εἰ {} μι", SEPARATOR)
                     } else {
@@ -742,8 +742,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("ἴμεν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("εἰ {} ", SEPARATOR)
                     } else {
@@ -756,8 +756,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("ἴτε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("εἰ {} σι(ν)", SEPARATOR)
                     } else {
@@ -773,8 +773,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Subjunctive {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("ἰ {} ω", SEPARATOR)
                     } else {
@@ -787,8 +787,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("ἴωμεν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("ἰ {} ῃς", SEPARATOR)
                     } else {
@@ -801,8 +801,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("ἴητε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("ἰ {} ῃ", SEPARATOR)
                     } else {
@@ -817,8 +817,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Optative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("ἰ {} οιμι, ἰ {} οιην", SEPARATOR, SEPARATOR)
                     } else {
@@ -831,8 +831,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("ἴοιμεν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("ἰ {} οις", SEPARATOR)
                     } else {
@@ -845,8 +845,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("ἴοιτε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("ἰ {} οι", SEPARATOR)
                     } else {
@@ -861,14 +861,14 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Imperative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("");
                 } else {
                     s = String::from("");
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("ἰ {} θι", SEPARATOR)
                     } else {
@@ -881,8 +881,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("ἴτε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("ἰ {} τω", SEPARATOR)
                     } else {
@@ -898,8 +898,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
             }
         }
     } else if vf.tense == HcTense::Imperfect {
-        if vf.person == HcPerson::First {
-            if vf.number == HcNumber::Singular {
+        if vf.person == Some(HcPerson::First) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!("ᾐ {} α, ᾐ {} ειν", SEPARATOR, SEPARATOR)
                 } else {
@@ -912,8 +912,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                     String::from("ᾖμεν")
                 };
             }
-        } else if vf.person == HcPerson::Second {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Second) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!("ᾐ {} εισθα, ᾐ {} εις", SEPARATOR, SEPARATOR)
                 } else {
@@ -926,8 +926,8 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
                     String::from("ᾖτε")
                 };
             }
-        } else if vf.person == HcPerson::Third {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Third) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!("ᾐ {} ει(ν)", SEPARATOR)
                 } else {
@@ -952,8 +952,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
     if vf.tense == HcTense::Perfect {
         if vf.mood == HcMood::Indicative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("οἰδ {} α", SEPARATOR)
                     } else {
@@ -966,8 +966,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("ἴσμεν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("οἰσ {} θα", SEPARATOR)
                     } else {
@@ -980,8 +980,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("ἴστε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("οἰδ {} ε(ν)", SEPARATOR)
                     } else {
@@ -997,8 +997,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Subjunctive {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("εἰδε {} ω", SEPARATOR)
                     } else {
@@ -1011,8 +1011,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("εἰδῶμεν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("εἰδε {} ῃς", SEPARATOR)
                     } else {
@@ -1025,8 +1025,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("εἰδῆτε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("εἰδε {} ῃ", SEPARATOR)
                     } else {
@@ -1041,8 +1041,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Optative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("εἰδ {} ειην", SEPARATOR)
                     } else {
@@ -1055,8 +1055,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("εἰδεῖμεν, εἰδείημεν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("εἰδ {} ειης", SEPARATOR)
                     } else {
@@ -1069,8 +1069,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("εἰδεῖτε, εἰδείητε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("εἰδ {} ειη", SEPARATOR)
                     } else {
@@ -1085,14 +1085,14 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Imperative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("");
                 } else {
                     s = String::from("");
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("ἰσ {} θι", SEPARATOR)
                     } else {
@@ -1105,8 +1105,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("ἴστε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("ἰσ {} τω", SEPARATOR)
                     } else {
@@ -1122,8 +1122,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
             }
         }
     } else if vf.tense == HcTense::Pluperfect {
-        if vf.person == HcPerson::First {
-            if vf.number == HcNumber::Singular {
+        if vf.person == Some(HcPerson::First) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!(
                         "ε {} εἰδ {} η, ε {} εἰδ {} ειν",
@@ -1142,8 +1142,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                     String::from("ᾖσμεν, ᾔδεμεν")
                 };
             }
-        } else if vf.person == HcPerson::Second {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Second) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!(
                         "ε {} εἰδ {} ησθα, ε {} εἰδ {} εις",
@@ -1162,8 +1162,8 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                     String::from("ᾖστε, ᾔδετε")
                 };
             }
-        } else if vf.person == HcPerson::Third {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Third) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!("ε {} εἰδ {} ει(ν)", SEPARATOR, SEPARATOR)
                 } else {
@@ -1191,8 +1191,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
     if vf.tense == HcTense::Perfect {
         if vf.mood == HcMood::Indicative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("συν {} οἰδ {} α", SEPARATOR, SEPARATOR)
                     } else {
@@ -1205,8 +1205,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("σύνισμεν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("συν {} οἰσ {} θα", SEPARATOR, SEPARATOR)
                     } else {
@@ -1219,8 +1219,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("σύνιστε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("συν {} οἰδ {} ε(ν)", SEPARATOR, SEPARATOR)
                     } else {
@@ -1236,8 +1236,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Subjunctive {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("συν {} εἰδε {} ω", SEPARATOR, SEPARATOR)
                     } else {
@@ -1250,8 +1250,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("συνειδῶμεν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("συν {} εἰδε {} ῃς", SEPARATOR, SEPARATOR)
                     } else {
@@ -1264,8 +1264,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("συνειδῆτε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("συν {} εἰδε {} ῃ", SEPARATOR, SEPARATOR)
                     } else {
@@ -1280,8 +1280,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Optative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("συν {} εἰδ {} ειην", SEPARATOR, SEPARATOR)
                     } else {
@@ -1297,8 +1297,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("συνειδεῖμεν, συνειδείημεν")
                     };
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("συν {} εἰδ {} ειης", SEPARATOR, SEPARATOR)
                     } else {
@@ -1314,8 +1314,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("συνειδεῖτε, συνειδείητε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("συν {} εἰδ {} ειη", SEPARATOR, SEPARATOR)
                     } else {
@@ -1333,14 +1333,14 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                 }
             }
         } else if vf.mood == HcMood::Imperative {
-            if vf.person == HcPerson::First {
-                if vf.number == HcNumber::Singular {
+            if vf.person == Some(HcPerson::First) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = String::from("");
                 } else {
                     s = String::from("");
                 }
-            } else if vf.person == HcPerson::Second {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Second) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("συν {} ἰσ {} θι", SEPARATOR, SEPARATOR)
                     } else {
@@ -1353,8 +1353,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                         String::from("σύνιστε")
                     };
                 }
-            } else if vf.person == HcPerson::Third {
-                if vf.number == HcNumber::Singular {
+            } else if vf.person == Some(HcPerson::Third) {
+                if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
                         format!("συν {} ἰσ {} τω", SEPARATOR, SEPARATOR)
                     } else {
@@ -1370,8 +1370,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
             }
         }
     } else if vf.tense == HcTense::Pluperfect {
-        if vf.person == HcPerson::First {
-            if vf.number == HcNumber::Singular {
+        if vf.person == Some(HcPerson::First) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!(
                         "συν {} ε {} εἰδ {} η, συν {} ε {} εἰδ {} ειν",
@@ -1390,8 +1390,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                     String::from("συνῇσμεν, συνῄδεμεν")
                 };
             }
-        } else if vf.person == HcPerson::Second {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Second) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!(
                         "συν {} ε {} εἰδ {} ησθα, συν {} ε {} εἰδ {} εις",
@@ -1410,8 +1410,8 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
                     String::from("συνῇστε, συνῄδετε")
                 };
             }
-        } else if vf.person == HcPerson::Third {
-            if vf.number == HcNumber::Singular {
+        } else if vf.person == Some(HcPerson::Third) {
+            if vf.number == Some(HcNumber::Singular) {
                 s = if decompose {
                     format!("συν {} ε {} εἰδ {} ει(ν)", SEPARATOR, SEPARATOR, SEPARATOR)
                 } else {

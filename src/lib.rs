@@ -569,8 +569,8 @@ pub struct Step {
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub struct HcGreekVerbForm {
     pub verb: Arc<HcGreekVerb>,
-    pub person: HcPerson,
-    pub number: HcNumber,
+    pub person: Option<HcPerson>,
+    pub number: Option<HcNumber>,
     pub tense: HcTense,
     pub voice: HcVoice,
     pub mood: HcMood,
@@ -839,8 +839,8 @@ impl HcVerbForms for HcGreekVerbForm {
             && (self.verb.pps[0].ends_with("άω")
                 || self.verb.pps[0].ends_with("έω")
                 || self.verb.pps[0].ends_with("όω"))
-            && self.person == HcPerson::Third
-            && self.number == HcNumber::Singular
+            && self.person == Some(HcPerson::Third)
+            && self.number == Some(HcNumber::Singular)
             && self.voice == HcVoice::Active
         {
             local_ending = local_ending.replacen("(ν)", "", 1);
@@ -857,7 +857,7 @@ impl HcVerbForms for HcGreekVerbForm {
 
         if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") {
             if self.tense == HcTense::Present || self.tense == HcTense::Imperfect {
-                if self.number == HcNumber::Plural
+                if self.number == Some(HcNumber::Plural)
                     || self.mood != HcMood::Indicative
                     || self.voice != HcVoice::Active
                 {
@@ -877,8 +877,8 @@ impl HcVerbForms for HcGreekVerbForm {
                         if (self.verb.pps[0].ends_with("ῑ̔́ημι")
                             || self.verb.pps[0].ends_with("ῑ́ημι"))
                             && self.tense == HcTense::Present
-                            && self.person == HcPerson::Third
-                            && self.number == HcNumber::Plural
+                            && self.person == Some(HcPerson::Third)
+                            && self.number == Some(HcNumber::Plural)
                             && self.voice == HcVoice::Active
                             && self.mood == HcMood::Indicative
                         {
@@ -922,16 +922,16 @@ impl HcVerbForms for HcGreekVerbForm {
                         }
                     } else if self.mood == HcMood::Imperative {
                         if decompose {
-                            if !(self.person == HcPerson::Second
-                                && self.number == HcNumber::Singular)
+                            if !(self.person == Some(HcPerson::Second)
+                                && self.number == Some(HcNumber::Singular))
                             {
                                 local_ending.remove(0);
                             } else if self.verb.pps[0].ends_with("ῡμι") {
                                 local_stem = local_stem.replacen('υ', "ῡ", 1); //fix me
                                 local_ending = String::from(""); // fix me
                             }
-                        } else if self.person == HcPerson::Second
-                            && self.number == HcNumber::Singular
+                        } else if self.person == Some(HcPerson::Second)
+                            && self.number == Some(HcNumber::Singular)
                         {
                             if self.verb.pps[0].ends_with("ωμι") {
                                 local_ending = String::from("υ");
@@ -948,8 +948,8 @@ impl HcVerbForms for HcGreekVerbForm {
                             local_ending.remove(0);
                         }
                     } else if self.verb.pps[0].ends_with("στημι")
-                        && self.person == HcPerson::Third
-                        && self.number == HcNumber::Plural
+                        && self.person == Some(HcPerson::Third)
+                        && self.number == Some(HcNumber::Plural)
                         && self.mood == HcMood::Indicative
                         && !decompose
                     {
@@ -1013,14 +1013,17 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
             } else if self.tense == HcTense::Imperfect {
                 if self.verb.pps[0].ends_with("ωμι") {
-                    if self.number == HcNumber::Singular {
+                    if self.number == Some(HcNumber::Singular) {
                         if decompose {
                             local_stem = local_stem.replacen('ω', "ο", 1); //use short stem when using thematic endings
-                            if self.person == HcPerson::First && self.voice == HcVoice::Active {
+                            if self.person == Some(HcPerson::First) && self.voice == HcVoice::Active
+                            {
                                 local_ending = local_ending.replacen('ν', "ον", 1);
                             } else {
                                 local_ending = local_ending.replacen('ς', "ες", 1);
-                                if self.person == HcPerson::Third && self.voice == HcVoice::Active {
+                                if self.person == Some(HcPerson::Third)
+                                    && self.voice == HcVoice::Active
+                                {
                                     local_ending = String::from("ε");
                                 }
                             }
@@ -1032,13 +1035,15 @@ impl HcVerbForms for HcGreekVerbForm {
                     || self.verb.pps[0].ends_with("ῑ̔́ημι")
                     || self.verb.pps[0].ends_with("ῑ́ημι")
                 {
-                    if (self.person == HcPerson::Second || self.person == HcPerson::Third)
-                        && self.number == HcNumber::Singular
+                    if (self.person == Some(HcPerson::Second)
+                        || self.person == Some(HcPerson::Third))
+                        && self.number == Some(HcNumber::Singular)
                     {
                         if decompose {
                             local_stem = local_stem.replacen('η', "ε", 1); //use short stem when using thematic endings
                             local_ending = local_ending.replacen('ς', "ες", 1);
-                            if self.person == HcPerson::Third && self.voice == HcVoice::Active {
+                            if self.person == Some(HcPerson::Third) && self.voice == HcVoice::Active
+                            {
                                 local_ending = String::from("ε");
                             }
                         } else {
@@ -1048,8 +1053,8 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
                 if (self.verb.pps[0] == "δύναμαι" || self.verb.pps[0] == "ἐπίσταμαι")
                     && self.tense == HcTense::Imperfect
-                    && self.person == HcPerson::Second
-                    && self.number == HcNumber::Singular
+                    && self.person == Some(HcPerson::Second)
+                    && self.number == Some(HcNumber::Singular)
                 {
                     if decompose {
                         local_ending = String::from("ο"); //fix me
@@ -1061,7 +1066,7 @@ impl HcVerbForms for HcGreekVerbForm {
             } else if self.tense == HcTense::Aorist {
                 //mixed aorist
                 if self.verb.pps[2].ends_with("κα")
-                    && (self.number == HcNumber::Plural
+                    && (self.number == Some(HcNumber::Plural)
                         || self.mood != HcMood::Indicative
                         || self.voice != HcVoice::Active)
                 {
@@ -1073,7 +1078,8 @@ impl HcVerbForms for HcGreekVerbForm {
                     {
                         if self.verb.pps[0].ends_with("ῑ́ημι")
                             && !decompose
-                            && (self.number == HcNumber::Plural || self.voice != HcVoice::Active)
+                            && (self.number == Some(HcNumber::Plural)
+                                || self.voice != HcVoice::Active)
                         {
                             local_stem = local_stem.replacen("ηκ", "ει", 1);
                         } else if self.verb.pps[0].ends_with("ῑ̔́ημι") && !decompose {
@@ -1103,12 +1109,24 @@ impl HcVerbForms for HcGreekVerbForm {
                                         }
                                     } else if self.verb.pps[0].ends_with("ῑ̔́ημι") {
                                         let (stem, ending) = match (self.person, self.number) {
-                                            (HcPerson::First, HcNumber::Singular) => ("-", "ὡ"),
-                                            (HcPerson::Second, HcNumber::Singular) => ("-", "ᾑς"),
-                                            (HcPerson::Third, HcNumber::Singular) => ("-", "ᾑ"),
-                                            (HcPerson::First, HcNumber::Plural) => ("-", "ὡμεν"),
-                                            (HcPerson::Second, HcNumber::Plural) => ("-", "ἡτε"),
-                                            (HcPerson::Third, HcNumber::Plural) => ("-", "ὡσι(ν)"),
+                                            (Some(HcPerson::First), Some(HcNumber::Singular)) => {
+                                                ("-", "ὡ")
+                                            }
+                                            (Some(HcPerson::Second), Some(HcNumber::Singular)) => {
+                                                ("-", "ᾑς")
+                                            }
+                                            (Some(HcPerson::Third), Some(HcNumber::Singular)) => {
+                                                ("-", "ᾑ")
+                                            }
+                                            (Some(HcPerson::First), Some(HcNumber::Plural)) => {
+                                                ("-", "ὡμεν")
+                                            }
+                                            (Some(HcPerson::Second), Some(HcNumber::Plural)) => {
+                                                ("-", "ἡτε")
+                                            }
+                                            (Some(HcPerson::Third), Some(HcNumber::Plural)) => {
+                                                ("-", "ὡσι(ν)")
+                                            }
                                             _ => ("", ""),
                                         };
                                         local_stem = stem.to_string();
@@ -1122,28 +1140,28 @@ impl HcVerbForms for HcGreekVerbForm {
                                 } else if self.mood == HcMood::Imperative {
                                     // ana/thes
                                     if self.verb.pps[0].ends_with("ἀνατίθημι")
-                                        && self.person == HcPerson::Second
-                                        && self.number == HcNumber::Singular
+                                        && self.person == Some(HcPerson::Second)
+                                        && self.number == Some(HcNumber::Singular)
                                     {
                                         local_stem =
                                             self.accent_syllable(&local_stem, 2, HGK_ACUTE);
                                     }
                                     // apo/dos
                                     else if self.verb.pps[0].ends_with("ἀποδίδωμι")
-                                        && self.person == HcPerson::Second
-                                        && self.number == HcNumber::Singular
+                                        && self.person == Some(HcPerson::Second)
+                                        && self.number == Some(HcNumber::Singular)
                                     {
                                         local_stem =
                                             self.accent_syllable(&local_stem, 2, HGK_ACUTE);
                                     } else if self.verb.pps[0].ends_with("μεταδίδωμι")
-                                        && self.person == HcPerson::Second
-                                        && self.number == HcNumber::Singular
+                                        && self.person == Some(HcPerson::Second)
+                                        && self.number == Some(HcNumber::Singular)
                                     {
                                         local_stem =
                                             self.accent_syllable(&local_stem, 2, HGK_ACUTE);
                                     } else if self.verb.pps[0].ends_with("παραδίδωμι")
-                                        && self.person == HcPerson::Second
-                                        && self.number == HcNumber::Singular
+                                        && self.person == Some(HcPerson::Second)
+                                        && self.number == Some(HcNumber::Singular)
                                     {
                                         local_stem =
                                             self.accent_syllable(&local_stem, 2, HGK_ACUTE);
@@ -1162,14 +1180,14 @@ impl HcVerbForms for HcGreekVerbForm {
                         if self.mood == HcMood::Indicative {
                             if (self.verb.pps[0].ends_with("ῑ̔́ημι")
                                 || self.verb.pps[0].ends_with("ῑ́ημι"))
-                                && self.person == HcPerson::Second
-                                && self.number == HcNumber::Singular
+                                && self.person == Some(HcPerson::Second)
+                                && self.number == Some(HcNumber::Singular)
                             {
                                 local_ending = String::from("σο");
                             } else {
                                 local_ending.remove(0);
-                                if self.person == HcPerson::Second
-                                    && self.number == HcNumber::Singular
+                                if self.person == Some(HcPerson::Second)
+                                    && self.number == Some(HcNumber::Singular)
                                 {
                                     if decompose {
                                         local_ending = String::from("ο");
@@ -1188,12 +1206,24 @@ impl HcVerbForms for HcGreekVerbForm {
                                 }
                             } else if self.verb.pps[0].ends_with("ῑ̔́ημι") && !decompose {
                                 let (stem, ending) = match (self.person, self.number) {
-                                    (HcPerson::First, HcNumber::Singular) => ("-", "ὡμαι"),
-                                    (HcPerson::Second, HcNumber::Singular) => ("-", "ᾑ"),
-                                    (HcPerson::Third, HcNumber::Singular) => ("-", "ἡται"),
-                                    (HcPerson::First, HcNumber::Plural) => ("-", "ὡμεθα"),
-                                    (HcPerson::Second, HcNumber::Plural) => ("-", "ἡσθε"),
-                                    (HcPerson::Third, HcNumber::Plural) => ("-", "ὡνται"),
+                                    (Some(HcPerson::First), Some(HcNumber::Singular)) => {
+                                        ("-", "ὡμαι")
+                                    }
+                                    (Some(HcPerson::Second), Some(HcNumber::Singular)) => {
+                                        ("-", "ᾑ")
+                                    }
+                                    (Some(HcPerson::Third), Some(HcNumber::Singular)) => {
+                                        ("-", "ἡται")
+                                    }
+                                    (Some(HcPerson::First), Some(HcNumber::Plural)) => {
+                                        ("-", "ὡμεθα")
+                                    }
+                                    (Some(HcPerson::Second), Some(HcNumber::Plural)) => {
+                                        ("-", "ἡσθε")
+                                    }
+                                    (Some(HcPerson::Third), Some(HcNumber::Plural)) => {
+                                        ("-", "ὡνται")
+                                    }
                                     _ => ("", ""),
                                 };
 
@@ -1221,7 +1251,8 @@ impl HcVerbForms for HcGreekVerbForm {
                                 }
                             }
                         } else if self.mood == HcMood::Imperative {
-                            if self.person == HcPerson::Second && self.number == HcNumber::Singular
+                            if self.person == Some(HcPerson::Second)
+                                && self.number == Some(HcNumber::Singular)
                             {
                                 if decompose {
                                     if !self.verb.pps[0].ends_with("ῑ́ημι")
@@ -1249,9 +1280,9 @@ impl HcVerbForms for HcGreekVerbForm {
                     }
                 }
             } else if self.tense == HcTense::Perfect {
-                if self.number == HcNumber::Plural && local_stem.ends_with("στηκ") {
+                if self.number == Some(HcNumber::Plural) && local_stem.ends_with("στηκ") {
                     local_stem = local_stem.replacen("ηκ", "α", 1);
-                    if self.person == HcPerson::Third {
+                    if self.person == Some(HcPerson::Third) {
                         if decompose {
                         } else {
                             local_stem.pop();
@@ -1262,7 +1293,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     }
                 }
             } else if self.tense == HcTense::Pluperfect {
-                if self.number == HcNumber::Plural && local_stem.ends_with("στηκ") {
+                if self.number == Some(HcNumber::Plural) && local_stem.ends_with("στηκ") {
                     local_stem = local_stem.replacen("ηκ", "α", 1);
                     local_ending.remove(0);
                 }
@@ -1305,12 +1336,14 @@ impl HcVerbForms for HcGreekVerbForm {
                     local_stem.push('α');
                 }
             } else if self.mood == HcMood::Imperative {
-                if self.person == HcPerson::Second
-                    && self.number == HcNumber::Singular
+                if self.person == Some(HcPerson::Second)
+                    && self.number == Some(HcNumber::Singular)
                     && local_stem.ends_with("φθη")
                 {
                     local_ending = local_ending.replacen('θ', "τ", 1);
-                } else if self.person == HcPerson::Third && self.number == HcNumber::Plural {
+                } else if self.person == Some(HcPerson::Third)
+                    && self.number == Some(HcNumber::Plural)
+                {
                     if local_stem.ends_with("γνω") {
                         local_stem.pop();
                         local_stem.push('ο');
@@ -1347,8 +1380,8 @@ impl HcVerbForms for HcGreekVerbForm {
             && (local_stem.ends_with('μ') || self.verb.pps[4].ends_with("φασμαι"))
         {
             if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU
-                && self.person == HcPerson::Second
-                && self.number == HcNumber::Singular
+                && self.person == Some(HcPerson::Second)
+                && self.number == Some(HcNumber::Singular)
             {
                 return Ok(String::from(BLANK));
             }
@@ -1436,7 +1469,9 @@ impl HcVerbForms for HcGreekVerbForm {
         {
             if local_ending.starts_with("ντ") {
                 return Ok(String::from(BLANK));
-            } else if local_ending.starts_with('σ') && !decompose && self.number == HcNumber::Plural
+            } else if local_ending.starts_with('σ')
+                && !decompose
+                && self.number == Some(HcNumber::Plural)
             {
                 local_ending.remove(0);
             }
@@ -1454,8 +1489,8 @@ impl HcVerbForms for HcGreekVerbForm {
             };
 
         if self.verb.pps[0].ends_with("ἔχω")
-            && self.person == HcPerson::Second
-            && self.number == HcNumber::Singular
+            && self.person == Some(HcPerson::Second)
+            && self.number == Some(HcNumber::Singular)
             && self.tense == HcTense::Aorist
             && self.mood == HcMood::Imperative
             && self.voice == HcVoice::Active
@@ -1605,7 +1640,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     1,
                 )
             } else if local_stem.starts_with("ἐπανε") {
-                if self.number == HcNumber::Singular {
+                if self.number == Some(HcNumber::Singular) {
                     local_stem.replacen(
                         "ἐπανε",
                         format!("ἐπι {} ανα {} ε {} ἑ", SEPARATOR, SEPARATOR, SEPARATOR).as_str(),
@@ -1619,7 +1654,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     )
                 }
             } else if local_stem.starts_with("μετανε") {
-                if self.number == HcNumber::Singular {
+                if self.number == Some(HcNumber::Singular) {
                     local_stem.replacen(
                         "μετανε",
                         format!("μετα {} ανα {} ε {} ἑ", SEPARATOR, SEPARATOR, SEPARATOR).as_str(),
@@ -1659,7 +1694,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     1,
                 )
             } else if local_stem.starts_with("ἀφε") {
-                if self.number == HcNumber::Singular
+                if self.number == Some(HcNumber::Singular)
                 /*|| self.voice != HcVoice::Active FIX ME */
                 {
                     local_stem.replacen(
@@ -1671,7 +1706,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     local_stem.replacen("ἀφε", format!("ἀπο {} ἑ", SEPARATOR).as_str(), 1)
                 }
             } else if local_stem.starts_with("καθε") {
-                if self.number == HcNumber::Singular
+                if self.number == Some(HcNumber::Singular)
                 /*|| self.voice != HcVoice::Active FIX ME */
                 {
                     local_stem.replacen(
@@ -1684,7 +1719,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
             } else if local_stem.starts_with("ἑσ") {
                 //isthmi
-                if self.number == HcNumber::Singular
+                if self.number == Some(HcNumber::Singular)
                 /*|| self.voice != HcVoice::Active FIX ME */
                 {
                     local_stem.replacen("ἑσ", format!("ε {} ἑσ", SEPARATOR).as_str(), 1)
@@ -1752,7 +1787,7 @@ impl HcVerbForms for HcGreekVerbForm {
             } else if local_stem.starts_with("κατα") {
                 local_stem.replacen("κατα", "κατε", 1)
             } else if local_stem.starts_with("μετανε") {
-                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                if self.number == Some(HcNumber::Singular) || self.voice != HcVoice::Active {
                     local_stem.replacen("μετανε", "μετανει", 1)
                 } else {
                     local_stem
@@ -1760,7 +1795,7 @@ impl HcVerbForms for HcGreekVerbForm {
             } else if local_stem.starts_with("μετανι") {
                 local_stem.replacen("μετανι", "μετανῑ", 1)
             } else if local_stem.starts_with("ἐπανε") {
-                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                if self.number == Some(HcNumber::Singular) || self.voice != HcVoice::Active {
                     local_stem.replacen("ἐπανε", "ἐπανει", 1)
                 } else {
                     local_stem
@@ -1778,13 +1813,13 @@ impl HcVerbForms for HcGreekVerbForm {
             } else if local_stem.starts_with("ἀφει") {
                 local_stem
             } else if local_stem.starts_with("ἀφε") {
-                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                if self.number == Some(HcNumber::Singular) || self.voice != HcVoice::Active {
                     local_stem.replacen("ἀφε", "ἀφει", 1)
                 } else {
                     local_stem
                 }
             } else if local_stem.starts_with("καθε") {
-                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                if self.number == Some(HcNumber::Singular) || self.voice != HcVoice::Active {
                     local_stem.replacen("καθε", "καθει", 1)
                 } else {
                     local_stem
@@ -1808,7 +1843,7 @@ impl HcVerbForms for HcGreekVerbForm {
             } else if local_stem.starts_with('ὠ') {
                 local_stem
             } else if local_stem.starts_with('ἑ') {
-                if self.number == HcNumber::Singular || self.voice != HcVoice::Active {
+                if self.number == Some(HcNumber::Singular) || self.voice != HcVoice::Active {
                     local_stem.replacen('ἑ', "εἱ", 1)
                 } else {
                     local_stem
@@ -1874,7 +1909,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
             } else if loc.starts_with("ἀφηκ")
                 && (self.mood != HcMood::Indicative
-                    || self.number == HcNumber::Plural
+                    || self.number == Some(HcNumber::Plural)
                     || self.voice != HcVoice::Active)
             {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
@@ -1930,7 +1965,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
             } else if loc.starts_with("-ἡκ") {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
-                    if self.number == HcNumber::Plural || self.voice != HcVoice::Active {
+                    if self.number == Some(HcNumber::Plural) || self.voice != HcVoice::Active {
                         loc = loc.replacen("-ἡκ", format!("- ε {} ἑ", SEPARATOR).as_str(), 1);
                         //fix me cf -hka
                     }
@@ -1975,7 +2010,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
             } else if loc.starts_with("συνηκ")
                 && (self.mood != HcMood::Indicative
-                    || self.number == HcNumber::Plural
+                    || self.number == Some(HcNumber::Plural)
                     || self.voice != HcVoice::Active)
             {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
@@ -1989,7 +2024,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
             } else if loc.starts_with("συνη")
                 && self.verb.pps[0].ends_with("ῑ́ημι")
-                && self.number == HcNumber::Singular
+                && self.number == Some(HcNumber::Singular)
             {
                 if self.tense == HcTense::Aorist && self.mood == HcMood::Indicative {
                     loc = loc.replacen("συνη", format!("συν {} ἡ", SEPARATOR).as_str(), 1);
@@ -2241,13 +2276,13 @@ impl HcVerbForms for HcGreekVerbForm {
                 loc = loc.replacen("ἀνη", "ἀνε", 1);
             } else if loc.starts_with("ἀφηκ")
                 && (self.mood != HcMood::Indicative
-                    || self.number == HcNumber::Plural
+                    || self.number == Some(HcNumber::Plural)
                     || self.voice != HcVoice::Active)
             {
                 loc = loc.replacen("ἀφηκ", "ἀφε", 1);
             } else if loc.starts_with("συνηκ")
                 && (self.mood != HcMood::Indicative
-                    || self.number == HcNumber::Plural
+                    || self.number == Some(HcNumber::Plural)
                     || self.voice != HcVoice::Active)
             {
                 loc = loc.replacen("συνηκ", "συνε", 1);
@@ -2359,8 +2394,8 @@ impl HcVerbForms for HcGreekVerbForm {
                 let is_consonant_stem_third_plural = self.verb.is_consonant_stem()
                     && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
                     && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)
-                    && self.person == HcPerson::Third
-                    && self.number == HcNumber::Plural;
+                    && self.person == Some(HcPerson::Third)
+                    && self.number == Some(HcNumber::Plural);
 
                 if unit <= 2 {
                     //2 and under active indicative and not perfect or pluperfect
@@ -2472,13 +2507,16 @@ impl HcVerbForms for HcGreekVerbForm {
 
     // num params to change must be equal or less than num params with more than one value
     fn change_params(&mut self, num: u8, parameters: &VerbParameters) {
+        if self.person.is_none() || self.number.is_none() {
+            return;
+        }
         let mut num_with_one = 0;
         if parameters.persons.len() == 1 {
-            self.person = parameters.persons[0];
+            self.person = Some(parameters.persons[0]);
             num_with_one += 1;
         }
         if parameters.numbers.len() == 1 {
-            self.number = parameters.numbers[0];
+            self.number = Some(parameters.numbers[0]);
             num_with_one += 1;
         }
         if parameters.tenses.len() == 1 {
@@ -2514,23 +2552,27 @@ impl HcVerbForms for HcGreekVerbForm {
             //remove current value from param vec to be sure it is not re-selected; must be at least two values to change
             match p {
                 0 if parameters.persons.len() > 1 => {
-                    self.person = **parameters
-                        .persons
-                        .iter()
-                        .filter(|x| **x != self.person)
-                        .collect::<Vec<_>>()
-                        .choose(&mut rand::thread_rng())
-                        .unwrap();
+                    self.person = Some(
+                        **parameters
+                            .persons
+                            .iter()
+                            .filter(|x| **x != self.person.unwrap())
+                            .collect::<Vec<_>>()
+                            .choose(&mut rand::thread_rng())
+                            .unwrap(),
+                    );
                     params_changed.push(p);
                 }
                 1 if parameters.numbers.len() > 1 => {
-                    self.number = **parameters
-                        .numbers
-                        .iter()
-                        .filter(|x| **x != self.number)
-                        .collect::<Vec<_>>()
-                        .choose(&mut rand::thread_rng())
-                        .unwrap();
+                    self.number = Some(
+                        **parameters
+                            .numbers
+                            .iter()
+                            .filter(|x| **x != self.number.unwrap())
+                            .collect::<Vec<_>>()
+                            .choose(&mut rand::thread_rng())
+                            .unwrap(),
+                    );
                     params_changed.push(p);
                 }
                 2 if parameters.tenses.len() > 1 => {
@@ -2723,7 +2765,7 @@ impl HcVerbForms for HcGreekVerbForm {
         //and optative outside of the present and aorist and future
         //except for oida in perfect tense
         #[allow(clippy::needless_bool)]
-        if self.mood == HcMood::Imperative && self.person == HcPerson::First {
+        if self.mood == HcMood::Imperative && self.person == Some(HcPerson::First) {
             false
         } else if (self.mood == HcMood::Subjunctive || self.mood == HcMood::Imperative)
             && self.tense != HcTense::Present
@@ -2893,8 +2935,8 @@ impl HcVerbForms for HcGreekVerbForm {
                     explanation: String::from("def"),
                 });
                 return Ok(steps);
-            } else if self.person == HcPerson::Third
-                && self.number == HcNumber::Singular
+            } else if self.person == Some(HcPerson::Third)
+                && self.number == Some(HcNumber::Singular)
                 && self.mood == HcMood::Indicative
             {
                 if !decompose {
@@ -3060,8 +3102,8 @@ impl HcVerbForms for HcGreekVerbForm {
                 if self.tense == HcTense::Aorist
                     && self.voice == HcVoice::Passive
                     && self.mood == HcMood::Imperative
-                    && self.person == HcPerson::Second
-                    && self.number == HcNumber::Singular
+                    && self.person == Some(HcPerson::Second)
+                    && self.number == Some(HcNumber::Singular)
                 {
                     if a.ends_with('θ') || a.ends_with('φ') || a.ends_with('χ') {
                         if e == "ηθι" {
@@ -3094,10 +3136,10 @@ impl HcVerbForms for HcGreekVerbForm {
 
                 // skip alternate here because same, could remove this now that we're removing duplicates later?
                 if self.verb.pps[0].starts_with("σῴζω")
-                    && ((a.ends_with("σεσω") && self.person == HcPerson::Second)
+                    && ((a.ends_with("σεσω") && self.person == Some(HcPerson::Second))
                         || (a.ends_with("σεσωσ")
-                            && self.person == HcPerson::Third
-                            && self.number == HcNumber::Plural))
+                            && self.person == Some(HcPerson::Third)
+                            && self.number == Some(HcNumber::Plural)))
                 {
                     continue;
                 }
@@ -3392,8 +3434,8 @@ impl HcVerbForms for HcGreekVerbForm {
         //aphihmi
         if self.verb.pps[0] == "ἀφῑ́ημι"
             && decompose
-            && self.person == HcPerson::Second
-            && self.number == HcNumber::Singular
+            && self.person == Some(HcPerson::Second)
+            && self.number == Some(HcNumber::Singular)
             && self.tense == HcTense::Present
             && self.voice == HcVoice::Active
             && self.mood == HcMood::Indicative
@@ -3402,8 +3444,8 @@ impl HcVerbForms for HcGreekVerbForm {
             add_ending_collector.push(alt);
         } else if self.verb.pps[0] == "συνῑ́ημι"
             && decompose
-            && self.person == HcPerson::Second
-            && self.number == HcNumber::Singular
+            && self.person == Some(HcPerson::Second)
+            && self.number == Some(HcNumber::Singular)
             && self.tense == HcTense::Present
             && self.voice == HcVoice::Active
             && self.mood == HcMood::Indicative
@@ -3412,8 +3454,8 @@ impl HcVerbForms for HcGreekVerbForm {
             add_ending_collector.push(alt);
         } else if self.verb.pps[0] == "ῑ̔́ημι"
             && decompose
-            && self.person == HcPerson::Second
-            && self.number == HcNumber::Singular
+            && self.person == Some(HcPerson::Second)
+            && self.number == Some(HcNumber::Singular)
             && self.tense == HcTense::Present
             && self.voice == HcVoice::Active
             && self.mood == HcMood::Indicative
@@ -3470,8 +3512,8 @@ impl HcVerbForms for HcGreekVerbForm {
 
             //aphihmi
             if self.verb.pps[0] == "ἀφῑ́ημι"
-                && self.person == HcPerson::Second
-                && self.number == HcNumber::Singular
+                && self.person == Some(HcPerson::Second)
+                && self.number == Some(HcNumber::Singular)
                 && self.tense == HcTense::Present
                 && self.voice == HcVoice::Active
                 && self.mood == HcMood::Indicative
@@ -3479,8 +3521,8 @@ impl HcVerbForms for HcGreekVerbForm {
                 let alt = String::from("ἀφῑεῖς");
                 add_accent_collector.push(alt);
             } else if self.verb.pps[0] == "συνῑ́ημι"
-                && self.person == HcPerson::Second
-                && self.number == HcNumber::Singular
+                && self.person == Some(HcPerson::Second)
+                && self.number == Some(HcNumber::Singular)
                 && self.tense == HcTense::Present
                 && self.voice == HcVoice::Active
                 && self.mood == HcMood::Indicative
@@ -3488,8 +3530,8 @@ impl HcVerbForms for HcGreekVerbForm {
                 let alt = String::from("συνῑεῖς");
                 add_accent_collector.push(alt);
             } else if self.verb.pps[0] == "ῑ̔́ημι"
-                && self.person == HcPerson::Second
-                && self.number == HcNumber::Singular
+                && self.person == Some(HcPerson::Second)
+                && self.number == Some(HcNumber::Singular)
                 && self.tense == HcTense::Present
                 && self.voice == HcVoice::Active
                 && self.mood == HcMood::Indicative
@@ -4186,21 +4228,25 @@ impl HcVerbForms for HcGreekVerbForm {
         }
 
         let person_number: usize = match self.person {
-            HcPerson::First => match self.number {
-                HcNumber::Singular => 0,
-                HcNumber::Dual => 0,
-                HcNumber::Plural => 3,
+            Some(HcPerson::First) => match self.number {
+                Some(HcNumber::Singular) => 0,
+                Some(HcNumber::Dual) => 0,
+                Some(HcNumber::Plural) => 3,
+                _ => return None,
             },
-            HcPerson::Second => match self.number {
-                HcNumber::Singular => 1,
-                HcNumber::Dual => 0,
-                HcNumber::Plural => 4,
+            Some(HcPerson::Second) => match self.number {
+                Some(HcNumber::Singular) => 1,
+                Some(HcNumber::Dual) => 0,
+                Some(HcNumber::Plural) => 4,
+                _ => return None,
             },
-            HcPerson::Third => match self.number {
-                HcNumber::Singular => 2,
-                HcNumber::Dual => 0,
-                HcNumber::Plural => 5,
+            Some(HcPerson::Third) => match self.number {
+                Some(HcNumber::Singular) => 2,
+                Some(HcNumber::Dual) => 0,
+                Some(HcNumber::Plural) => 5,
+                _ => return None,
             },
+            _ => return None,
         };
 
         Some(ENDINGS[ending as usize][person_number].split(',').collect())
@@ -4235,8 +4281,8 @@ static PREFIXES: &[&str; 16] = &[
 
 fn analyze_syllable_quantities(
     word: &str,
-    p: HcPerson,
-    n: HcNumber,
+    p: Option<HcPerson>,
+    n: Option<HcNumber>,
     t: HcTense,
     m: HcMood,
     props: u32,
@@ -4347,8 +4393,8 @@ fn analyze_syllable_quantities(
                             && (x.letter == 'α' || x.letter == 'ο')
                             && last_letter == 'ι'; //final diphthongs short accent
                         if is_short
-                            && p == HcPerson::Third
-                            && n == HcNumber::Singular
+                            && p == Some(HcPerson::Third)
+                            && n == Some(HcNumber::Singular)
                             && m == HcMood::Optative
                         {
                             //exception to the exception for optative 3rd sing.
@@ -4488,15 +4534,15 @@ mod tests {
     fn test_infinitives() {
         //*consonant stem perfects
         //*contracted
-        //first aorist
+        //*first aorist
         //mi verbs
         //exceptions apothnhskw alternates, etc
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
         let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -4507,8 +4553,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4519,8 +4565,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -4531,8 +4577,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4543,8 +4589,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Passive,
             mood: HcMood::Infinitive,
@@ -4555,8 +4601,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -4567,8 +4613,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4583,8 +4629,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4599,8 +4645,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4615,8 +4661,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4631,8 +4677,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4647,8 +4693,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4663,8 +4709,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4679,8 +4725,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4693,8 +4739,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4710,8 +4756,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4724,8 +4770,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -4736,8 +4782,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4750,8 +4796,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -4762,8 +4808,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4776,8 +4822,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4785,6 +4831,20 @@ mod tests {
             case: None,
         };
         assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "γενέσθαι");
+
+        // let consonant_stem = "τίθημι, θήσω, ἔθηκα, τέθηκα, τέθειμαι, ἐτέθην";
+        // let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
+        // let b = HcGreekVerbForm {
+        //     verb: a.clone(),
+        //     person: Some(HcPerson::First),
+        //     number: Some(HcNumber::Singular),
+        //     tense: HcTense::Aorist,
+        //     voice: HcVoice::Active,
+        //     mood: HcMood::Infinitive,
+        //     gender: None,
+        //     case: None,
+        // };
+        // assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "τιθέναι");
     }
 
     #[test]
@@ -4793,8 +4853,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a,
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -4820,8 +4880,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a,
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -4878,8 +4938,8 @@ mod tests {
         let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
         let illegal = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Active,
             mood: HcMood::Subjunctive,
@@ -4890,8 +4950,8 @@ mod tests {
 
         let illegal = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Imperative,
@@ -4902,8 +4962,8 @@ mod tests {
 
         let illegal = HcGreekVerbForm {
             verb: luwverb,
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Active,
             mood: HcMood::Optative,
@@ -4916,8 +4976,8 @@ mod tests {
         let oidaverb = Arc::new(HcGreekVerb::from_string(1, oida, REGULAR, 0).unwrap());
         let legaloidaperf = HcGreekVerbForm {
             verb: oidaverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Active,
             mood: HcMood::Subjunctive,
@@ -4927,8 +4987,8 @@ mod tests {
         assert!(legaloidaperf.is_legal_form());
         let legaloidaperf = HcGreekVerbForm {
             verb: oidaverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Active,
             mood: HcMood::Optative,
@@ -4938,8 +4998,8 @@ mod tests {
         assert!(legaloidaperf.is_legal_form());
         let legaloidaperf = HcGreekVerbForm {
             verb: oidaverb.clone(),
-            person: HcPerson::Second,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::Second),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Active,
             mood: HcMood::Imperative,
@@ -4949,8 +5009,8 @@ mod tests {
         assert!(legaloidaperf.is_legal_form());
         let legaloidaperf = HcGreekVerbForm {
             verb: oidaverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Active,
             mood: HcMood::Subjunctive,
@@ -4960,8 +5020,8 @@ mod tests {
         assert!(!legaloidaperf.is_legal_form());
         let legaloidaperf = HcGreekVerbForm {
             verb: oidaverb.clone(),
-            person: HcPerson::Second,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::Second),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Active,
             mood: HcMood::Imperative,
@@ -4971,8 +5031,8 @@ mod tests {
         assert!(!legaloidaperf.is_legal_form());
         let illegaloidaplup = HcGreekVerbForm {
             verb: oidaverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Pluperfect,
             voice: HcVoice::Active,
             mood: HcMood::Subjunctive,
@@ -4982,8 +5042,8 @@ mod tests {
         assert!(!illegaloidaplup.is_legal_form());
         let illegaloidaplup = HcGreekVerbForm {
             verb: oidaverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Pluperfect,
             voice: HcVoice::Active,
             mood: HcMood::Optative,
@@ -4993,8 +5053,8 @@ mod tests {
         assert!(!illegaloidaplup.is_legal_form());
         let illegaloidaplup = HcGreekVerbForm {
             verb: oidaverb.clone(),
-            person: HcPerson::Second,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::Second),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Pluperfect,
             voice: HcVoice::Active,
             mood: HcMood::Imperative,
@@ -5005,8 +5065,8 @@ mod tests {
 
         let illegaloidaplup = HcGreekVerbForm {
             verb: oidaverb.clone(),
-            person: HcPerson::Second,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::Second),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Active,
             mood: HcMood::Optative,
@@ -5017,8 +5077,8 @@ mod tests {
 
         let illegaloidaplup = HcGreekVerbForm {
             verb: oidaverb,
-            person: HcPerson::Second,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::Second),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Active,
             mood: HcMood::Imperative,
@@ -5035,8 +5095,8 @@ mod tests {
 
         let vf = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5051,8 +5111,8 @@ mod tests {
         // subjunctive/optative in unit 3
         let vf = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Subjunctive,
@@ -5065,8 +5125,8 @@ mod tests {
         // subjunctive/optative in unit 3
         let vf = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Optative,
@@ -5079,8 +5139,8 @@ mod tests {
         // passive voice in unit 5
         let vf = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5093,8 +5153,8 @@ mod tests {
         // middle voice in unit 7
         let vf = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5107,8 +5167,8 @@ mod tests {
         // imperatives in unit 11
         let vf = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Imperative,
@@ -5123,8 +5183,8 @@ mod tests {
         let isthmi_verb = Arc::new(HcGreekVerb::from_string(1, isthmi, REGULAR, 0).unwrap());
         let vf = HcGreekVerbForm {
             verb: isthmi_verb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5146,8 +5206,8 @@ mod tests {
         // block aorist of mi verbs until unit 13
         let vf = HcGreekVerbForm {
             verb: isthmi_verb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5160,8 +5220,8 @@ mod tests {
         // block perfect of isthmi until unit 13
         let vf = HcGreekVerbForm {
             verb: isthmi_verb,
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5174,8 +5234,8 @@ mod tests {
         // future optative, not until unit 16
         let vf = HcGreekVerbForm {
             verb: luwverb,
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Active,
             mood: HcMood::Optative,
@@ -5204,8 +5264,8 @@ mod tests {
             Arc::new(HcGreekVerb::from_string(1, blaptw, CONSONANT_STEM_PERFECT_PI, 0).unwrap());
         let vf = HcGreekVerbForm {
             verb: cons_stem_verb.clone(),
-            person: HcPerson::Third,
-            number: HcNumber::Plural,
+            person: Some(HcPerson::Third),
+            number: Some(HcNumber::Plural),
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5237,8 +5297,8 @@ mod tests {
         // but perfect active of consonant stems is ok
         let vf = HcGreekVerbForm {
             verb: cons_stem_verb,
-            person: HcPerson::Third,
-            number: HcNumber::Plural,
+            person: Some(HcPerson::Third),
+            number: Some(HcNumber::Plural),
             tense: HcTense::Perfect,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5256,8 +5316,8 @@ mod tests {
 
         let a = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5266,8 +5326,8 @@ mod tests {
         };
         let b = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5279,8 +5339,8 @@ mod tests {
 
         let a = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5289,8 +5349,8 @@ mod tests {
         };
         let b = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5302,8 +5362,8 @@ mod tests {
 
         let a = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5312,8 +5372,8 @@ mod tests {
         };
         let b = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5325,8 +5385,8 @@ mod tests {
 
         let a = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5335,8 +5395,8 @@ mod tests {
         };
         let b = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5348,8 +5408,8 @@ mod tests {
 
         let a = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5358,8 +5418,8 @@ mod tests {
         };
         let b = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5371,8 +5431,8 @@ mod tests {
 
         let a = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5381,8 +5441,8 @@ mod tests {
         };
         let b = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5394,8 +5454,8 @@ mod tests {
 
         let a = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5404,8 +5464,8 @@ mod tests {
         };
         let b = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5417,8 +5477,8 @@ mod tests {
 
         let a = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5427,8 +5487,8 @@ mod tests {
         };
         let b = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5440,8 +5500,8 @@ mod tests {
 
         let a = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5450,8 +5510,8 @@ mod tests {
         };
         let b = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5463,8 +5523,8 @@ mod tests {
 
         let a = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5473,8 +5533,8 @@ mod tests {
         };
         let b = HcGreekVerbForm {
             verb: luwverb,
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5508,8 +5568,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5518,8 +5578,8 @@ mod tests {
         };
         let c = HcGreekVerbForm {
             verb: luwverb.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5542,8 +5602,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, blaptw, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Aorist,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5553,8 +5613,8 @@ mod tests {
         assert_eq!(b.get_form(false).unwrap()[2].form, "ἐβλαβην / ἐβλαφθην");
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5566,8 +5626,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5577,8 +5637,8 @@ mod tests {
         assert_eq!(b.get_form(false).unwrap()[3].form, "βλάπτομαι");
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::Second,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::Second),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5590,8 +5650,8 @@ mod tests {
         assert_eq!(b.get_form(false).unwrap()[3].form, "βλάπτει / βλάπτῃ");
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::Third,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::Third),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5601,8 +5661,8 @@ mod tests {
         assert_eq!(b.get_form(false).unwrap()[3].form, "βλάπτεται");
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Plural,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Plural),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5612,8 +5672,8 @@ mod tests {
         assert_eq!(b.get_form(false).unwrap()[3].form, "βλαπτόμεθα");
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::Second,
-            number: HcNumber::Plural,
+            person: Some(HcPerson::Second),
+            number: Some(HcNumber::Plural),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5623,8 +5683,8 @@ mod tests {
         assert_eq!(b.get_form(false).unwrap()[3].form, "βλάπτεσθε");
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::Third,
-            number: HcNumber::Plural,
+            person: Some(HcPerson::Third),
+            number: Some(HcNumber::Plural),
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Indicative,
@@ -5635,8 +5695,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Future,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5646,8 +5706,8 @@ mod tests {
         assert_eq!(b.get_form(false).unwrap()[2].form, "βλαψω");
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Active,
             mood: HcMood::Indicative,
@@ -5657,8 +5717,8 @@ mod tests {
         assert_eq!(b.get_form(false).unwrap()[2].form, "βεβλαφα");
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Perfect,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5669,8 +5729,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a,
-            person: HcPerson::First,
-            number: HcNumber::Singular,
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Pluperfect,
             voice: HcVoice::Passive,
             mood: HcMood::Indicative,
@@ -5717,8 +5777,8 @@ mod tests {
                             }
                             let b = HcGreekVerbForm {
                                 verb: luwverb.clone(),
-                                person: y,
-                                number: z,
+                                person: Some(y),
+                                number: Some(z),
                                 tense: x,
                                 voice: v,
                                 mood: m,
@@ -5848,8 +5908,8 @@ mod tests {
                                         {
                                             let form = HcGreekVerbForm {
                                                 verb: verb.clone(),
-                                                person: y,
-                                                number: z,
+                                                person: Some(y),
+                                                number: Some(z),
                                                 tense: x,
                                                 voice: v,
                                                 mood: m,
