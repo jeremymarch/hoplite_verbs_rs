@@ -3266,12 +3266,15 @@ impl HcVerbForms for HcGreekVerbForm {
                         }
                     } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("άομαι")
                     {
+                        new_stem.pop();
                         format!("{}{}", new_stem, "ᾶσθαι")
                     } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("έομαι")
                     {
+                        new_stem.pop();
                         format!("{}{}", new_stem, "εῖσθαι")
                     } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("όομαι")
                     {
+                        new_stem.pop();
                         format!("{}{}", new_stem, "οῦσθαι")
                     } else if self.tense == HcTense::Future
                         && self.voice != HcVoice::Passive
@@ -3296,6 +3299,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         && self.voice != HcVoice::Passive
                         && self.verb.pps[1].ends_with("οῦμαι")
                     {
+                        new_stem.pop();
                         format!("{}{}", new_stem, "εῖσθαι")
                     } else if self.tense == HcTense::Future
                         && self.verb.pps[1].starts_with("ἐρῶ")
@@ -3333,7 +3337,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         } else {
                             format!("{}{}", new_stem, "οσθαι")
                         }
-                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("ἵστημι")
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("στημι")
                     {
                         new_stem.pop();
                         if self.voice == HcVoice::Active {
@@ -3341,9 +3345,45 @@ impl HcVerbForms for HcGreekVerbForm {
                         } else {
                             format!("{}{}", new_stem, "ασθαι")
                         }
+                    } else if self.tense == HcTense::Aorist
+                        && self.voice != HcVoice::Passive
+                        && self.verb.pps[0].ends_with("τίθημι")
+                    {
+                        new_stem.pop(); //κ
+                        new_stem.pop(); //η
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, "εῖναι")
+                        } else {
+                            format!("{}{}", new_stem, "έσθαι")
+                        }
+                    } else if self.tense == HcTense::Aorist
+                        && self.voice != HcVoice::Passive
+                        && self.verb.pps[0].ends_with("δίδωμι")
+                    {
+                        new_stem.pop(); //κ
+                        new_stem.pop(); //ο
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, "οῦναι")
+                        } else {
+                            format!("{}{}", new_stem, "όσθαι")
+                        }
+                    } else if self.tense == HcTense::Aorist
+                        && self.voice != HcVoice::Passive
+                        && self.verb.pps[0].ends_with("στημι")
+                        && new_stem.ends_with("στη")
+                    {
+                        format!("{}{}", new_stem, "ναι")
                     } else if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
                         format!("{}ησ{}", new_stem, e)
+                    } else if self.tense == HcTense::Perfect
+                        && self.voice == HcVoice::Active
+                        && self.verb.pps[0].ends_with("στημι")
+                    {
+                        new_stem.pop(); //
+                        new_stem.pop(); //
+                        format!("{}{}", new_stem, "άναι")
                     } else {
+                        //everything else
                         format!("{}{}", new_stem, e)
                     };
 
@@ -3356,16 +3396,8 @@ impl HcVerbForms for HcGreekVerbForm {
                         };
 
                     add_accent_collector.push(fff);
-                    //continue;
-
-                    // steps.push(Step {
-                    //     form: fff,
-                    //     explanation: String::from("def"),
-                    // });
-                    // return Ok(steps);
                 } //end handle infinitives
-
-                //if self.mood == HcMood::Participle {}
+                  //else if self.mood == HcMood::Participle {}
 
                 let stem = if decompose
                     && self.tense == HcTense::Aorist
@@ -3389,9 +3421,10 @@ impl HcVerbForms for HcGreekVerbForm {
                     && self.tense != HcTense::Aorist
                     && !(self.tense == HcTense::Future && self.voice == HcVoice::Passive)
                     && self.mood != HcMood::Infinitive
+                    && self.mood != HcMood::Participle
                 {
                     add_ending_collector.push(self.separate_prefix(&y));
-                } else if self.mood != HcMood::Infinitive {
+                } else if self.mood != HcMood::Infinitive && self.mood != HcMood::Participle {
                     add_ending_collector.push(y.to_string());
                 }
 
@@ -3404,6 +3437,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         };
                     /* contracted future and present */
                     if self.mood != HcMood::Infinitive
+                        && self.mood != HcMood::Participle
                         && ((self.tense == HcTense::Imperfect || self.tense == HcTense::Present)
                             && (self.verb.pps[0].ends_with("άω")
                                 || self.verb.pps[0].ends_with("έω")
@@ -3419,7 +3453,7 @@ impl HcVerbForms for HcGreekVerbForm {
                                 || self.verb.pps[1].ends_with("οῦμαι")))
                     {
                         add_accent_collector.push(self.contract_verb(&accented_form, e));
-                    } else if self.mood != HcMood::Infinitive {
+                    } else if self.mood != HcMood::Infinitive && self.mood != HcMood::Participle {
                         add_accent_collector.push(accented_form);
                     }
                     //println!("Here {} {}", a, e);
@@ -3526,7 +3560,10 @@ impl HcVerbForms for HcGreekVerbForm {
             }
         }
 
-        if add_ending_collector.is_empty() && self.mood != HcMood::Infinitive {
+        if add_ending_collector.is_empty()
+            && self.mood != HcMood::Infinitive
+            && self.mood != HcMood::Participle
+        {
             //this catches meanesthn in aorist middle, etc.; fix me? should be better way to catch these
             return Err(HcFormError::InternalError);
         }
