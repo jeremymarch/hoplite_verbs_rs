@@ -3155,7 +3155,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 };
 
                 if self.mood == HcMood::Infinitive {
-                    let mut new_stem = a;
+                    let mut new_stem = a.clone();
                     let infinitive = if self.tense == HcTense::Perfect
                         && self.voice != HcVoice::Active
                         && self.verb.properties & CONSONANT_STEM_PERFECT_PHI
@@ -3355,12 +3355,15 @@ impl HcVerbForms for HcGreekVerbForm {
                             infinitive
                         };
 
-                    steps.push(Step {
-                        form: fff,
-                        explanation: String::from("def"),
-                    });
-                    return Ok(steps);
-                }
+                    add_accent_collector.push(fff);
+                    //continue;
+
+                    // steps.push(Step {
+                    //     form: fff,
+                    //     explanation: String::from("def"),
+                    // });
+                    // return Ok(steps);
+                } //end handle infinitives
 
                 //if self.mood == HcMood::Participle {}
 
@@ -3385,9 +3388,10 @@ impl HcVerbForms for HcGreekVerbForm {
                     && self.tense != HcTense::Pluperfect
                     && self.tense != HcTense::Aorist
                     && !(self.tense == HcTense::Future && self.voice == HcVoice::Passive)
+                    && self.mood != HcMood::Infinitive
                 {
                     add_ending_collector.push(self.separate_prefix(&y));
-                } else {
+                } else if self.mood != HcMood::Infinitive {
                     add_ending_collector.push(y.to_string());
                 }
 
@@ -3399,13 +3403,14 @@ impl HcVerbForms for HcGreekVerbForm {
                             y
                         };
                     /* contracted future and present */
-                    if ((self.tense == HcTense::Imperfect || self.tense == HcTense::Present)
-                        && (self.verb.pps[0].ends_with("άω")
-                            || self.verb.pps[0].ends_with("έω")
-                            || self.verb.pps[0].ends_with("όω")
-                            || self.verb.pps[0].ends_with("άομαι")
-                            || self.verb.pps[0].ends_with("έομαι")
-                            || self.verb.pps[0].ends_with("όομαι")))
+                    if self.mood != HcMood::Infinitive
+                        && ((self.tense == HcTense::Imperfect || self.tense == HcTense::Present)
+                            && (self.verb.pps[0].ends_with("άω")
+                                || self.verb.pps[0].ends_with("έω")
+                                || self.verb.pps[0].ends_with("όω")
+                                || self.verb.pps[0].ends_with("άομαι")
+                                || self.verb.pps[0].ends_with("έομαι")
+                                || self.verb.pps[0].ends_with("όομαι")))
                         || (self.tense == HcTense::Future
                             && self.voice != HcVoice::Passive
                             && (self.verb.pps[1].ends_with('ῶ')
@@ -3414,12 +3419,13 @@ impl HcVerbForms for HcGreekVerbForm {
                                 || self.verb.pps[1].ends_with("οῦμαι")))
                     {
                         add_accent_collector.push(self.contract_verb(&accented_form, e));
-                    } else {
+                    } else if self.mood != HcMood::Infinitive {
                         add_accent_collector.push(accented_form);
                     }
+                    //println!("Here {} {}", a, e);
                 }
-            }
-        }
+            } //each ending loop
+        } //each alt pp loop
 
         //remove duplicate decomposed forms for proe / prou
         if decompose
@@ -3520,7 +3526,7 @@ impl HcVerbForms for HcGreekVerbForm {
             }
         }
 
-        if add_ending_collector.is_empty() {
+        if add_ending_collector.is_empty() && self.mood != HcMood::Infinitive {
             //this catches meanesthn in aorist middle, etc.; fix me? should be better way to catch these
             return Err(HcFormError::InternalError);
         }
@@ -4573,6 +4579,18 @@ mod tests {
             verb: a.clone(),
             person: Some(HcPerson::First),
             number: Some(HcNumber::Singular),
+            tense: HcTense::Aorist,
+            voice: HcVoice::Passive,
+            mood: HcMood::Infinitive,
+            gender: None,
+            case: None,
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λυθῆναι");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -4616,18 +4634,6 @@ mod tests {
             case: None,
         };
         assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λῡ́σασθαι");
-
-        let b = HcGreekVerbForm {
-            verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
-            tense: HcTense::Aorist,
-            voice: HcVoice::Passive,
-            mood: HcMood::Infinitive,
-            gender: None,
-            case: None,
-        };
-        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λυθῆναι");
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
