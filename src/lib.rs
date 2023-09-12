@@ -3339,6 +3339,40 @@ impl HcVerbForms for HcGreekVerbForm {
                         } else {
                             format!("{}{}", new_stem, "έσθαι")
                         }
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("ῑ̔́ημι")
+                    {
+                        if self.voice == HcVoice::Active {
+                            String::from("ῑ̔έναι")
+                        } else {
+                            String::from("ῑ̔́εσθαι")
+                        }
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("ῑ́ημι")
+                    {
+                        new_stem.pop();
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, "έναι")
+                        } else {
+                            format!("{}{}", new_stem, "εσθαι")
+                        }
+                    } else if self.tense == HcTense::Aorist
+                        && self.voice != HcVoice::Passive
+                        && self.verb.pps[0].ends_with("ῑ̔́ημι")
+                    {
+                        if self.voice == HcVoice::Active {
+                            String::from("-εἷναι")
+                        } else {
+                            String::from("-ἕσθαι")
+                        }
+                    } else if self.tense == HcTense::Aorist
+                        && self.voice != HcVoice::Passive
+                        && self.verb.pps[0].ends_with("ῑ́ημι")
+                    {
+                        new_stem.pop();
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, "εῖναι")
+                        } else {
+                            format!("{}{}", new_stem, "έσθαι")
+                        }
                     } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("τίθημι")
                     {
                         new_stem.pop();
@@ -3676,6 +3710,11 @@ impl HcVerbForms for HcGreekVerbForm {
                     && add_accent_collector[0] == "ἐτεθνήκεσαν"
                 {
                     let alt = String::from("ἐτέθνασαν");
+                    add_accent_collector.push(alt);
+                } else if !add_accent_collector.is_empty()
+                    && add_accent_collector[0] == "τεθνηκέναι"
+                {
+                    let alt = String::from("τεθνάναι");
                     add_accent_collector.push(alt);
                 }
             }

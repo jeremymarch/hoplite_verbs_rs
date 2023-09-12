@@ -64,6 +64,10 @@ pub fn get_exesti(vf: &HcGreekVerbForm, decompose: bool) -> String {
 
 pub fn get_dei(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
+    if vf.mood == HcMood::Infinitive && vf.voice == HcVoice::Active && vf.tense == HcTense::Present
+    {
+        return String::from("δεῖν");
+    }
     if vf.voice != HcVoice::Active
         || vf.person != Some(HcPerson::Third)
         || vf.number != Some(HcNumber::Singular)
@@ -121,6 +125,10 @@ pub fn get_dei(vf: &HcGreekVerbForm, decompose: bool) -> String {
 
 pub fn get_xrh(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
+    if vf.mood == HcMood::Infinitive && vf.voice == HcVoice::Active && vf.tense == HcTense::Present
+    {
+        return String::from("χρῆναι");
+    }
     if vf.voice != HcVoice::Active
         || vf.person != Some(HcPerson::Third)
         || vf.number != Some(HcNumber::Singular)
@@ -284,7 +292,9 @@ pub fn get_eimi(vf: &HcGreekVerbForm, _decompose: bool) -> String {
 pub fn get_keimai(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
     if vf.tense == HcTense::Present {
-        if vf.mood == HcMood::Indicative {
+        if vf.mood == HcMood::Infinitive {
+            s = String::from("κεῖσθαι")
+        } else if vf.mood == HcMood::Indicative {
             if vf.person == Some(HcPerson::First) {
                 if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
@@ -963,7 +973,9 @@ pub fn get_oida(vf: &HcGreekVerbForm, decompose: bool) -> String {
     }
     let mut s = String::from("");
     if vf.tense == HcTense::Perfect {
-        if vf.mood == HcMood::Indicative {
+        if vf.mood == HcMood::Infinitive {
+            s = String::from("εἰδέναι");
+        } else if vf.mood == HcMood::Indicative {
             if vf.person == Some(HcPerson::First) {
                 if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
@@ -1202,7 +1214,9 @@ pub fn get_sunoida(vf: &HcGreekVerbForm, decompose: bool) -> String {
     }
     let mut s = String::from("");
     if vf.tense == HcTense::Perfect {
-        if vf.mood == HcMood::Indicative {
+        if vf.mood == HcMood::Infinitive {
+            s = String::from("συνειδέναι");
+        } else if vf.mood == HcMood::Indicative {
             if vf.person == Some(HcPerson::First) {
                 if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {
