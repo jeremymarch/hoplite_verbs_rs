@@ -594,6 +594,7 @@ pub trait HcVerbForms {
     fn strip_ending(&self, pp_num: usize, form: String) -> Result<String, &str>;
     fn add_ending(&self, stem: &str, ending: &str, decompose: bool) -> Result<String, &str>;
     fn get_endings(&self, stem: &str) -> Option<Vec<&str>>;
+    fn get_participle_endings(&self, _stem: &str) -> Option<Vec<&str>>;
     fn get_infinitive_endings(&self, _stem: &str) -> Option<Vec<&str>>;
     fn accent_verb(&self, form: &str) -> String;
     fn accent_verb_contracted(
@@ -3082,6 +3083,11 @@ impl HcVerbForms for HcGreekVerbForm {
                     Some(e) => e,
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
+            } else if self.mood == HcMood::Participle {
+                match self.get_participle_endings(a) {
+                    Some(e) => e,
+                    None => return Err(HcFormError::InternalError), //("Illegal form ending");,
+                }
             } else {
                 match self.get_endings(a) {
                     Some(e) => e,
@@ -3471,8 +3477,53 @@ impl HcVerbForms for HcGreekVerbForm {
                         };
 
                     add_accent_collector.push(fff);
-                } //end handle infinitives
-                  //else if self.mood == HcMood::Participle {}
+                }
+                //end handle infinitives
+                else if self.mood == HcMood::Participle {
+                    let new_stem = a.clone();
+                    let ptc = if self.tense == HcTense::Present {
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, e)
+                        } else if self.voice == HcVoice::Middle {
+                            format!("{}{}", new_stem, e)
+                        } else {
+                            format!("{}{}", new_stem, e)
+                        }
+                    } else if self.tense == HcTense::Future {
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, e)
+                        } else if self.voice == HcVoice::Middle {
+                            format!("{}{}", new_stem, e)
+                        } else {
+                            format!("{}{}", new_stem, e)
+                        }
+                    } else if self.tense == HcTense::Aorist {
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, e)
+                        } else if self.voice == HcVoice::Middle {
+                            format!("{}{}", new_stem, e)
+                        } else {
+                            format!("{}{}", new_stem, e)
+                        }
+                    } else if self.tense == HcTense::Perfect {
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, e)
+                        } else if self.voice == HcVoice::Middle {
+                            format!("{}{}", new_stem, e)
+                        } else {
+                            format!("{}{}", new_stem, e)
+                        }
+                    } else {
+                        String::from("")
+                    };
+                    let fff = if !hgk_has_diacritics(&ptc, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) {
+                        self.accent_verb_persistent(ptc.as_str())
+                    } else {
+                        ptc
+                    };
+
+                    add_accent_collector.push(fff);
+                } //end ptc
 
                 let stem = if decompose
                     && self.tense == HcTense::Aorist
@@ -4028,6 +4079,25 @@ impl HcVerbForms for HcGreekVerbForm {
                 HcVoice::Middle => HcGreekPrincipalParts::Third,
                 HcVoice::Passive => HcGreekPrincipalParts::Sixth,
             },
+        }
+    }
+
+    fn get_participle_endings(&self, _stem: &str) -> Option<Vec<&str>> {
+        match self.tense {
+            HcTense::Present | HcTense::Future => match self.voice {
+                HcVoice::Active => Some(vec!["ων"]),
+                _ => Some(vec!["άμενος"]),
+            },
+            HcTense::Aorist => match self.voice {
+                HcVoice::Active => Some(vec!["ας"]),
+                HcVoice::Middle => Some(vec!["άμενος"]),
+                _ => Some(vec!["είς"]),
+            },
+            HcTense::Perfect => match self.voice {
+                HcVoice::Active => Some(vec!["ώς"]),
+                _ => Some(vec!["μένος"]),
+            },
+            _ => None,
         }
     }
 
