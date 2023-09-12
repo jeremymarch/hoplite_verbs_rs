@@ -2,7 +2,10 @@ use super::*;
 
 pub fn get_esti(vf: &HcGreekVerbForm, _decompose: bool) -> String {
     let mut s = String::from("");
-    if vf.person != Some(HcPerson::Third) || vf.number != Some(HcNumber::Singular) {
+    if vf.tense == HcTense::Present && vf.mood == HcMood::Infinitive && vf.voice == HcVoice::Active
+    {
+        s = String::from("εἶναι");
+    } else if vf.person != Some(HcPerson::Third) || vf.number != Some(HcNumber::Singular) {
         return s;
     }
 
@@ -24,7 +27,10 @@ pub fn get_esti(vf: &HcGreekVerbForm, _decompose: bool) -> String {
 
 pub fn get_exesti(vf: &HcGreekVerbForm, decompose: bool) -> String {
     let mut s = String::from("");
-    if vf.person != Some(HcPerson::Third) || vf.number != Some(HcNumber::Singular) {
+    if vf.tense == HcTense::Present && vf.mood == HcMood::Infinitive && vf.voice == HcVoice::Active
+    {
+        s = String::from("ἐξεῖναι");
+    } else if vf.person != Some(HcPerson::Third) || vf.number != Some(HcNumber::Singular) {
         return s;
     }
 
@@ -168,7 +174,9 @@ pub fn get_eimi(vf: &HcGreekVerbForm, _decompose: bool) -> String {
     }
     let mut s = String::from("");
     if vf.tense == HcTense::Present {
-        if vf.mood == HcMood::Indicative {
+        if vf.mood == HcMood::Infinitive && vf.voice == HcVoice::Active {
+            s = String::from("εἶναι");
+        } else if vf.mood == HcMood::Indicative {
             if vf.person == Some(HcPerson::First) {
                 if vf.number == Some(HcNumber::Singular) {
                     s = String::from("εἰμί");
@@ -500,7 +508,9 @@ pub fn get_fhmi(vf: &HcGreekVerbForm, decompose: bool) -> String {
     }
     let mut s = String::from("");
     if vf.tense == HcTense::Present {
-        if vf.mood == HcMood::Indicative {
+        if vf.mood == HcMood::Infinitive {
+            s = String::from("φάναι");
+        } else if vf.mood == HcMood::Indicative {
             if vf.person == Some(HcPerson::First) {
                 if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {

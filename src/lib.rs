@@ -3075,14 +3075,15 @@ impl HcVerbForms for HcGreekVerbForm {
 
         let mut add_ending_collector = Vec::new();
         let mut add_accent_collector = Vec::new();
-        for a in pps_without_ending {
+
+        for (alt_pp_idx, a) in pps_without_ending.iter().enumerate() {
             let endings_for_form = if self.mood == HcMood::Infinitive {
-                match self.get_infinitive_endings(&a) {
+                match self.get_infinitive_endings(a) {
                     Some(e) => e,
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
             } else {
-                match self.get_endings(&a) {
+                match self.get_endings(a) {
                     Some(e) => e,
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
@@ -3126,7 +3127,11 @@ impl HcVerbForms for HcGreekVerbForm {
                     && self.tense == HcTense::Aorist
                     && self.voice == HcVoice::Middle
                 {
-                    continue;
+                    if pps_without_ending.len() > 1 {
+                        continue; //if non-root alternate
+                    } else {
+                        return Err(HcFormError::InternalError); //only root, so no form
+                    }
                 }
 
                 //attic greek does not form future passive from βλάπτω's βλαφθ 6th pp stem
@@ -3155,6 +3160,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 };
 
                 if self.mood == HcMood::Infinitive {
+                    //println!("alt pp {}, {}, {}", alt_pp_idx, self.verb.pps[2], self.verb.pps[2].split('/').collect::<Vec<_>>()[alt_pp_idx]);
                     let mut new_stem = a.clone();
                     let infinitive = if self.tense == HcTense::Perfect
                         && self.voice != HcVoice::Active
@@ -3198,6 +3204,8 @@ impl HcVerbForms for HcGreekVerbForm {
                         && self.voice != HcVoice::Active
                         && self.verb.properties & CONSONANT_STEM_PERFECT_PI
                             == CONSONANT_STEM_PERFECT_PI
+                        && new_stem.ends_with('μ')
+                    //because ὁράω has two
                     {
                         new_stem.pop();
                         format!("{}{}", new_stem, "φθαι")
@@ -3212,6 +3220,8 @@ impl HcVerbForms for HcGreekVerbForm {
                         && self.voice != HcVoice::Active
                         && self.verb.properties & CONSONANT_STEM_PERFECT_GAMMA
                             == CONSONANT_STEM_PERFECT_GAMMA
+                        && new_stem.ends_with('γ')
+                    //because λέγω has two
                     {
                         new_stem.pop();
                         format!("{}{}", new_stem, "χθαι")
@@ -3314,7 +3324,11 @@ impl HcVerbForms for HcGreekVerbForm {
                         }
                     } else if self.tense == HcTense::Aorist
                         && self.voice != HcVoice::Passive
-                        && (self.verb.pps[2].ends_with("ον") || self.verb.pps[2].ends_with("όμην"))
+                        && (self.verb.pps[2].split('/').collect::<Vec<_>>()[alt_pp_idx]
+                            .trim()
+                            .ends_with("ον")
+                            || self.verb.pps[2].trim().split('/').collect::<Vec<_>>()[alt_pp_idx]
+                                .ends_with("όμην"))
                     {
                         if self.voice == HcVoice::Active {
                             format!("{}{}", new_stem, "εῖν")
@@ -3374,6 +3388,13 @@ impl HcVerbForms for HcGreekVerbForm {
                         && self.voice == HcVoice::Active
                         && self.verb.pps[2].ends_with("ην") //root aorists
                         && new_stem.ends_with('η')
+                    //check each alt principal part in case not all root aorists
+                    {
+                        format!("{}{}", new_stem, "ναι")
+                    } else if self.tense == HcTense::Aorist
+                        && self.voice == HcVoice::Active
+                        && self.verb.pps[2].ends_with("ων") //root aorists
+                        && new_stem.ends_with('ω')
                     //check each alt principal part in case not all root aorists
                     {
                         format!("{}{}", new_stem, "ναι")
