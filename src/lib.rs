@@ -3345,6 +3345,9 @@ impl HcVerbForms for HcGreekVerbForm {
                         } else {
                             format!("{}{}", new_stem, "ασθαι")
                         }
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("σταμαι")
+                    {
+                        format!("{}{}", new_stem, "σθαι")
                     } else if self.tense == HcTense::Aorist
                         && self.voice != HcVoice::Passive
                         && self.verb.pps[0].ends_with("τίθημι")
@@ -3368,20 +3371,33 @@ impl HcVerbForms for HcGreekVerbForm {
                             format!("{}{}", new_stem, "όσθαι")
                         }
                     } else if self.tense == HcTense::Aorist
-                        && self.voice != HcVoice::Passive
-                        && self.verb.pps[0].ends_with("στημι")
-                        && new_stem.ends_with("στη")
+                        && self.voice == HcVoice::Active
+                        && self.verb.pps[2].ends_with("ην") //root aorists
+                        && new_stem.ends_with('η')
+                    //check each alt principal part in case not all root aorists
                     {
                         format!("{}{}", new_stem, "ναι")
                     } else if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
                         format!("{}ησ{}", new_stem, e)
                     } else if self.tense == HcTense::Perfect
                         && self.voice == HcVoice::Active
-                        && self.verb.pps[0].ends_with("στημι")
+                        && (self.verb.pps[0].ends_with("στημι")
+                            || self.verb.pps[0].ends_with("σταμαι"))
                     {
-                        new_stem.pop(); //
-                        new_stem.pop(); //
+                        new_stem.pop(); //κ
+                        new_stem.pop(); //η
                         format!("{}{}", new_stem, "άναι")
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("ῡμι")
+                    {
+                        new_stem.pop();
+                        if self.voice == HcVoice::Active {
+                            format!("{}{}", new_stem, "υναι")
+                        } else {
+                            format!("{}{}", new_stem, "υσθαι")
+                        }
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("υμαι")
+                    {
+                        format!("{}{}", new_stem, "σθαι")
                     } else {
                         //everything else
                         format!("{}{}", new_stem, e)
