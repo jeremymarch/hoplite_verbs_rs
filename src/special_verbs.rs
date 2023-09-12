@@ -737,7 +737,9 @@ pub fn get_eimi_ibo(vf: &HcGreekVerbForm, decompose: bool) -> String {
     }
     let mut s = String::from("");
     if vf.tense == HcTense::Present {
-        if vf.mood == HcMood::Indicative {
+        if vf.mood == HcMood::Infinitive {
+            s = String::from("ἰέναι");
+        } else if vf.mood == HcMood::Indicative {
             if vf.person == Some(HcPerson::First) {
                 if vf.number == Some(HcNumber::Singular) {
                     s = if decompose {

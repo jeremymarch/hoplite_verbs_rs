@@ -3286,6 +3286,10 @@ impl HcVerbForms for HcGreekVerbForm {
                     {
                         new_stem.pop();
                         format!("{}{}", new_stem, "οῦσθαι")
+                    } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("αμαι")
+                    //δύναμαι
+                    {
+                        format!("{}{}", new_stem, "σθαι")
                     } else if self.tense == HcTense::Future
                         && self.voice != HcVoice::Passive
                         && self.verb.pps[1].ends_with('ῶ')
@@ -3482,7 +3486,8 @@ impl HcVerbForms for HcGreekVerbForm {
                                 || self.verb.pps[0].ends_with("άομαι")
                                 || self.verb.pps[0].ends_with("έομαι")
                                 || self.verb.pps[0].ends_with("όομαι")))
-                        || (self.tense == HcTense::Future
+                        || (self.mood != HcMood::Infinitive
+                            && self.tense == HcTense::Future
                             && self.voice != HcVoice::Passive
                             && (self.verb.pps[1].ends_with('ῶ')
                                 || (accented_form.starts_with("ἐρ")
