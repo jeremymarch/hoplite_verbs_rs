@@ -609,6 +609,7 @@ pub trait HcVerbForms {
     fn get_label(&self) -> String;
     fn add_augment(&self, stem: &str, decompose: bool) -> String;
     fn deaugment(&self, stem: &str, decompose: bool) -> String;
+    fn contract_consonants(&self, unaccented_form: &str) -> String;
     fn contract_verb(&self, unaccented_form: &str, ending: &str) -> String;
     fn is_deponent(&self, stem: &str) -> bool;
     fn separate_prefix(&self, stem: &str) -> String;
@@ -661,6 +662,19 @@ impl HcVerbForms for HcGreekVerbForm {
 
     fn get_label(&self) -> String {
         "".to_string()
+    }
+
+    fn contract_consonants(&self, unaccented_form: &str) -> String {
+        let mut form = unaccented_form.to_string();
+
+        if form.contains("γσθαι") {
+            form = form.replacen("γσθαι", "χθαι", 1);
+        } else if form.contains("κσθαι") {
+            form = form.replacen("κσθαι", "χθαι", 1);
+        } else if form.contains("χσθαι") {
+            form = form.replacen("χσθαι", "χθαι", 1);
+        }
+        form
     }
 
     fn contract_verb(&self, unaccented_form: &str, ending: &str) -> String {
@@ -2785,6 +2799,28 @@ impl HcVerbForms for HcGreekVerbForm {
             && !(self.verb.pps[0].ends_with("δα") && self.tense == HcTense::Perfect)
         {
             false
+        } else if self.mood == HcMood::Infinitive
+            && (self.person.is_some()
+                || self.number.is_some()
+                || self.gender.is_some()
+                || self.case.is_some())
+        {
+            false //infinitive must not have person, number, gender, or case
+        } else if self.mood == HcMood::Participle
+            && (self.person.is_some()
+                || self.number.is_none()
+                || self.gender.is_none()
+                || self.case.is_none())
+        {
+            false //ptc must not have a person, but must have gender, number, case
+        } else if self.mood != HcMood::Participle
+            && self.mood != HcMood::Infinitive
+            && (self.person.is_none()
+                || self.number.is_none()
+                || self.gender.is_some()
+                || self.case.is_some())
+        {
+            false //finite must have a person and number, but must not have a gender or case
         } else {
             true
         }
@@ -4755,6 +4791,23 @@ mod tests {
     // }
 
     #[test]
+    fn test_participles() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: None,
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Participle,
+            gender: Some(HcGender::Masculine),
+            case: Some(HcCase::Nominative),
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λῡ́ων");
+    }
+
+    #[test]
     fn test_infinitives() {
         //*consonant stem perfects
         //*contracted
@@ -4765,8 +4818,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Aorist,
             voice: HcVoice::Passive,
             mood: HcMood::Infinitive,
@@ -4777,8 +4830,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -4789,8 +4842,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4801,8 +4854,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Aorist,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -4813,8 +4866,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Aorist,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4825,8 +4878,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Perfect,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -4837,8 +4890,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4853,8 +4906,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4869,8 +4922,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4885,8 +4938,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4901,8 +4954,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4917,8 +4970,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4933,8 +4986,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4949,8 +5002,8 @@ mod tests {
         );
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4963,8 +5016,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4980,8 +5033,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Perfect,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -4994,8 +5047,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -5006,8 +5059,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Present,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -5020,8 +5073,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Aorist,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -5032,8 +5085,8 @@ mod tests {
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Aorist,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -5046,8 +5099,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Aorist,
             voice: HcVoice::Middle,
             mood: HcMood::Infinitive,
@@ -5060,8 +5113,8 @@ mod tests {
         let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
         let b = HcGreekVerbForm {
             verb: a.clone(),
-            person: Some(HcPerson::First),
-            number: Some(HcNumber::Singular),
+            person: None,
+            number: None,
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Infinitive,
@@ -5179,6 +5232,18 @@ mod tests {
             tense: HcTense::Present,
             voice: HcVoice::Active,
             mood: HcMood::Imperative,
+            gender: None,
+            case: None,
+        };
+        assert!(!illegal.is_legal_form());
+
+        let illegal = HcGreekVerbForm {
+            verb: luwverb.clone(),
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Infinitive,
             gender: None,
             case: None,
         };
