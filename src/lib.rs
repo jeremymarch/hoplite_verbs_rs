@@ -3034,7 +3034,7 @@ impl HcVerbForms for HcGreekVerbForm {
         //and optative outside of the present and aorist and future
         //except for oida in perfect tense
         #[allow(clippy::needless_bool)]
-        if self.number == Some(HcNumber::Dual) {
+        if self.number == Some(HcNumber::Dual) && self.person == Some(HcPerson::First) {
             false
         } else if self.mood == HcMood::Imperative && self.person == Some(HcPerson::First) {
             false
@@ -3147,6 +3147,10 @@ impl HcVerbForms for HcGreekVerbForm {
         //0 is form valid?
         if !self.is_legal_form() {
             return Err(HcFormError::IllegalForm);
+        }
+        //first person dual is eliminated in is_legal_form() above
+        if self.number == Some(HcNumber::Dual) && self.person != Some(HcPerson::First) {
+            return Err(HcFormError::NotImplemented);
         }
 
         let mut steps = Vec::new();
