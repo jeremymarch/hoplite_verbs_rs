@@ -10,6 +10,7 @@ use itertools::Itertools;
 use rand::prelude::SliceRandom;
 use rand::Rng;
 
+//mod latin;
 mod special_verbs;
 
 trait RReplacen {
@@ -596,23 +597,8 @@ pub trait HcVerbForms {
     fn get_endings(&self, stem: &str) -> Option<Vec<&str>>;
     fn get_participle_endings(&self, _stem: &str) -> Option<Vec<&str>>;
     fn get_infinitive_endings(&self, _stem: &str) -> Option<Vec<&str>>;
-    fn accent_verb(&self, form: &str) -> String;
-    fn accent_verb_contracted(
-        &self,
-        word: &str,
-        orig_syllables: Vec<SyllableAnalysis>,
-        ending: &str,
-    ) -> String;
-    fn accent_verb_persistent(&self, word: &str) -> String;
-    fn accent_syllable(&self, word: &str, syllable: u8, accent: u32) -> String;
-    fn accent_syllable_start(&self, word: &str, letter_index_from_end: u8, accent: u32) -> String;
     fn get_label(&self) -> String;
-    fn add_augment(&self, stem: &str, decompose: bool) -> String;
-    fn deaugment(&self, stem: &str, decompose: bool) -> String;
-    fn contract_consonants(&self, unaccented_form: &str) -> String;
-    fn contract_verb(&self, unaccented_form: &str, ending: &str) -> String;
     fn is_deponent(&self, stem: &str) -> bool;
-    fn separate_prefix(&self, stem: &str) -> String;
     fn change_params(&mut self, num: u8, parameters: &VerbParameters);
     fn random_form(
         &self,
@@ -620,7 +606,6 @@ pub trait HcVerbForms {
         highest_unit: Option<i16>,
         parameters: &VerbParameters,
     ) -> HcGreekVerbForm;
-    fn block_middle_passive(&self, new_form: &HcGreekVerbForm) -> bool;
     fn block_for_hq_unit(&self, unit: Option<i16>) -> bool;
 }
 
@@ -654,16 +639,7 @@ fn get_voice_label(
     }
 }
 
-impl HcVerbForms for HcGreekVerbForm {
-    /*
-    fn new() -> HcGreekVerbForm {
-
-    }*/
-
-    fn get_label(&self) -> String {
-        "".to_string()
-    }
-
+impl HcGreekVerbForm {
     fn contract_consonants(&self, unaccented_form: &str) -> String {
         let mut form = unaccented_form.to_string();
 
@@ -677,869 +653,203 @@ impl HcVerbForms for HcGreekVerbForm {
         form
     }
 
-    fn contract_verb(&self, unaccented_form: &str, ending: &str) -> String {
-        let mut form =
-            hgk_strip_diacritics(unaccented_form, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
-        let orig_syl = analyze_syllable_quantities(
-            &form,
+    fn separate_prefix(&self, stem: &str) -> String {
+        // let pre = vec![("ἀπο", vec!["ἀπο"], "")];
+        // for p in pre {
+        //     if stem.starts_with(p.0) {
+        //         return stem.replacen(p.0, format!("{} {}", p.1.join(" - "), p.2).as_str(), 1);
+        //     }
+        // }
+
+        if stem.starts_with("ἀπολ") {
+            return stem.replacen("ἀπολ", format!("ἀπο {} ολ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ἀπο") {
+            return stem.replacen("ἀπο", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ἀφῑ") {
+            return stem.replacen("ἀφῑ", format!("ἀπο {} ῑ̔", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ἀφει") {
+            return stem.replacen("ἀφει", format!("ἀπο {} εἱ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ἀφε") {
+            return stem.replacen("ἀφε", format!("ἀπο {} ἑ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ἀφη") {
+            return stem.replacen("ἀφη", format!("ἀπο {} ἡ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ἀπεκ") {
+            return stem.replacen("ἀπεκ", format!("ἀπο {} εκ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ἀνε") {
+            return stem.replacen("ἀνε", format!("ἀνα {} ε", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ἐκ") {
+            return stem.replacen("ἐκ", format!("ἐκ {} ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("προ") {
+            return stem.replacen("προ", format!("προ {} ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("συμ") {
+            return stem.replacen("συμ", format!("συν {} ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("συνῑ") {
+            return stem.replacen("συνῑ", format!("συν {} ῑ̔", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("συνη") && self.verb.pps[0].ends_with("ῑ́ημι") {
+            return stem.replacen("συνη", format!("συν {} ἡ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("συνει") && self.verb.pps[0].ends_with("δα") {
+            return stem.replacen("συνει", format!("συν {} εἰ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("συνει") {
+            return stem.replacen("συνει", format!("συν {} εἱ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("συν") {
+            return stem.replacen("συν", format!("συν {} ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("διο") {
+            // διοίσω
+            return stem.replacen("διο", format!("δια {} ο", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("δια") {
+            return stem.replacen("δια", format!("δια {} ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ὑπο") {
+            return stem.replacen("ὑπο", format!("ὑπο {} ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ὑπα") {
+            return stem.replacen(
+                "ὑπα",
+                format!("ὑπο {} α" /* FIX ME ἀ */, SEPARATOR).as_str(),
+                1,
+            );
+        } else if stem.starts_with("ἀνα") {
+            return stem.replacen("ἀνα", format!("ἀνα {} ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("παρα") {
+            return stem.replacen("παρα", format!("παρα {} ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ἐπιστ") {
+            //fix me
+            return stem.to_string();
+        } else if stem.starts_with("ἐπι") {
+            return stem.replacen("ἐπι", format!("ἐπι {} ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("ἀφι") {
+            return stem.replacen("ἀφι", format!("ἀπο {} ἱ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("καθι") {
+            return stem.replacen("καθι", format!("κατα {} ἱ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("καθε") {
+            return stem.replacen("καθε", format!("κατα {} ἑ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("κατα") {
+            return stem.replacen("κατα", format!("κατα {} ", SEPARATOR).as_str(), 1);
+        } else if stem.starts_with("μετανα") {
+            return stem.replacen(
+                "μετανα",
+                format!("μετα {} ανα {} ", SEPARATOR, SEPARATOR).as_str(),
+                1,
+            );
+        } else if stem.starts_with("μετανι") {
+            return stem.replacen(
+                "μετανι",
+                format!("μετα {} ανα {} ἱ", SEPARATOR, SEPARATOR).as_str(),
+                1,
+            );
+        } else if stem.starts_with("μετανε") {
+            return stem.replacen(
+                "μετανε",
+                format!("μετα {} ανα {} ἑ", SEPARATOR, SEPARATOR).as_str(),
+                1,
+            );
+        } else if stem.starts_with("ἐπανα") {
+            return stem.replacen(
+                "ἐπανα",
+                format!("ἐπι {} ανα {} ", SEPARATOR, SEPARATOR).as_str(),
+                1,
+            );
+        } else if stem.starts_with("ἐπανι") {
+            return stem.replacen(
+                "ἐπανι",
+                format!("ἐπι {} ανα {} ἱ", SEPARATOR, SEPARATOR).as_str(),
+                1,
+            );
+        } else if stem.starts_with("ἐπανε") {
+            return stem.replacen(
+                "ἐπανε",
+                format!("ἐπι {} ανα {} ἑ", SEPARATOR, SEPARATOR).as_str(),
+                1,
+            );
+        } else if stem.starts_with("μετα") {
+            return stem.replacen("μετα", format!("μετα {} ", SEPARATOR).as_str(), 1);
+        }
+        stem.to_string()
+    }
+
+    fn accent_verb_persistent(&self, word: &str) -> String {
+        let mut syllables = analyze_syllable_quantities(
+            word,
             self.person,
             self.number,
             self.tense,
             self.mood,
             self.verb.properties,
         );
+        syllables.reverse();
 
-        if form.contains("εει") {
-            // h&q p236
-            form = form.replacen("εει", "ει", 1);
-        } else if form.contains("εε") {
-            form = form.replacen("εε", "ει", 1);
-        } else if form.contains("εη") {
-            form = form.replacen("εη", "η", 1);
-        } else if form.contains("εῃ") {
-            form = form.replacen("εῃ", "ῃ", 1);
-        } else if form.contains("εοι") {
-            form = form.replacen("εοι", "οι", 1);
-        } else if form.contains("εου") {
-            form = form.replacen("εου", "ου", 1);
-        } else if form.contains("εο") {
-            form = form.replacen("εο", "ου", 1);
-        } else if form.contains("εω") {
-            form = form.replacen("εω", "ω", 1);
-        } else if form.contains("αει") {
-            // h&q p232
-            form = form.replacen("αει", "ᾱͅ", 1);
-        } else if form.contains("αε") {
-            form = form.replacen("αε", "ᾱ", 1);
-        } else if form.contains("αη") {
-            form = form.replacen("αη", "ᾱ", 1);
-        } else if form.contains("αῃ") {
-            form = form.replacen("αῃ", "ᾱͅ", 1);
-        } else if form.contains("αοι") {
-            form = form.replacen("αοι", "ῳ", 1);
-        } else if form.contains("αου") {
-            form = form.replacen("αου", "ω", 1);
-        } else if form.contains("αο") {
-            form = form.replacen("αο", "ω", 1);
-        } else if form.contains("αω") {
-            form = form.replacen("αω", "ω", 1);
-        } else if form.contains("οει") {
-            // h&q p264
-            form = form.replacen("οει", "οι", 1);
-        } else if form.contains("οε") {
-            form = form.replacen("οε", "ου", 1);
-        } else if form.contains("οη") {
-            form = form.replacen("οη", "ω", 1);
-        } else if form.contains("οῃ") {
-            form = form.replacen("οῃ", "οι", 1);
-        } else if form.contains("οοι") {
-            form = form.replacen("οοι", "οι", 1);
-        } else if form.contains("οου") {
-            form = form.replacen("οου", "ου", 1);
-        } else if form.contains("οο") {
-            form = form.replacen("οο", "ου", 1);
-        } else if form.contains("οω") {
-            form = form.replacen("οω", "ω", 1);
-        }
-
-        self.accent_verb_contracted(&form, orig_syl, ending)
-
-        //unaccented_form.to_string()
-    }
-
-    fn strip_ending(&self, pp_num: usize, form: String) -> Result<String, &str> {
-        //println!("form: {}", form);
-        match pp_num {
-            1..=2 => {
-                if form.ends_with('ω') {
-                    if self.tense == HcTense::Future
-                        && self.voice != HcVoice::Passive
-                        && (self.verb.pps[1].ends_with('ῶ')
-                            || (form.starts_with("ἐρ") && self.verb.pps[1].starts_with("ἐρῶ")))
-                    {
-                        if self.verb.pps[1].ends_with("ἐλῶ") {
-                            // alpha contracted future: TODO add option to verb, so this is more general
-                            if let Some(f) = form.strip_suffix('ω') {
-                                return Ok(format!("{}α", f));
-                            }
-                        } else if let Some(f) = form.strip_suffix('ω') {
-                            // epsilon contracted future
-                            return Ok(format!("{}ε", f));
-                        }
-                    } else if let Some(f) = form.strip_suffix('ω') {
-                        return Ok(f.to_string());
+        const ULTIMA: usize = 0;
+        const PENULT: usize = 1;
+        const ANTEPENULT: usize = 2;
+        let accent;
+        let accent_position = match self.tense {
+            HcTense::Present | HcTense::Future => match self.voice {
+                HcVoice::Active => {
+                    if syllables.len() > 1 {
+                        PENULT
+                    } else {
+                        ULTIMA
                     }
-                } else if form.ends_with("ουμαι") && self.verb.pps[1].ends_with("οῦμαι")
-                {
-                    // contracted future
-                    return Ok(form.replacen("ουμαι", "ε", 1));
-                } else if let Some(f) = form.strip_suffix("ομαι") {
-                    return Ok(f.to_string());
-                } else if let Some(f) = form.strip_suffix("μαι") {
-                    return Ok(f.to_string());
-                } else if let Some(f) = form.strip_suffix("μι") {
-                    return Ok(f.to_string());
-                } else if let Some(f) = form.strip_suffix("τι(ν)") {
-                    return Ok(f.to_string());
-                } else if let Some(f) = form.strip_suffix("ται") {
-                    return Ok(f.to_string());
-                } else if form.ends_with("οἰδα") || form.ends_with("οιδα") {
-                    return Ok("οἰδ".to_string());
-                } else if form.ends_with("δει") {
-                    return Ok("δε".to_string());
-                } else if form.ends_with("δεησει") {
-                    return Ok("δεησ".to_string());
-                } else if form.ends_with("χρη") {
-                    return Ok("χρ".to_string());
+                }
+                _ => {
+                    if syllables.len() > 2 {
+                        ANTEPENULT
+                    } else {
+                        PENULT
+                    }
+                }
+            },
+            HcTense::Aorist => match self.voice {
+                HcVoice::Active => {
+                    if syllables.len() > 1 {
+                        PENULT
+                    } else {
+                        ULTIMA
+                    }
+                }
+                HcVoice::Middle => {
+                    if syllables.len() > 2 {
+                        ANTEPENULT
+                    } else {
+                        PENULT
+                    }
+                }
+                HcVoice::Passive => {
+                    if syllables.len() > 1 {
+                        PENULT
+                    } else {
+                        ULTIMA
+                    }
+                }
+            },
+            HcTense::Perfect => {
+                if syllables.len() > 1 {
+                    PENULT
+                } else {
+                    ULTIMA
                 }
             }
-            3 => {
-                if let Some(f) = form.strip_suffix("αμην") {
-                    return Ok(f.to_string());
-                } else if let Some(f) = form.strip_suffix('α') {
-                    return Ok(f.to_string());
-                } else if let Some(f) = form.strip_suffix("ον") {
-                    return Ok(f.to_string());
-                } else if let Some(f) = form.strip_suffix("ομην") {
-                    return Ok(f.to_string());
-                } else if let Some(f) = form.strip_suffix('ν') {
-                    return Ok(f.to_string());
-                } else if let Some(f) = form.strip_suffix("ε(ν)") {
-                    return Ok(f.to_string());
-                }
-            }
-            4 => {
-                if let Some(f) = form.strip_suffix('α') {
-                    return Ok(f.to_string());
-                }
-            }
-            5 => {
-                if let Some(f) = form.strip_suffix("μαι") {
-                    return Ok(f.to_string());
-                }
-            }
-            6 => {
-                if let Some(f) = form.strip_suffix("ην") {
-                    return Ok(f.to_string());
-                }
-            }
-            _ => {
-                return Err("error stripping ending 1");
-            }
-        }
-        Err("error stripping ending 2")
-    }
+            _ => return String::new(),
+        };
 
-    fn is_deponent(&self, stem: &str) -> bool {
-        #[allow(clippy::needless_bool)]
-        if (self.tense == HcTense::Present
-            || self.tense == HcTense::Imperfect
-            || self.tense == HcTense::Future)
-            && stem.ends_with("μαι")
+        if syllables.len() > 2
+            && !syllables.first().unwrap().is_long
+            && syllables[1].is_long
+            && accent_position == PENULT
         {
-            true
-        } else if self.tense == HcTense::Aorist
-            && self.voice != HcVoice::Passive
-            && stem.ends_with("άμην")
+            accent = HGK_CIRCUMFLEX;
+        } else if syllables.len() > 2 && syllables.first().unwrap().is_long {
+            accent = HGK_ACUTE;
+        } else if syllables.len() == 2
+            && !syllables.first().unwrap().is_long
+            && syllables[1].is_long
+            && accent_position == PENULT
         {
-            true
+            accent = HGK_CIRCUMFLEX;
         } else {
-            false
-        }
-    }
-
-    fn add_ending(&self, stem: &str, ending: &str, decompose: bool) -> Result<String, &str> {
-        let mut local_stem = stem.to_string();
-        let mut local_ending = ending.to_string();
-
-        //for contracted verbs remove nu movable for imperfect 3rd sing. active
-        if self.tense == HcTense::Imperfect
-            && (self.verb.pps[0].ends_with("άω")
-                || self.verb.pps[0].ends_with("έω")
-                || self.verb.pps[0].ends_with("όω"))
-            && self.person == Some(HcPerson::Third)
-            && self.number == Some(HcNumber::Singular)
-            && self.voice == HcVoice::Active
-        {
-            local_ending = local_ending.replacen("(ν)", "", 1);
+            accent = HGK_ACUTE;
         }
 
-        //add macron to ἀφικνέομαι perfect and pluperfect
-        if self.verb.pps[0].ends_with("ἀφικνέομαι")
-            && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-            && self.mood == HcMood::Indicative
-            && self.voice != HcVoice::Active
-        {
-            local_stem = local_stem.replacen('ι', "ῑ", 1);
-        }
-
-        if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") {
-            if self.tense == HcTense::Present || self.tense == HcTense::Imperfect {
-                if self.number == Some(HcNumber::Plural)
-                    || self.mood != HcMood::Indicative
-                    || self.voice != HcVoice::Active
-                {
-                    if self.verb.pps[0].ends_with("ωμι") {
-                        local_stem.pop();
-                        local_stem.push('ο');
-                    } else if self.verb.pps[0].ends_with("στημι") {
-                        local_stem.pop();
-                        local_stem.push('α');
-                    } else if self.verb.pps[0].ends_with("τίθημι")
-                        || self.verb.pps[0].ends_with("ῑ̔́ημι")
-                        || self.verb.pps[0].ends_with("ῑ́ημι")
-                    {
-                        local_stem.pop();
-                        local_stem.push('ε');
-
-                        if (self.verb.pps[0].ends_with("ῑ̔́ημι")
-                            || self.verb.pps[0].ends_with("ῑ́ημι"))
-                            && self.tense == HcTense::Present
-                            && self.person == Some(HcPerson::Third)
-                            && self.number == Some(HcNumber::Plural)
-                            && self.voice == HcVoice::Active
-                            && self.mood == HcMood::Indicative
-                        {
-                            if !decompose {
-                                local_stem.pop();
-                            }
-                            local_ending = if decompose {
-                                String::from("ᾱσι(ν)")
-                            } else {
-                                String::from("ᾶσι(ν)")
-                            };
-                        }
-                    } else if self.verb.pps[0].ends_with("ῡμι") {
-                        local_stem = local_stem.replacen('ῡ', "υ", 1);
-                    }
-                }
-            }
-
-            if self.tense == HcTense::Present {
-                if self.voice == HcVoice::Active {
-                    if self.mood == HcMood::Subjunctive {
-                        if !decompose {
-                            if self.verb.pps[0].ends_with("ωμι") {
-                                // didwmi / gignwskw subjunctive contraction
-                                if local_ending.contains('ῇ') {
-                                    local_ending = local_ending.replacen('ῇ', "ῷ", 1);
-                                } else if local_ending.contains('ῆ') {
-                                    local_ending = local_ending.replacen('ῆ', "ῶ", 1);
-                                }
-                            }
-
-                            if !self.verb.pps[0].ends_with("ῡμι") {
-                                local_stem.pop();
-                            }
-                        } else {
-                            //isthmi subjunctive stem
-                            if self.verb.pps[0].ends_with("στημι") {
-                                local_stem.pop();
-                                local_stem.push('ε');
-                            }
-                        }
-                    } else if self.mood == HcMood::Imperative {
-                        if decompose {
-                            if !(self.person == Some(HcPerson::Second)
-                                && self.number == Some(HcNumber::Singular))
-                            {
-                                local_ending.remove(0);
-                            } else if self.verb.pps[0].ends_with("ῡμι") {
-                                local_stem = local_stem.replacen('υ', "ῡ", 1); //fix me
-                                local_ending = String::from(""); // fix me
-                            }
-                        } else if self.person == Some(HcPerson::Second)
-                            && self.number == Some(HcNumber::Singular)
-                        {
-                            if self.verb.pps[0].ends_with("ωμι") {
-                                local_ending = String::from("υ");
-                            } else if self.verb.pps[0].ends_with("στημι") {
-                                local_stem.pop();
-                                local_ending = String::from("η");
-                            } else if self.verb.pps[0].ends_with("ῡμι") {
-                                local_stem = local_stem.replacen('υ', "ῡ", 1);
-                                local_ending = String::from("");
-                            } else {
-                                local_ending = String::from("ι");
-                            }
-                        } else {
-                            local_ending.remove(0);
-                        }
-                    } else if self.verb.pps[0].ends_with("στημι")
-                        && self.person == Some(HcPerson::Third)
-                        && self.number == Some(HcNumber::Plural)
-                        && self.mood == HcMood::Indicative
-                        && !decompose
-                    {
-                        local_stem.pop();
-                        local_ending = local_ending.replacen("ᾱ", "ᾶ", 1);
-                    }
-                } else {
-                    // middle/passive
-                    if self.mood == HcMood::Subjunctive {
-                        if !decompose {
-                            if !self.verb.pps[0].ends_with("ῡμι") {
-                                local_stem.pop();
-                            }
-                            if self.verb.pps[0].ends_with("ωμι") {
-                                // didwmi / gignwskw subjunctive contraction
-                                if local_ending.contains('ῃ') {
-                                    local_ending = local_ending.replacen('ῃ', "ῷ", 1);
-                                } else if local_ending.contains('η') {
-                                    local_ending = local_ending.replacen('η', "ῶ", 1);
-                                }
-                            }
-
-                            if local_ending != "ωμεθα"
-                                && !self.verb.pps[0].ends_with("ῡμι")
-                                && !self.verb.pps[0].ends_with("δύναμαι")
-                                && !self.verb.pps[0].ends_with("ἐπίσταμαι")
-                            {
-                                local_ending =
-                                    self.accent_syllable_start(&local_ending, 0, HGK_CIRCUMFLEX);
-                            }
-                        } else {
-                            //isthmi subjunctive stem
-                            if self.verb.pps[0].ends_with("δύναμαι")
-                                || self.verb.pps[0].ends_with("ἐπίσταμαι")
-                            {
-                                local_stem.pop();
-                            } else if self.verb.pps[0].ends_with("στημι")
-                                || self.verb.pps[0].ends_with("αμαι")
-                            {
-                                local_stem.pop();
-                                local_stem.push('ε');
-                            }
-                        }
-                    } else if self.mood == HcMood::Optative {
-                        if !decompose {
-                            if self.verb.pps[0].ends_with("δύναμαι")
-                                || self.verb.pps[0].ends_with("ἐπίσταμαι")
-                            {
-                                local_ending = hgk_strip_diacritics(
-                                    &local_ending,
-                                    HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE,
-                                );
-                            }
-                            if local_ending.starts_with('ο') && !self.verb.pps[0].ends_with("ῡμι")
-                            {
-                                //alt endings for tithhmi and ihmi
-                                local_stem.pop();
-                            }
-                        }
-                    }
-                }
-            } else if self.tense == HcTense::Imperfect {
-                if self.verb.pps[0].ends_with("ωμι") {
-                    if self.number == Some(HcNumber::Singular) {
-                        if decompose {
-                            local_stem = local_stem.replacen('ω', "ο", 1); //use short stem when using thematic endings
-                            if self.person == Some(HcPerson::First) && self.voice == HcVoice::Active
-                            {
-                                local_ending = local_ending.replacen('ν', "ον", 1);
-                            } else {
-                                local_ending = local_ending.replacen('ς', "ες", 1);
-                                if self.person == Some(HcPerson::Third)
-                                    && self.voice == HcVoice::Active
-                                {
-                                    local_ending = String::from("ε");
-                                }
-                            }
-                        } else {
-                            local_stem = local_stem.replacen('ω', "ου", 1);
-                        }
-                    }
-                } else if self.verb.pps[0].ends_with("τίθημι")
-                    || self.verb.pps[0].ends_with("ῑ̔́ημι")
-                    || self.verb.pps[0].ends_with("ῑ́ημι")
-                {
-                    if (self.person == Some(HcPerson::Second)
-                        || self.person == Some(HcPerson::Third))
-                        && self.number == Some(HcNumber::Singular)
-                    {
-                        if decompose {
-                            local_stem = local_stem.replacen('η', "ε", 1); //use short stem when using thematic endings
-                            local_ending = local_ending.replacen('ς', "ες", 1);
-                            if self.person == Some(HcPerson::Third) && self.voice == HcVoice::Active
-                            {
-                                local_ending = String::from("ε");
-                            }
-                        } else {
-                            local_stem = local_stem.replacen('η', "ει", 1);
-                        }
-                    }
-                }
-                if (self.verb.pps[0] == "δύναμαι" || self.verb.pps[0] == "ἐπίσταμαι")
-                    && self.tense == HcTense::Imperfect
-                    && self.person == Some(HcPerson::Second)
-                    && self.number == Some(HcNumber::Singular)
-                {
-                    if decompose {
-                        local_ending = String::from("ο"); //fix me
-                    } else {
-                        local_stem.pop();
-                        local_ending = String::from("ω");
-                    }
-                }
-            } else if self.tense == HcTense::Aorist {
-                //mixed aorist
-                if self.verb.pps[2].ends_with("κα")
-                    && (self.number == Some(HcNumber::Plural)
-                        || self.mood != HcMood::Indicative
-                        || self.voice != HcVoice::Active)
-                {
-                    if self.verb.pps[0].ends_with("δίδωμι") {
-                        local_stem = local_stem.replacen("ωκ", "ο", 1);
-                    } else if self.verb.pps[0].ends_with("τίθημι")
-                        || self.verb.pps[0].ends_with("ῑ̔́ημι")
-                        || self.verb.pps[0].ends_with("ῑ́ημι")
-                    {
-                        if self.verb.pps[0].ends_with("ῑ́ημι")
-                            && !decompose
-                            && (self.number == Some(HcNumber::Plural)
-                                || self.voice != HcVoice::Active)
-                        {
-                            local_stem = local_stem.replacen("ηκ", "ει", 1);
-                        } else if self.verb.pps[0].ends_with("ῑ̔́ημι") && !decompose {
-                            local_stem = local_stem.replacen("ἡκ", "εἱ", 1);
-                        } else {
-                            local_stem = local_stem.replacen("ηκ", "ε", 1);
-                        }
-                    }
-
-                    if self.mood == HcMood::Subjunctive
-                        && !decompose
-                        && self.voice != HcVoice::Passive
-                    {
-                        local_stem.pop();
-                    }
-
-                    if self.voice == HcVoice::Active {
-                        if self.mood != HcMood::Indicative {
-                            if !decompose {
-                                if self.mood == HcMood::Subjunctive {
-                                    if self.verb.pps[0].ends_with("ωμι") {
-                                        // didwmi / gignwskw subjunctive contraction
-                                        if local_ending.contains('ῃ') {
-                                            local_ending = local_ending.replacen('ῃ', "ῷ", 1);
-                                        } else if local_ending.contains('η') {
-                                            local_ending = local_ending.replacen('η', "ῶ", 1);
-                                        }
-                                    } else if self.verb.pps[0].ends_with("ῑ̔́ημι") {
-                                        let (stem, ending) = match (self.person, self.number) {
-                                            (Some(HcPerson::First), Some(HcNumber::Singular)) => {
-                                                ("-", "ὡ")
-                                            }
-                                            (Some(HcPerson::Second), Some(HcNumber::Singular)) => {
-                                                ("-", "ᾑς")
-                                            }
-                                            (Some(HcPerson::Third), Some(HcNumber::Singular)) => {
-                                                ("-", "ᾑ")
-                                            }
-                                            (Some(HcPerson::First), Some(HcNumber::Plural)) => {
-                                                ("-", "ὡμεν")
-                                            }
-                                            (Some(HcPerson::Second), Some(HcNumber::Plural)) => {
-                                                ("-", "ἡτε")
-                                            }
-                                            (Some(HcPerson::Third), Some(HcNumber::Plural)) => {
-                                                ("-", "ὡσι(ν)")
-                                            }
-                                            _ => ("", ""),
-                                        };
-                                        local_stem = stem.to_string();
-                                        local_ending = ending.to_string();
-                                    }
-                                    local_ending = self.accent_syllable_start(
-                                        &local_ending,
-                                        0,
-                                        HGK_CIRCUMFLEX,
-                                    );
-                                } else if self.mood == HcMood::Imperative {
-                                    // ana/thes
-                                    if self.verb.pps[0].ends_with("ἀνατίθημι")
-                                        && self.person == Some(HcPerson::Second)
-                                        && self.number == Some(HcNumber::Singular)
-                                    {
-                                        local_stem =
-                                            self.accent_syllable(&local_stem, 2, HGK_ACUTE);
-                                    }
-                                    // apo/dos
-                                    else if self.verb.pps[0].ends_with("ἀποδίδωμι")
-                                        && self.person == Some(HcPerson::Second)
-                                        && self.number == Some(HcNumber::Singular)
-                                    {
-                                        local_stem =
-                                            self.accent_syllable(&local_stem, 2, HGK_ACUTE);
-                                    } else if self.verb.pps[0].ends_with("μεταδίδωμι")
-                                        && self.person == Some(HcPerson::Second)
-                                        && self.number == Some(HcNumber::Singular)
-                                    {
-                                        local_stem =
-                                            self.accent_syllable(&local_stem, 2, HGK_ACUTE);
-                                    } else if self.verb.pps[0].ends_with("παραδίδωμι")
-                                        && self.person == Some(HcPerson::Second)
-                                        && self.number == Some(HcNumber::Singular)
-                                    {
-                                        local_stem =
-                                            self.accent_syllable(&local_stem, 2, HGK_ACUTE);
-                                    }
-                                }
-                            }
-                            if self.mood == HcMood::Optative {
-                                local_ending.remove(0);
-                                if self.verb.pps[0].ends_with("ῑ̔́ημι") && !decompose {
-                                    local_ending.remove(0);
-                                    local_stem = "-εἱ".to_string();
-                                }
-                            }
-                        }
-                    } else if self.voice == HcVoice::Middle {
-                        if self.mood == HcMood::Indicative {
-                            if (self.verb.pps[0].ends_with("ῑ̔́ημι")
-                                || self.verb.pps[0].ends_with("ῑ́ημι"))
-                                && self.person == Some(HcPerson::Second)
-                                && self.number == Some(HcNumber::Singular)
-                            {
-                                local_ending = String::from("σο");
-                            } else {
-                                local_ending.remove(0);
-                                if self.person == Some(HcPerson::Second)
-                                    && self.number == Some(HcNumber::Singular)
-                                {
-                                    if decompose {
-                                        local_ending = String::from("ο");
-                                    } else if local_stem.ends_with('ε') {
-                                        local_stem = local_stem.rreplacen("ε", "ο", 1);
-                                    }
-                                }
-                            }
-                        } else if self.mood == HcMood::Subjunctive {
-                            if self.verb.pps[0].ends_with("ωμι") && !decompose {
-                                // didwmi / gignwskw subjunctive contraction
-                                if local_ending.contains('ῃ') {
-                                    local_ending = local_ending.replacen('ῃ', "ῷ", 1);
-                                } else if local_ending.contains('η') {
-                                    local_ending = local_ending.replacen('η', "ῶ", 1);
-                                }
-                            } else if self.verb.pps[0].ends_with("ῑ̔́ημι") && !decompose {
-                                let (stem, ending) = match (self.person, self.number) {
-                                    (Some(HcPerson::First), Some(HcNumber::Singular)) => {
-                                        ("-", "ὡμαι")
-                                    }
-                                    (Some(HcPerson::Second), Some(HcNumber::Singular)) => {
-                                        ("-", "ᾑ")
-                                    }
-                                    (Some(HcPerson::Third), Some(HcNumber::Singular)) => {
-                                        ("-", "ἡται")
-                                    }
-                                    (Some(HcPerson::First), Some(HcNumber::Plural)) => {
-                                        ("-", "ὡμεθα")
-                                    }
-                                    (Some(HcPerson::Second), Some(HcNumber::Plural)) => {
-                                        ("-", "ἡσθε")
-                                    }
-                                    (Some(HcPerson::Third), Some(HcNumber::Plural)) => {
-                                        ("-", "ὡνται")
-                                    }
-                                    _ => ("", ""),
-                                };
-
-                                local_stem = stem.to_string();
-                                local_ending = ending.to_string();
-                            }
-                            if !decompose && local_ending != "ωμεθα" && local_ending != "ὡμεθα"
-                            {
-                                local_ending =
-                                    self.accent_syllable_start(&local_ending, 0, HGK_CIRCUMFLEX);
-                            }
-                        } else if self.mood == HcMood::Optative {
-                            if !decompose {
-                                if self.verb.pps[0].ends_with("ῑ̔́ημι") {
-                                    if local_ending.starts_with('ο') {
-                                        local_ending.remove(0);
-                                        local_ending.remove(0);
-                                        local_stem = "-οἱ".to_string();
-                                    } else {
-                                        local_ending.remove(0);
-                                        local_stem = "-εἱ".to_string();
-                                    }
-                                } else if local_ending.starts_with('ο') {
-                                    local_stem.pop();
-                                }
-                            }
-                        } else if self.mood == HcMood::Imperative {
-                            if self.person == Some(HcPerson::Second)
-                                && self.number == Some(HcNumber::Singular)
-                            {
-                                if decompose {
-                                    if !self.verb.pps[0].ends_with("ῑ́ημι")
-                                        && !self.verb.pps[0].ends_with("ῑ̔́ημι")
-                                    {
-                                        local_ending.remove(0);
-                                    } else {
-                                        local_ending = local_ending.replacen("σο", "ου", 1);
-                                    }
-                                } else {
-                                    local_stem.pop();
-
-                                    if local_stem.starts_with("προ")
-                                        || self.verb.pps[0].ends_with("ῑ́ημι")
-                                    {
-                                        local_ending = local_ending.replacen("σο", "οῦ", 1);
-                                    } else if self.verb.pps[0].ends_with("ῑ̔́ημι") {
-                                        local_ending = local_ending.replacen("σο", "οὗ", 1);
-                                    } else {
-                                        local_ending = local_ending.replacen("σο", "ου", 1);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } else if self.tense == HcTense::Perfect {
-                if self.number == Some(HcNumber::Plural) && local_stem.ends_with("στηκ") {
-                    local_stem = local_stem.replacen("ηκ", "α", 1);
-                    if self.person == Some(HcPerson::Third) {
-                        if decompose {
-                        } else {
-                            local_stem.pop();
-                            local_ending = local_ending.replacen("ᾱ", "ᾶ", 1);
-                        }
-                    } else {
-                        local_ending.remove(0);
-                    }
-                }
-            } else if self.tense == HcTense::Pluperfect {
-                if self.number == Some(HcNumber::Plural) && local_stem.ends_with("στηκ") {
-                    local_stem = local_stem.replacen("ηκ", "α", 1);
-                    local_ending.remove(0);
-                }
-            }
-        }
-
-        // root aorist
-        if (self.tense == HcTense::Aorist && self.voice == HcVoice::Active)
-            && local_stem.ends_with("στη")
-            || local_stem.ends_with("φθη")
-            || local_stem.ends_with("βη")
-            || local_stem.ends_with("γνω")
-        {
-            if self.mood == HcMood::Subjunctive {
-                if decompose {
-                    if local_stem.ends_with("γνω") {
-                        local_stem.pop();
-                        local_stem.push('ο');
-                    } else {
-                        local_stem.pop();
-                        local_stem.push('ε');
-                    }
-                } else {
-                    if local_stem.ends_with("γνω") {
-                        // didwmi / gignwskw subjunctive contraction
-                        if local_ending.contains('ῇ') {
-                            local_ending = local_ending.replacen('ῇ', "ῷ", 1);
-                        } else if local_ending.contains('ῆ') {
-                            local_ending = local_ending.replacen('ῆ', "ῶ", 1);
-                        }
-                    }
-                    local_stem.pop();
-                }
-            } else if self.mood == HcMood::Optative {
-                if local_stem.ends_with("γνω") {
-                    local_stem.pop();
-                    local_stem.push('ο');
-                } else {
-                    local_stem.pop();
-                    local_stem.push('α');
-                }
-            } else if self.mood == HcMood::Imperative {
-                if self.person == Some(HcPerson::Second)
-                    && self.number == Some(HcNumber::Singular)
-                    && local_stem.ends_with("φθη")
-                {
-                    local_ending = local_ending.replacen('θ', "τ", 1);
-                } else if self.person == Some(HcPerson::Third)
-                    && self.number == Some(HcNumber::Plural)
-                {
-                    if local_stem.ends_with("γνω") {
-                        local_stem.pop();
-                        local_stem.push('ο');
-                    } else {
-                        local_stem.pop();
-                        local_stem.push('α');
-                    }
-                }
-            }
-        }
-
-        // consonant stem perfects and pluperfects
-        if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
-            && local_stem == "πεπεμ"
-            || local_stem == "ἐπεπεμ"
-            || local_stem == format!("ε {} πεπεμ", SEPARATOR)
-        {
-            if local_ending.starts_with("ντ") {
-                return Ok(String::from(BLANK));
-            } else if decompose {
-                local_stem = format!("{}π", local_stem);
-            } else if local_ending.starts_with("σθ") {
-                local_ending.remove(0);
-                local_ending = format!("φ{}", local_ending);
-            } else if local_ending.starts_with('σ') {
-                local_ending.remove(0);
-                local_ending = format!("ψ{}", local_ending);
-            } else if local_ending.starts_with('τ') {
-                local_ending = format!("π{}", local_ending);
-            }
-        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
-            && (local_stem.ends_with('μ') || self.verb.pps[4].ends_with("φασμαι"))
-        {
-            if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU
-                && self.person == Some(HcPerson::Second)
-                && self.number == Some(HcNumber::Singular)
-            {
-                return Ok(String::from(BLANK));
-            }
-
-            if local_ending.starts_with("ντ") {
-                return Ok(String::from(BLANK));
-            } else if decompose {
-                local_stem.pop();
-                if self.verb.properties & CONSONANT_STEM_PERFECT_PI == CONSONANT_STEM_PERFECT_PI {
-                    local_stem = format!("{}π", local_stem);
-                } else if self.verb.properties & CONSONANT_STEM_PERFECT_BETA
-                    == CONSONANT_STEM_PERFECT_BETA
-                {
-                    local_stem = format!("{}β", local_stem);
-                } else if self.verb.properties & CONSONANT_STEM_PERFECT_NU
-                    == CONSONANT_STEM_PERFECT_NU
-                {
-                    local_stem = format!("{}ν", local_stem);
-                } else {
-                    local_stem = format!("{}φ", local_stem);
-                }
-            } else if local_ending.starts_with("σθ") {
-                local_ending.remove(0);
-                local_stem.pop();
-                if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU {
-                    local_ending = format!("ν{}", local_ending);
-                } else {
-                    local_ending = format!("φ{}", local_ending);
-                }
-            } else if local_ending.starts_with('σ') {
-                local_stem.pop();
-                local_ending.remove(0);
-                local_ending = format!("ψ{}", local_ending);
-            } else if local_ending.starts_with('τ') {
-                local_stem.pop();
-                if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU {
-                    local_ending = format!("ν{}", local_ending);
-                } else {
-                    local_ending = format!("π{}", local_ending);
-                }
-            }
-        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
-            && local_stem.ends_with('γ')
-        {
-            if local_ending.starts_with("ντ") {
-                return Ok(String::from(BLANK));
-            } else if decompose {
-                local_stem.pop();
-                if self.verb.properties & CONSONANT_STEM_PERFECT_GAMMA
-                    == CONSONANT_STEM_PERFECT_GAMMA
-                {
-                    local_stem = format!("{}γ", local_stem);
-                } else if self.verb.properties & CONSONANT_STEM_PERFECT_CHI
-                    == CONSONANT_STEM_PERFECT_CHI
-                {
-                    local_stem = format!("{}χ", local_stem);
-                } else {
-                    local_stem = format!("{}κ", local_stem);
-                }
-            } else if local_ending.starts_with("σθ") {
-                local_ending.remove(0);
-                local_stem.pop();
-                local_ending = format!("χ{}", local_ending);
-            } else if local_ending.starts_with('σ') {
-                local_stem.pop();
-                local_ending.remove(0);
-                local_ending = format!("ξ{}", local_ending);
-            } else if local_ending.starts_with('τ') {
-                local_stem.pop();
-                local_ending = format!("κ{}", local_ending);
-            }
-        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
-            && local_stem.ends_with('σ')
-        {
-            if local_ending.starts_with("ντ") {
-                return Ok(String::from(BLANK));
-            } else if local_ending.starts_with('σ') && !decompose {
-                local_ending.remove(0);
-            }
-        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
-            && local_stem.ends_with('λ')
-        {
-            if local_ending.starts_with("ντ") {
-                return Ok(String::from(BLANK));
-            } else if local_ending.starts_with('σ')
-                && !decompose
-                && self.number == Some(HcNumber::Plural)
-            {
-                local_ending.remove(0);
-            }
-        }
-
-        //future passive
-        let future_passive_suffix =
-            if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
-                if decompose {
-                    format!("ησ {} ", SEPARATOR)
-                } else {
-                    String::from("ησ")
-                }
-            } else {
-                String::from("")
-            };
-
-        if self.verb.pps[0].ends_with("ἔχω")
-            && self.person == Some(HcPerson::Second)
-            && self.number == Some(HcNumber::Singular)
-            && self.tense == HcTense::Aorist
-            && self.mood == HcMood::Imperative
-            && self.voice == HcVoice::Active
-        {
-            local_ending = String::from("ες");
-        }
-
-        if decompose {
-            Ok(format!(
-                "{} {} {}{}",
-                local_stem, SEPARATOR, future_passive_suffix, local_ending
-            ))
-        } else {
-            //come take see say find: elthe/ labe/ eide/ eipe/ eyre/
-            if local_stem == "ἐλθ" && local_ending == "ε" {
-                local_ending = "έ".to_string();
-            } else if local_stem == "λαβ" && local_ending == "ε" {
-                local_ending = "έ".to_string();
-            } else if local_stem == "ἰδ" && local_ending == "ε" {
-                local_ending = "έ".to_string();
-            } else if local_stem == "εἰπ" && local_ending == "ε" {
-                local_ending = "έ".to_string();
-            } else if local_stem == "εὑρ" && local_ending == "ε" {
-                local_ending = "έ".to_string();
-            }
-            Ok(format!(
-                "{}{}{}",
-                local_stem, future_passive_suffix, local_ending
-            ))
-        }
+        let letter_index = syllables[accent_position].index;
+        self.accent_syllable(word, letter_index, accent)
     }
 
     fn add_augment(&self, stem: &str, decompose: bool) -> String {
@@ -2396,6 +1706,1021 @@ impl HcVerbForms for HcGreekVerbForm {
             && self.tense != HcTense::Future
     }
 
+    fn accent_verb(&self, word: &str) -> String {
+        let syllables = analyze_syllable_quantities(
+            word,
+            self.person,
+            self.number,
+            self.tense,
+            self.mood,
+            self.verb.properties,
+        );
+
+        let accent;
+        let letter_index;
+        if syllables.len() > 2 && !syllables.last().unwrap().is_long {
+            //acute on antepenult (παιδεύομεν)
+            accent = HGK_ACUTE;
+            letter_index = syllables[0].index;
+        } else if syllables.len() == 2 && syllables[0].is_long && !syllables[1].is_long {
+            if (syllables[1].letters == "αι" || syllables[1].letters == "οι")
+                && self.mood == HcMood::Optative
+            {
+                //***we never get here because analyze_syllable_quantities marks optative ai and oi as long
+                accent = HGK_ACUTE; //exception to the exception for optative 3rd singular: acute on penult
+            } else {
+                accent = HGK_CIRCUMFLEX; //circumflex on penult (λῦε present active imperative)
+            }
+            letter_index = syllables[0].index;
+        } else if syllables.len() > 1 {
+            //acute on penult (παιδεύω)
+            accent = HGK_ACUTE;
+            letter_index = syllables[syllables.len() - 2].index;
+        } else if syllables.len() == 1 {
+            if syllables[0].is_long {
+                accent = HGK_CIRCUMFLEX; //circumflex on ultima. e.g. (δοῦ)
+            } else {
+                accent = HGK_ACUTE; //acute on ultima. e.g. do/s (δός)
+            }
+            letter_index = syllables[0].index;
+        } else {
+            return String::from(word);
+        }
+
+        self.accent_syllable(word, letter_index, accent)
+    }
+
+    fn accent_verb_contracted(
+        &self,
+        word: &str,
+        orig_syllables: Vec<SyllableAnalysis>,
+        ending: &str,
+    ) -> String {
+        let syl = analyze_syllable_quantities(
+            word,
+            self.person,
+            self.number,
+            self.tense,
+            self.mood,
+            self.verb.properties,
+        );
+
+        let esyl = analyze_syllable_quantities(
+            ending,
+            self.person,
+            self.number,
+            self.tense,
+            self.mood,
+            self.verb.properties,
+        );
+        let accent;
+        let letter_index;
+        if orig_syllables.len() > 2 && !orig_syllables.last().unwrap().is_long {
+            if esyl.len() > 2 {
+                //has 3 or more syllables
+                accent = HGK_ACUTE;
+                letter_index = syl[syl.len() - 3].index; //accute on antepenult (ἀδικοιημεν)
+            } else if syl.last().unwrap().is_long {
+                accent = HGK_ACUTE;
+                letter_index = syl[syl.len() - 2].index; //accute on penult (ἀδικει present active imperative)
+            } else {
+                accent = HGK_CIRCUMFLEX;
+                letter_index = syl[syl.len() - 2].index; //circumflex on penult (ἀδικουμεν)
+            }
+        } else if orig_syllables.len() > 1 {
+            //uncontracted word has 2 syllables
+            if esyl.len() == 2 && esyl[1].is_long {
+                accent = HGK_ACUTE;
+                letter_index = syl[syl.len() - 2].index; //acute on penult (ἀδικοιην)
+            } else {
+                accent = HGK_CIRCUMFLEX;
+                letter_index = syl[syl.len() - 1].index; //circumflex on ultima (ἀδικω)
+            }
+        } else {
+            return String::from(word); //(nothing gets here)
+        }
+
+        self.accent_syllable(word, letter_index, accent)
+    }
+
+    fn accent_syllable(&self, word: &str, letter_index_from_end: u8, accent: u32) -> String {
+        let v = word
+            .gkletters()
+            .rev()
+            .enumerate()
+            .map(|(x, mut a)| {
+                if x == letter_index_from_end as usize {
+                    a.toggle_diacritic(accent, true);
+                    //println!("abc {:?} {:?} {:?}", a.letter, accent, letter_index_from_end);
+                }
+                a
+            })
+            .collect::<Vec<HGKLetter>>();
+
+        let s = v
+            .iter()
+            .rev()
+            .map(|a| a.to_string(HgkUnicodeMode::Precomposed))
+            .collect::<String>();
+        s
+    }
+
+    fn accent_syllable_start(&self, word: &str, letter_index_from_end: u8, accent: u32) -> String {
+        let v = word
+            .gkletters()
+            .enumerate()
+            .map(|(x, mut a)| {
+                if x == letter_index_from_end as usize {
+                    a.toggle_diacritic(accent, true);
+                    //println!("abc {:?} {:?} {:?}", a.letter, accent, letter_index_from_end);
+                }
+                a
+            })
+            .collect::<Vec<HGKLetter>>();
+
+        let s = v
+            .iter()
+            .map(|a| a.to_string(HgkUnicodeMode::Precomposed))
+            .collect::<String>();
+        s
+    }
+
+    fn contract_verb(&self, unaccented_form: &str, ending: &str) -> String {
+        let mut form =
+            hgk_strip_diacritics(unaccented_form, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
+        let orig_syl = analyze_syllable_quantities(
+            &form,
+            self.person,
+            self.number,
+            self.tense,
+            self.mood,
+            self.verb.properties,
+        );
+
+        if form.contains("εει") {
+            // h&q p236
+            form = form.replacen("εει", "ει", 1);
+        } else if form.contains("εε") {
+            form = form.replacen("εε", "ει", 1);
+        } else if form.contains("εη") {
+            form = form.replacen("εη", "η", 1);
+        } else if form.contains("εῃ") {
+            form = form.replacen("εῃ", "ῃ", 1);
+        } else if form.contains("εοι") {
+            form = form.replacen("εοι", "οι", 1);
+        } else if form.contains("εου") {
+            form = form.replacen("εου", "ου", 1);
+        } else if form.contains("εο") {
+            form = form.replacen("εο", "ου", 1);
+        } else if form.contains("εω") {
+            form = form.replacen("εω", "ω", 1);
+        } else if form.contains("αει") {
+            // h&q p232
+            form = form.replacen("αει", "ᾱͅ", 1);
+        } else if form.contains("αε") {
+            form = form.replacen("αε", "ᾱ", 1);
+        } else if form.contains("αη") {
+            form = form.replacen("αη", "ᾱ", 1);
+        } else if form.contains("αῃ") {
+            form = form.replacen("αῃ", "ᾱͅ", 1);
+        } else if form.contains("αοι") {
+            form = form.replacen("αοι", "ῳ", 1);
+        } else if form.contains("αου") {
+            form = form.replacen("αου", "ω", 1);
+        } else if form.contains("αο") {
+            form = form.replacen("αο", "ω", 1);
+        } else if form.contains("αω") {
+            form = form.replacen("αω", "ω", 1);
+        } else if form.contains("οει") {
+            // h&q p264
+            form = form.replacen("οει", "οι", 1);
+        } else if form.contains("οε") {
+            form = form.replacen("οε", "ου", 1);
+        } else if form.contains("οη") {
+            form = form.replacen("οη", "ω", 1);
+        } else if form.contains("οῃ") {
+            form = form.replacen("οῃ", "οι", 1);
+        } else if form.contains("οοι") {
+            form = form.replacen("οοι", "οι", 1);
+        } else if form.contains("οου") {
+            form = form.replacen("οου", "ου", 1);
+        } else if form.contains("οο") {
+            form = form.replacen("οο", "ου", 1);
+        } else if form.contains("οω") {
+            form = form.replacen("οω", "ω", 1);
+        }
+
+        self.accent_verb_contracted(&form, orig_syl, ending)
+
+        //unaccented_form.to_string()
+    }
+}
+
+impl HcVerbForms for HcGreekVerbForm {
+    /*
+    fn new() -> HcGreekVerbForm {
+
+    }*/
+
+    fn get_label(&self) -> String {
+        "".to_string()
+    }
+
+    fn strip_ending(&self, pp_num: usize, form: String) -> Result<String, &str> {
+        //println!("form: {}", form);
+        match pp_num {
+            1..=2 => {
+                if form.ends_with('ω') {
+                    if self.tense == HcTense::Future
+                        && self.voice != HcVoice::Passive
+                        && (self.verb.pps[1].ends_with('ῶ')
+                            || (form.starts_with("ἐρ") && self.verb.pps[1].starts_with("ἐρῶ")))
+                    {
+                        if self.verb.pps[1].ends_with("ἐλῶ") {
+                            // alpha contracted future: TODO add option to verb, so this is more general
+                            if let Some(f) = form.strip_suffix('ω') {
+                                return Ok(format!("{}α", f));
+                            }
+                        } else if let Some(f) = form.strip_suffix('ω') {
+                            // epsilon contracted future
+                            return Ok(format!("{}ε", f));
+                        }
+                    } else if let Some(f) = form.strip_suffix('ω') {
+                        return Ok(f.to_string());
+                    }
+                } else if form.ends_with("ουμαι") && self.verb.pps[1].ends_with("οῦμαι")
+                {
+                    // contracted future
+                    return Ok(form.replacen("ουμαι", "ε", 1));
+                } else if let Some(f) = form.strip_suffix("ομαι") {
+                    return Ok(f.to_string());
+                } else if let Some(f) = form.strip_suffix("μαι") {
+                    return Ok(f.to_string());
+                } else if let Some(f) = form.strip_suffix("μι") {
+                    return Ok(f.to_string());
+                } else if let Some(f) = form.strip_suffix("τι(ν)") {
+                    return Ok(f.to_string());
+                } else if let Some(f) = form.strip_suffix("ται") {
+                    return Ok(f.to_string());
+                } else if form.ends_with("οἰδα") || form.ends_with("οιδα") {
+                    return Ok("οἰδ".to_string());
+                } else if form.ends_with("δει") {
+                    return Ok("δε".to_string());
+                } else if form.ends_with("δεησει") {
+                    return Ok("δεησ".to_string());
+                } else if form.ends_with("χρη") {
+                    return Ok("χρ".to_string());
+                }
+            }
+            3 => {
+                if let Some(f) = form.strip_suffix("αμην") {
+                    return Ok(f.to_string());
+                } else if let Some(f) = form.strip_suffix('α') {
+                    return Ok(f.to_string());
+                } else if let Some(f) = form.strip_suffix("ον") {
+                    return Ok(f.to_string());
+                } else if let Some(f) = form.strip_suffix("ομην") {
+                    return Ok(f.to_string());
+                } else if let Some(f) = form.strip_suffix('ν') {
+                    return Ok(f.to_string());
+                } else if let Some(f) = form.strip_suffix("ε(ν)") {
+                    return Ok(f.to_string());
+                }
+            }
+            4 => {
+                if let Some(f) = form.strip_suffix('α') {
+                    return Ok(f.to_string());
+                }
+            }
+            5 => {
+                if let Some(f) = form.strip_suffix("μαι") {
+                    return Ok(f.to_string());
+                }
+            }
+            6 => {
+                if let Some(f) = form.strip_suffix("ην") {
+                    return Ok(f.to_string());
+                }
+            }
+            _ => {
+                return Err("error stripping ending 1");
+            }
+        }
+        Err("error stripping ending 2")
+    }
+
+    fn is_deponent(&self, stem: &str) -> bool {
+        #[allow(clippy::needless_bool)]
+        if (self.tense == HcTense::Present
+            || self.tense == HcTense::Imperfect
+            || self.tense == HcTense::Future)
+            && stem.ends_with("μαι")
+        {
+            true
+        } else if self.tense == HcTense::Aorist
+            && self.voice != HcVoice::Passive
+            && stem.ends_with("άμην")
+        {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn add_ending(&self, stem: &str, ending: &str, decompose: bool) -> Result<String, &str> {
+        let mut local_stem = stem.to_string();
+        let mut local_ending = ending.to_string();
+
+        //for contracted verbs remove nu movable for imperfect 3rd sing. active
+        if self.tense == HcTense::Imperfect
+            && (self.verb.pps[0].ends_with("άω")
+                || self.verb.pps[0].ends_with("έω")
+                || self.verb.pps[0].ends_with("όω"))
+            && self.person == Some(HcPerson::Third)
+            && self.number == Some(HcNumber::Singular)
+            && self.voice == HcVoice::Active
+        {
+            local_ending = local_ending.replacen("(ν)", "", 1);
+        }
+
+        //add macron to ἀφικνέομαι perfect and pluperfect
+        if self.verb.pps[0].ends_with("ἀφικνέομαι")
+            && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
+            && self.mood == HcMood::Indicative
+            && self.voice != HcVoice::Active
+        {
+            local_stem = local_stem.replacen('ι', "ῑ", 1);
+        }
+
+        if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") {
+            if self.tense == HcTense::Present || self.tense == HcTense::Imperfect {
+                if self.number == Some(HcNumber::Plural)
+                    || self.mood != HcMood::Indicative
+                    || self.voice != HcVoice::Active
+                {
+                    if self.verb.pps[0].ends_with("ωμι") {
+                        local_stem.pop();
+                        local_stem.push('ο');
+                    } else if self.verb.pps[0].ends_with("στημι") {
+                        local_stem.pop();
+                        local_stem.push('α');
+                    } else if self.verb.pps[0].ends_with("τίθημι")
+                        || self.verb.pps[0].ends_with("ῑ̔́ημι")
+                        || self.verb.pps[0].ends_with("ῑ́ημι")
+                    {
+                        local_stem.pop();
+                        local_stem.push('ε');
+
+                        if (self.verb.pps[0].ends_with("ῑ̔́ημι")
+                            || self.verb.pps[0].ends_with("ῑ́ημι"))
+                            && self.tense == HcTense::Present
+                            && self.person == Some(HcPerson::Third)
+                            && self.number == Some(HcNumber::Plural)
+                            && self.voice == HcVoice::Active
+                            && self.mood == HcMood::Indicative
+                        {
+                            if !decompose {
+                                local_stem.pop();
+                            }
+                            local_ending = if decompose {
+                                String::from("ᾱσι(ν)")
+                            } else {
+                                String::from("ᾶσι(ν)")
+                            };
+                        }
+                    } else if self.verb.pps[0].ends_with("ῡμι") {
+                        local_stem = local_stem.replacen('ῡ', "υ", 1);
+                    }
+                }
+            }
+
+            if self.tense == HcTense::Present {
+                if self.voice == HcVoice::Active {
+                    if self.mood == HcMood::Subjunctive {
+                        if !decompose {
+                            if self.verb.pps[0].ends_with("ωμι") {
+                                // didwmi / gignwskw subjunctive contraction
+                                if local_ending.contains('ῇ') {
+                                    local_ending = local_ending.replacen('ῇ', "ῷ", 1);
+                                } else if local_ending.contains('ῆ') {
+                                    local_ending = local_ending.replacen('ῆ', "ῶ", 1);
+                                }
+                            }
+
+                            if !self.verb.pps[0].ends_with("ῡμι") {
+                                local_stem.pop();
+                            }
+                        } else {
+                            //isthmi subjunctive stem
+                            if self.verb.pps[0].ends_with("στημι") {
+                                local_stem.pop();
+                                local_stem.push('ε');
+                            }
+                        }
+                    } else if self.mood == HcMood::Imperative {
+                        if decompose {
+                            if !(self.person == Some(HcPerson::Second)
+                                && self.number == Some(HcNumber::Singular))
+                            {
+                                local_ending.remove(0);
+                            } else if self.verb.pps[0].ends_with("ῡμι") {
+                                local_stem = local_stem.replacen('υ', "ῡ", 1); //fix me
+                                local_ending = String::from(""); // fix me
+                            }
+                        } else if self.person == Some(HcPerson::Second)
+                            && self.number == Some(HcNumber::Singular)
+                        {
+                            if self.verb.pps[0].ends_with("ωμι") {
+                                local_ending = String::from("υ");
+                            } else if self.verb.pps[0].ends_with("στημι") {
+                                local_stem.pop();
+                                local_ending = String::from("η");
+                            } else if self.verb.pps[0].ends_with("ῡμι") {
+                                local_stem = local_stem.replacen('υ', "ῡ", 1);
+                                local_ending = String::from("");
+                            } else {
+                                local_ending = String::from("ι");
+                            }
+                        } else {
+                            local_ending.remove(0);
+                        }
+                    } else if self.verb.pps[0].ends_with("στημι")
+                        && self.person == Some(HcPerson::Third)
+                        && self.number == Some(HcNumber::Plural)
+                        && self.mood == HcMood::Indicative
+                        && !decompose
+                    {
+                        local_stem.pop();
+                        local_ending = local_ending.replacen("ᾱ", "ᾶ", 1);
+                    }
+                } else {
+                    // middle/passive
+                    if self.mood == HcMood::Subjunctive {
+                        if !decompose {
+                            if !self.verb.pps[0].ends_with("ῡμι") {
+                                local_stem.pop();
+                            }
+                            if self.verb.pps[0].ends_with("ωμι") {
+                                // didwmi / gignwskw subjunctive contraction
+                                if local_ending.contains('ῃ') {
+                                    local_ending = local_ending.replacen('ῃ', "ῷ", 1);
+                                } else if local_ending.contains('η') {
+                                    local_ending = local_ending.replacen('η', "ῶ", 1);
+                                }
+                            }
+
+                            if local_ending != "ωμεθα"
+                                && !self.verb.pps[0].ends_with("ῡμι")
+                                && !self.verb.pps[0].ends_with("δύναμαι")
+                                && !self.verb.pps[0].ends_with("ἐπίσταμαι")
+                            {
+                                local_ending =
+                                    self.accent_syllable_start(&local_ending, 0, HGK_CIRCUMFLEX);
+                            }
+                        } else {
+                            //isthmi subjunctive stem
+                            if self.verb.pps[0].ends_with("δύναμαι")
+                                || self.verb.pps[0].ends_with("ἐπίσταμαι")
+                            {
+                                local_stem.pop();
+                            } else if self.verb.pps[0].ends_with("στημι")
+                                || self.verb.pps[0].ends_with("αμαι")
+                            {
+                                local_stem.pop();
+                                local_stem.push('ε');
+                            }
+                        }
+                    } else if self.mood == HcMood::Optative {
+                        if !decompose {
+                            if self.verb.pps[0].ends_with("δύναμαι")
+                                || self.verb.pps[0].ends_with("ἐπίσταμαι")
+                            {
+                                local_ending = hgk_strip_diacritics(
+                                    &local_ending,
+                                    HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE,
+                                );
+                            }
+                            if local_ending.starts_with('ο') && !self.verb.pps[0].ends_with("ῡμι")
+                            {
+                                //alt endings for tithhmi and ihmi
+                                local_stem.pop();
+                            }
+                        }
+                    }
+                }
+            } else if self.tense == HcTense::Imperfect {
+                if self.verb.pps[0].ends_with("ωμι") {
+                    if self.number == Some(HcNumber::Singular) {
+                        if decompose {
+                            local_stem = local_stem.replacen('ω', "ο", 1); //use short stem when using thematic endings
+                            if self.person == Some(HcPerson::First) && self.voice == HcVoice::Active
+                            {
+                                local_ending = local_ending.replacen('ν', "ον", 1);
+                            } else {
+                                local_ending = local_ending.replacen('ς', "ες", 1);
+                                if self.person == Some(HcPerson::Third)
+                                    && self.voice == HcVoice::Active
+                                {
+                                    local_ending = String::from("ε");
+                                }
+                            }
+                        } else {
+                            local_stem = local_stem.replacen('ω', "ου", 1);
+                        }
+                    }
+                } else if self.verb.pps[0].ends_with("τίθημι")
+                    || self.verb.pps[0].ends_with("ῑ̔́ημι")
+                    || self.verb.pps[0].ends_with("ῑ́ημι")
+                {
+                    if (self.person == Some(HcPerson::Second)
+                        || self.person == Some(HcPerson::Third))
+                        && self.number == Some(HcNumber::Singular)
+                    {
+                        if decompose {
+                            local_stem = local_stem.replacen('η', "ε", 1); //use short stem when using thematic endings
+                            local_ending = local_ending.replacen('ς', "ες", 1);
+                            if self.person == Some(HcPerson::Third) && self.voice == HcVoice::Active
+                            {
+                                local_ending = String::from("ε");
+                            }
+                        } else {
+                            local_stem = local_stem.replacen('η', "ει", 1);
+                        }
+                    }
+                }
+                if (self.verb.pps[0] == "δύναμαι" || self.verb.pps[0] == "ἐπίσταμαι")
+                    && self.tense == HcTense::Imperfect
+                    && self.person == Some(HcPerson::Second)
+                    && self.number == Some(HcNumber::Singular)
+                {
+                    if decompose {
+                        local_ending = String::from("ο"); //fix me
+                    } else {
+                        local_stem.pop();
+                        local_ending = String::from("ω");
+                    }
+                }
+            } else if self.tense == HcTense::Aorist {
+                //mixed aorist
+                if self.verb.pps[2].ends_with("κα")
+                    && (self.number == Some(HcNumber::Plural)
+                        || self.mood != HcMood::Indicative
+                        || self.voice != HcVoice::Active)
+                {
+                    if self.verb.pps[0].ends_with("δίδωμι") {
+                        local_stem = local_stem.replacen("ωκ", "ο", 1);
+                    } else if self.verb.pps[0].ends_with("τίθημι")
+                        || self.verb.pps[0].ends_with("ῑ̔́ημι")
+                        || self.verb.pps[0].ends_with("ῑ́ημι")
+                    {
+                        if self.verb.pps[0].ends_with("ῑ́ημι")
+                            && !decompose
+                            && (self.number == Some(HcNumber::Plural)
+                                || self.voice != HcVoice::Active)
+                        {
+                            local_stem = local_stem.replacen("ηκ", "ει", 1);
+                        } else if self.verb.pps[0].ends_with("ῑ̔́ημι") && !decompose {
+                            local_stem = local_stem.replacen("ἡκ", "εἱ", 1);
+                        } else {
+                            local_stem = local_stem.replacen("ηκ", "ε", 1);
+                        }
+                    }
+
+                    if self.mood == HcMood::Subjunctive
+                        && !decompose
+                        && self.voice != HcVoice::Passive
+                    {
+                        local_stem.pop();
+                    }
+
+                    if self.voice == HcVoice::Active {
+                        if self.mood != HcMood::Indicative {
+                            if !decompose {
+                                if self.mood == HcMood::Subjunctive {
+                                    if self.verb.pps[0].ends_with("ωμι") {
+                                        // didwmi / gignwskw subjunctive contraction
+                                        if local_ending.contains('ῃ') {
+                                            local_ending = local_ending.replacen('ῃ', "ῷ", 1);
+                                        } else if local_ending.contains('η') {
+                                            local_ending = local_ending.replacen('η', "ῶ", 1);
+                                        }
+                                    } else if self.verb.pps[0].ends_with("ῑ̔́ημι") {
+                                        let (stem, ending) = match (self.person, self.number) {
+                                            (Some(HcPerson::First), Some(HcNumber::Singular)) => {
+                                                ("-", "ὡ")
+                                            }
+                                            (Some(HcPerson::Second), Some(HcNumber::Singular)) => {
+                                                ("-", "ᾑς")
+                                            }
+                                            (Some(HcPerson::Third), Some(HcNumber::Singular)) => {
+                                                ("-", "ᾑ")
+                                            }
+                                            (Some(HcPerson::First), Some(HcNumber::Plural)) => {
+                                                ("-", "ὡμεν")
+                                            }
+                                            (Some(HcPerson::Second), Some(HcNumber::Plural)) => {
+                                                ("-", "ἡτε")
+                                            }
+                                            (Some(HcPerson::Third), Some(HcNumber::Plural)) => {
+                                                ("-", "ὡσι(ν)")
+                                            }
+                                            _ => ("", ""),
+                                        };
+                                        local_stem = stem.to_string();
+                                        local_ending = ending.to_string();
+                                    }
+                                    local_ending = self.accent_syllable_start(
+                                        &local_ending,
+                                        0,
+                                        HGK_CIRCUMFLEX,
+                                    );
+                                } else if self.mood == HcMood::Imperative {
+                                    // ana/thes
+                                    if self.verb.pps[0].ends_with("ἀνατίθημι")
+                                        && self.person == Some(HcPerson::Second)
+                                        && self.number == Some(HcNumber::Singular)
+                                    {
+                                        local_stem =
+                                            self.accent_syllable(&local_stem, 2, HGK_ACUTE);
+                                    }
+                                    // apo/dos
+                                    else if self.verb.pps[0].ends_with("ἀποδίδωμι")
+                                        && self.person == Some(HcPerson::Second)
+                                        && self.number == Some(HcNumber::Singular)
+                                    {
+                                        local_stem =
+                                            self.accent_syllable(&local_stem, 2, HGK_ACUTE);
+                                    } else if self.verb.pps[0].ends_with("μεταδίδωμι")
+                                        && self.person == Some(HcPerson::Second)
+                                        && self.number == Some(HcNumber::Singular)
+                                    {
+                                        local_stem =
+                                            self.accent_syllable(&local_stem, 2, HGK_ACUTE);
+                                    } else if self.verb.pps[0].ends_with("παραδίδωμι")
+                                        && self.person == Some(HcPerson::Second)
+                                        && self.number == Some(HcNumber::Singular)
+                                    {
+                                        local_stem =
+                                            self.accent_syllable(&local_stem, 2, HGK_ACUTE);
+                                    }
+                                }
+                            }
+                            if self.mood == HcMood::Optative {
+                                local_ending.remove(0);
+                                if self.verb.pps[0].ends_with("ῑ̔́ημι") && !decompose {
+                                    local_ending.remove(0);
+                                    local_stem = "-εἱ".to_string();
+                                }
+                            }
+                        }
+                    } else if self.voice == HcVoice::Middle {
+                        if self.mood == HcMood::Indicative {
+                            if (self.verb.pps[0].ends_with("ῑ̔́ημι")
+                                || self.verb.pps[0].ends_with("ῑ́ημι"))
+                                && self.person == Some(HcPerson::Second)
+                                && self.number == Some(HcNumber::Singular)
+                            {
+                                local_ending = String::from("σο");
+                            } else {
+                                local_ending.remove(0);
+                                if self.person == Some(HcPerson::Second)
+                                    && self.number == Some(HcNumber::Singular)
+                                {
+                                    if decompose {
+                                        local_ending = String::from("ο");
+                                    } else if local_stem.ends_with('ε') {
+                                        local_stem = local_stem.rreplacen("ε", "ο", 1);
+                                    }
+                                }
+                            }
+                        } else if self.mood == HcMood::Subjunctive {
+                            if self.verb.pps[0].ends_with("ωμι") && !decompose {
+                                // didwmi / gignwskw subjunctive contraction
+                                if local_ending.contains('ῃ') {
+                                    local_ending = local_ending.replacen('ῃ', "ῷ", 1);
+                                } else if local_ending.contains('η') {
+                                    local_ending = local_ending.replacen('η', "ῶ", 1);
+                                }
+                            } else if self.verb.pps[0].ends_with("ῑ̔́ημι") && !decompose {
+                                let (stem, ending) = match (self.person, self.number) {
+                                    (Some(HcPerson::First), Some(HcNumber::Singular)) => {
+                                        ("-", "ὡμαι")
+                                    }
+                                    (Some(HcPerson::Second), Some(HcNumber::Singular)) => {
+                                        ("-", "ᾑ")
+                                    }
+                                    (Some(HcPerson::Third), Some(HcNumber::Singular)) => {
+                                        ("-", "ἡται")
+                                    }
+                                    (Some(HcPerson::First), Some(HcNumber::Plural)) => {
+                                        ("-", "ὡμεθα")
+                                    }
+                                    (Some(HcPerson::Second), Some(HcNumber::Plural)) => {
+                                        ("-", "ἡσθε")
+                                    }
+                                    (Some(HcPerson::Third), Some(HcNumber::Plural)) => {
+                                        ("-", "ὡνται")
+                                    }
+                                    _ => ("", ""),
+                                };
+
+                                local_stem = stem.to_string();
+                                local_ending = ending.to_string();
+                            }
+                            if !decompose && local_ending != "ωμεθα" && local_ending != "ὡμεθα"
+                            {
+                                local_ending =
+                                    self.accent_syllable_start(&local_ending, 0, HGK_CIRCUMFLEX);
+                            }
+                        } else if self.mood == HcMood::Optative {
+                            if !decompose {
+                                if self.verb.pps[0].ends_with("ῑ̔́ημι") {
+                                    if local_ending.starts_with('ο') {
+                                        local_ending.remove(0);
+                                        local_ending.remove(0);
+                                        local_stem = "-οἱ".to_string();
+                                    } else {
+                                        local_ending.remove(0);
+                                        local_stem = "-εἱ".to_string();
+                                    }
+                                } else if local_ending.starts_with('ο') {
+                                    local_stem.pop();
+                                }
+                            }
+                        } else if self.mood == HcMood::Imperative {
+                            if self.person == Some(HcPerson::Second)
+                                && self.number == Some(HcNumber::Singular)
+                            {
+                                if decompose {
+                                    if !self.verb.pps[0].ends_with("ῑ́ημι")
+                                        && !self.verb.pps[0].ends_with("ῑ̔́ημι")
+                                    {
+                                        local_ending.remove(0);
+                                    } else {
+                                        local_ending = local_ending.replacen("σο", "ου", 1);
+                                    }
+                                } else {
+                                    local_stem.pop();
+
+                                    if local_stem.starts_with("προ")
+                                        || self.verb.pps[0].ends_with("ῑ́ημι")
+                                    {
+                                        local_ending = local_ending.replacen("σο", "οῦ", 1);
+                                    } else if self.verb.pps[0].ends_with("ῑ̔́ημι") {
+                                        local_ending = local_ending.replacen("σο", "οὗ", 1);
+                                    } else {
+                                        local_ending = local_ending.replacen("σο", "ου", 1);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if self.tense == HcTense::Perfect {
+                if self.number == Some(HcNumber::Plural) && local_stem.ends_with("στηκ") {
+                    local_stem = local_stem.replacen("ηκ", "α", 1);
+                    if self.person == Some(HcPerson::Third) {
+                        if decompose {
+                        } else {
+                            local_stem.pop();
+                            local_ending = local_ending.replacen("ᾱ", "ᾶ", 1);
+                        }
+                    } else {
+                        local_ending.remove(0);
+                    }
+                }
+            } else if self.tense == HcTense::Pluperfect {
+                if self.number == Some(HcNumber::Plural) && local_stem.ends_with("στηκ") {
+                    local_stem = local_stem.replacen("ηκ", "α", 1);
+                    local_ending.remove(0);
+                }
+            }
+        }
+
+        // root aorist
+        if (self.tense == HcTense::Aorist && self.voice == HcVoice::Active)
+            && local_stem.ends_with("στη")
+            || local_stem.ends_with("φθη")
+            || local_stem.ends_with("βη")
+            || local_stem.ends_with("γνω")
+        {
+            if self.mood == HcMood::Subjunctive {
+                if decompose {
+                    if local_stem.ends_with("γνω") {
+                        local_stem.pop();
+                        local_stem.push('ο');
+                    } else {
+                        local_stem.pop();
+                        local_stem.push('ε');
+                    }
+                } else {
+                    if local_stem.ends_with("γνω") {
+                        // didwmi / gignwskw subjunctive contraction
+                        if local_ending.contains('ῇ') {
+                            local_ending = local_ending.replacen('ῇ', "ῷ", 1);
+                        } else if local_ending.contains('ῆ') {
+                            local_ending = local_ending.replacen('ῆ', "ῶ", 1);
+                        }
+                    }
+                    local_stem.pop();
+                }
+            } else if self.mood == HcMood::Optative {
+                if local_stem.ends_with("γνω") {
+                    local_stem.pop();
+                    local_stem.push('ο');
+                } else {
+                    local_stem.pop();
+                    local_stem.push('α');
+                }
+            } else if self.mood == HcMood::Imperative {
+                if self.person == Some(HcPerson::Second)
+                    && self.number == Some(HcNumber::Singular)
+                    && local_stem.ends_with("φθη")
+                {
+                    local_ending = local_ending.replacen('θ', "τ", 1);
+                } else if self.person == Some(HcPerson::Third)
+                    && self.number == Some(HcNumber::Plural)
+                {
+                    if local_stem.ends_with("γνω") {
+                        local_stem.pop();
+                        local_stem.push('ο');
+                    } else {
+                        local_stem.pop();
+                        local_stem.push('α');
+                    }
+                }
+            }
+        }
+
+        // consonant stem perfects and pluperfects
+        if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
+            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
+            && local_stem == "πεπεμ"
+            || local_stem == "ἐπεπεμ"
+            || local_stem == format!("ε {} πεπεμ", SEPARATOR)
+        {
+            if local_ending.starts_with("ντ") {
+                return Ok(String::from(BLANK));
+            } else if decompose {
+                local_stem = format!("{}π", local_stem);
+            } else if local_ending.starts_with("σθ") {
+                local_ending.remove(0);
+                local_ending = format!("φ{}", local_ending);
+            } else if local_ending.starts_with('σ') {
+                local_ending.remove(0);
+                local_ending = format!("ψ{}", local_ending);
+            } else if local_ending.starts_with('τ') {
+                local_ending = format!("π{}", local_ending);
+            }
+        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
+            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
+            && (local_stem.ends_with('μ') || self.verb.pps[4].ends_with("φασμαι"))
+        {
+            if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU
+                && self.person == Some(HcPerson::Second)
+                && self.number == Some(HcNumber::Singular)
+            {
+                return Ok(String::from(BLANK));
+            }
+
+            if local_ending.starts_with("ντ") {
+                return Ok(String::from(BLANK));
+            } else if decompose {
+                local_stem.pop();
+                if self.verb.properties & CONSONANT_STEM_PERFECT_PI == CONSONANT_STEM_PERFECT_PI {
+                    local_stem = format!("{}π", local_stem);
+                } else if self.verb.properties & CONSONANT_STEM_PERFECT_BETA
+                    == CONSONANT_STEM_PERFECT_BETA
+                {
+                    local_stem = format!("{}β", local_stem);
+                } else if self.verb.properties & CONSONANT_STEM_PERFECT_NU
+                    == CONSONANT_STEM_PERFECT_NU
+                {
+                    local_stem = format!("{}ν", local_stem);
+                } else {
+                    local_stem = format!("{}φ", local_stem);
+                }
+            } else if local_ending.starts_with("σθ") {
+                local_ending.remove(0);
+                local_stem.pop();
+                if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU {
+                    local_ending = format!("ν{}", local_ending);
+                } else {
+                    local_ending = format!("φ{}", local_ending);
+                }
+            } else if local_ending.starts_with('σ') {
+                local_stem.pop();
+                local_ending.remove(0);
+                local_ending = format!("ψ{}", local_ending);
+            } else if local_ending.starts_with('τ') {
+                local_stem.pop();
+                if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU {
+                    local_ending = format!("ν{}", local_ending);
+                } else {
+                    local_ending = format!("π{}", local_ending);
+                }
+            }
+        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
+            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
+            && local_stem.ends_with('γ')
+        {
+            if local_ending.starts_with("ντ") {
+                return Ok(String::from(BLANK));
+            } else if decompose {
+                local_stem.pop();
+                if self.verb.properties & CONSONANT_STEM_PERFECT_GAMMA
+                    == CONSONANT_STEM_PERFECT_GAMMA
+                {
+                    local_stem = format!("{}γ", local_stem);
+                } else if self.verb.properties & CONSONANT_STEM_PERFECT_CHI
+                    == CONSONANT_STEM_PERFECT_CHI
+                {
+                    local_stem = format!("{}χ", local_stem);
+                } else {
+                    local_stem = format!("{}κ", local_stem);
+                }
+            } else if local_ending.starts_with("σθ") {
+                local_ending.remove(0);
+                local_stem.pop();
+                local_ending = format!("χ{}", local_ending);
+            } else if local_ending.starts_with('σ') {
+                local_stem.pop();
+                local_ending.remove(0);
+                local_ending = format!("ξ{}", local_ending);
+            } else if local_ending.starts_with('τ') {
+                local_stem.pop();
+                local_ending = format!("κ{}", local_ending);
+            }
+        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
+            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
+            && local_stem.ends_with('σ')
+        {
+            if local_ending.starts_with("ντ") {
+                return Ok(String::from(BLANK));
+            } else if local_ending.starts_with('σ') && !decompose {
+                local_ending.remove(0);
+            }
+        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
+            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
+            && local_stem.ends_with('λ')
+        {
+            if local_ending.starts_with("ντ") {
+                return Ok(String::from(BLANK));
+            } else if local_ending.starts_with('σ')
+                && !decompose
+                && self.number == Some(HcNumber::Plural)
+            {
+                local_ending.remove(0);
+            }
+        }
+
+        //future passive
+        let future_passive_suffix =
+            if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
+                if decompose {
+                    format!("ησ {} ", SEPARATOR)
+                } else {
+                    String::from("ησ")
+                }
+            } else {
+                String::from("")
+            };
+
+        if self.verb.pps[0].ends_with("ἔχω")
+            && self.person == Some(HcPerson::Second)
+            && self.number == Some(HcNumber::Singular)
+            && self.tense == HcTense::Aorist
+            && self.mood == HcMood::Imperative
+            && self.voice == HcVoice::Active
+        {
+            local_ending = String::from("ες");
+        }
+
+        if decompose {
+            Ok(format!(
+                "{} {} {}{}",
+                local_stem, SEPARATOR, future_passive_suffix, local_ending
+            ))
+        } else {
+            //come take see say find: elthe/ labe/ eide/ eipe/ eyre/
+            if local_stem == "ἐλθ" && local_ending == "ε" {
+                local_ending = "έ".to_string();
+            } else if local_stem == "λαβ" && local_ending == "ε" {
+                local_ending = "έ".to_string();
+            } else if local_stem == "ἰδ" && local_ending == "ε" {
+                local_ending = "έ".to_string();
+            } else if local_stem == "εἰπ" && local_ending == "ε" {
+                local_ending = "έ".to_string();
+            } else if local_stem == "εὑρ" && local_ending == "ε" {
+                local_ending = "έ".to_string();
+            }
+            Ok(format!(
+                "{}{}{}",
+                local_stem, future_passive_suffix, local_ending
+            ))
+        }
+    }
+
     fn block_for_hq_unit(&self, unit: Option<i16>) -> bool {
         match unit {
             Some(unit) => {
@@ -2627,118 +2952,6 @@ impl HcVerbForms for HcGreekVerbForm {
                 _ => (),
             }
         }
-    }
-
-    fn separate_prefix(&self, stem: &str) -> String {
-        // let pre = vec![("ἀπο", vec!["ἀπο"], "")];
-        // for p in pre {
-        //     if stem.starts_with(p.0) {
-        //         return stem.replacen(p.0, format!("{} {}", p.1.join(" - "), p.2).as_str(), 1);
-        //     }
-        // }
-
-        if stem.starts_with("ἀπολ") {
-            return stem.replacen("ἀπολ", format!("ἀπο {} ολ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ἀπο") {
-            return stem.replacen("ἀπο", format!("ἀπο {} ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ἀφῑ") {
-            return stem.replacen("ἀφῑ", format!("ἀπο {} ῑ̔", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ἀφει") {
-            return stem.replacen("ἀφει", format!("ἀπο {} εἱ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ἀφε") {
-            return stem.replacen("ἀφε", format!("ἀπο {} ἑ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ἀφη") {
-            return stem.replacen("ἀφη", format!("ἀπο {} ἡ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ἀπεκ") {
-            return stem.replacen("ἀπεκ", format!("ἀπο {} εκ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ἀνε") {
-            return stem.replacen("ἀνε", format!("ἀνα {} ε", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ἐκ") {
-            return stem.replacen("ἐκ", format!("ἐκ {} ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("προ") {
-            return stem.replacen("προ", format!("προ {} ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("συμ") {
-            return stem.replacen("συμ", format!("συν {} ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("συνῑ") {
-            return stem.replacen("συνῑ", format!("συν {} ῑ̔", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("συνη") && self.verb.pps[0].ends_with("ῑ́ημι") {
-            return stem.replacen("συνη", format!("συν {} ἡ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("συνει") && self.verb.pps[0].ends_with("δα") {
-            return stem.replacen("συνει", format!("συν {} εἰ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("συνει") {
-            return stem.replacen("συνει", format!("συν {} εἱ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("συν") {
-            return stem.replacen("συν", format!("συν {} ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("διο") {
-            // διοίσω
-            return stem.replacen("διο", format!("δια {} ο", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("δια") {
-            return stem.replacen("δια", format!("δια {} ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ὑπο") {
-            return stem.replacen("ὑπο", format!("ὑπο {} ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ὑπα") {
-            return stem.replacen(
-                "ὑπα",
-                format!("ὑπο {} α" /* FIX ME ἀ */, SEPARATOR).as_str(),
-                1,
-            );
-        } else if stem.starts_with("ἀνα") {
-            return stem.replacen("ἀνα", format!("ἀνα {} ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("παρα") {
-            return stem.replacen("παρα", format!("παρα {} ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ἐπιστ") {
-            //fix me
-            return stem.to_string();
-        } else if stem.starts_with("ἐπι") {
-            return stem.replacen("ἐπι", format!("ἐπι {} ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("ἀφι") {
-            return stem.replacen("ἀφι", format!("ἀπο {} ἱ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("καθι") {
-            return stem.replacen("καθι", format!("κατα {} ἱ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("καθε") {
-            return stem.replacen("καθε", format!("κατα {} ἑ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("κατα") {
-            return stem.replacen("κατα", format!("κατα {} ", SEPARATOR).as_str(), 1);
-        } else if stem.starts_with("μετανα") {
-            return stem.replacen(
-                "μετανα",
-                format!("μετα {} ανα {} ", SEPARATOR, SEPARATOR).as_str(),
-                1,
-            );
-        } else if stem.starts_with("μετανι") {
-            return stem.replacen(
-                "μετανι",
-                format!("μετα {} ανα {} ἱ", SEPARATOR, SEPARATOR).as_str(),
-                1,
-            );
-        } else if stem.starts_with("μετανε") {
-            return stem.replacen(
-                "μετανε",
-                format!("μετα {} ανα {} ἑ", SEPARATOR, SEPARATOR).as_str(),
-                1,
-            );
-        } else if stem.starts_with("ἐπανα") {
-            return stem.replacen(
-                "ἐπανα",
-                format!("ἐπι {} ανα {} ", SEPARATOR, SEPARATOR).as_str(),
-                1,
-            );
-        } else if stem.starts_with("ἐπανι") {
-            return stem.replacen(
-                "ἐπανι",
-                format!("ἐπι {} ανα {} ἱ", SEPARATOR, SEPARATOR).as_str(),
-                1,
-            );
-        } else if stem.starts_with("ἐπανε") {
-            return stem.replacen(
-                "ἐπανε",
-                format!("ἐπι {} ανα {} ἑ", SEPARATOR, SEPARATOR).as_str(),
-                1,
-            );
-        } else if stem.starts_with("μετα") {
-            return stem.replacen("μετα", format!("μετα {} ", SEPARATOR).as_str(), 1);
-        }
-        stem.to_string()
     }
 
     fn get_description(&self, p: &HcGreekVerbForm, start: &str, end: &str) -> String {
@@ -3842,232 +4055,6 @@ impl HcVerbForms for HcGreekVerbForm {
         }
 
         Ok(steps)
-    }
-
-    fn accent_verb_persistent(&self, word: &str) -> String {
-        let mut syllables = analyze_syllable_quantities(
-            word,
-            self.person,
-            self.number,
-            self.tense,
-            self.mood,
-            self.verb.properties,
-        );
-        syllables.reverse();
-
-        const ULTIMA: usize = 0;
-        const PENULT: usize = 1;
-        const ANTEPENULT: usize = 2;
-        let accent;
-        let accent_position = match self.tense {
-            HcTense::Present | HcTense::Future => match self.voice {
-                HcVoice::Active => {
-                    if syllables.len() > 1 {
-                        PENULT
-                    } else {
-                        ULTIMA
-                    }
-                }
-                _ => {
-                    if syllables.len() > 2 {
-                        ANTEPENULT
-                    } else {
-                        PENULT
-                    }
-                }
-            },
-            HcTense::Aorist => match self.voice {
-                HcVoice::Active => {
-                    if syllables.len() > 1 {
-                        PENULT
-                    } else {
-                        ULTIMA
-                    }
-                }
-                HcVoice::Middle => {
-                    if syllables.len() > 2 {
-                        ANTEPENULT
-                    } else {
-                        PENULT
-                    }
-                }
-                HcVoice::Passive => {
-                    if syllables.len() > 1 {
-                        PENULT
-                    } else {
-                        ULTIMA
-                    }
-                }
-            },
-            HcTense::Perfect => {
-                if syllables.len() > 1 {
-                    PENULT
-                } else {
-                    ULTIMA
-                }
-            }
-            _ => return String::new(),
-        };
-
-        if syllables.len() > 2
-            && !syllables.first().unwrap().is_long
-            && syllables[1].is_long
-            && accent_position == PENULT
-        {
-            accent = HGK_CIRCUMFLEX;
-        } else if syllables.len() > 2 && syllables.first().unwrap().is_long {
-            accent = HGK_ACUTE;
-        } else if syllables.len() == 2
-            && !syllables.first().unwrap().is_long
-            && syllables[1].is_long
-            && accent_position == PENULT
-        {
-            accent = HGK_CIRCUMFLEX;
-        } else {
-            accent = HGK_ACUTE;
-        }
-
-        let letter_index = syllables[accent_position].index;
-        self.accent_syllable(word, letter_index, accent)
-    }
-
-    fn accent_verb(&self, word: &str) -> String {
-        let syllables = analyze_syllable_quantities(
-            word,
-            self.person,
-            self.number,
-            self.tense,
-            self.mood,
-            self.verb.properties,
-        );
-
-        let accent;
-        let letter_index;
-        if syllables.len() > 2 && !syllables.last().unwrap().is_long {
-            //acute on antepenult (παιδεύομεν)
-            accent = HGK_ACUTE;
-            letter_index = syllables[0].index;
-        } else if syllables.len() == 2 && syllables[0].is_long && !syllables[1].is_long {
-            if (syllables[1].letters == "αι" || syllables[1].letters == "οι")
-                && self.mood == HcMood::Optative
-            {
-                //***we never get here because analyze_syllable_quantities marks optative ai and oi as long
-                accent = HGK_ACUTE; //exception to the exception for optative 3rd singular: acute on penult
-            } else {
-                accent = HGK_CIRCUMFLEX; //circumflex on penult (λῦε present active imperative)
-            }
-            letter_index = syllables[0].index;
-        } else if syllables.len() > 1 {
-            //acute on penult (παιδεύω)
-            accent = HGK_ACUTE;
-            letter_index = syllables[syllables.len() - 2].index;
-        } else if syllables.len() == 1 {
-            if syllables[0].is_long {
-                accent = HGK_CIRCUMFLEX; //circumflex on ultima. e.g. (δοῦ)
-            } else {
-                accent = HGK_ACUTE; //acute on ultima. e.g. do/s (δός)
-            }
-            letter_index = syllables[0].index;
-        } else {
-            return String::from(word);
-        }
-
-        self.accent_syllable(word, letter_index, accent)
-    }
-
-    fn accent_verb_contracted(
-        &self,
-        word: &str,
-        orig_syllables: Vec<SyllableAnalysis>,
-        ending: &str,
-    ) -> String {
-        let syl = analyze_syllable_quantities(
-            word,
-            self.person,
-            self.number,
-            self.tense,
-            self.mood,
-            self.verb.properties,
-        );
-
-        let esyl = analyze_syllable_quantities(
-            ending,
-            self.person,
-            self.number,
-            self.tense,
-            self.mood,
-            self.verb.properties,
-        );
-        let accent;
-        let letter_index;
-        if orig_syllables.len() > 2 && !orig_syllables.last().unwrap().is_long {
-            if esyl.len() > 2 {
-                //has 3 or more syllables
-                accent = HGK_ACUTE;
-                letter_index = syl[syl.len() - 3].index; //accute on antepenult (ἀδικοιημεν)
-            } else if syl.last().unwrap().is_long {
-                accent = HGK_ACUTE;
-                letter_index = syl[syl.len() - 2].index; //accute on penult (ἀδικει present active imperative)
-            } else {
-                accent = HGK_CIRCUMFLEX;
-                letter_index = syl[syl.len() - 2].index; //circumflex on penult (ἀδικουμεν)
-            }
-        } else if orig_syllables.len() > 1 {
-            //uncontracted word has 2 syllables
-            if esyl.len() == 2 && esyl[1].is_long {
-                accent = HGK_ACUTE;
-                letter_index = syl[syl.len() - 2].index; //acute on penult (ἀδικοιην)
-            } else {
-                accent = HGK_CIRCUMFLEX;
-                letter_index = syl[syl.len() - 1].index; //circumflex on ultima (ἀδικω)
-            }
-        } else {
-            return String::from(word); //(nothing gets here)
-        }
-
-        self.accent_syllable(word, letter_index, accent)
-    }
-
-    fn accent_syllable(&self, word: &str, letter_index_from_end: u8, accent: u32) -> String {
-        let v = word
-            .gkletters()
-            .rev()
-            .enumerate()
-            .map(|(x, mut a)| {
-                if x == letter_index_from_end as usize {
-                    a.toggle_diacritic(accent, true);
-                    //println!("abc {:?} {:?} {:?}", a.letter, accent, letter_index_from_end);
-                }
-                a
-            })
-            .collect::<Vec<HGKLetter>>();
-
-        let s = v
-            .iter()
-            .rev()
-            .map(|a| a.to_string(HgkUnicodeMode::Precomposed))
-            .collect::<String>();
-        s
-    }
-
-    fn accent_syllable_start(&self, word: &str, letter_index_from_end: u8, accent: u32) -> String {
-        let v = word
-            .gkletters()
-            .enumerate()
-            .map(|(x, mut a)| {
-                if x == letter_index_from_end as usize {
-                    a.toggle_diacritic(accent, true);
-                    //println!("abc {:?} {:?} {:?}", a.letter, accent, letter_index_from_end);
-                }
-                a
-            })
-            .collect::<Vec<HGKLetter>>();
-
-        let s = v
-            .iter()
-            .map(|a| a.to_string(HgkUnicodeMode::Precomposed))
-            .collect::<String>();
-        s
     }
 
     fn get_pp(&self) -> Option<String> {
