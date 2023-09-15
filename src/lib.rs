@@ -443,6 +443,19 @@ enum HcDeponentType {
     MiddleDeponentHgeomai,
 }
 
+impl HcDeponentType {
+    fn value(&self) -> &str {
+        match *self {
+            HcDeponentType::NotDeponent => "Not Deponent",
+            HcDeponentType::MiddleDeponent => "Middle Deponent",
+            HcDeponentType::PassiveDeponent => "Passive Deponent",
+            HcDeponentType::PartialDeponent => "Partial Deponent",
+            HcDeponentType::GignomaiDeponent => "Deponent gignomai",
+            HcDeponentType::MiddleDeponentHgeomai => "Middle Deponent with 6th pp",
+        }
+    }
+}
+
 pub const REGULAR: u32 = 0x0000;
 pub const CONSONANT_STEM_PERFECT_PHI: u32 = 0x0001;
 pub const CONSONANT_STEM_PERFECT_MU_PI: u32 = 0x0002;
@@ -468,6 +481,14 @@ pub struct HcGreekVerb {
 }
 
 impl HcGreekVerb {
+    pub fn get_verb_lemma(&self) -> String {
+        if self.pps[0] == *"—" {
+            format!("—, {}", self.pps[1]) //display 2nd pp if 1st is blank
+        } else {
+            self.pps[0].to_string()
+        }
+    }
+
     pub fn from_string(id: u32, pps: &str, props: u32, hq_unit: u32) -> Option<HcGreekVerb> {
         let x: Vec<String> = pps.split(',').map(|s| s.trim().to_owned()).collect();
         if x.len() == 6 {
@@ -2119,8 +2140,9 @@ impl HcVerbForms for HcGreekVerbForm {
                         }
                     } else if self.mood == HcMood::Imperative {
                         if decompose {
-                            if !(self.person == Some(HcPerson::Second)
-                                && self.number == Some(HcNumber::Singular))
+                            if !(local_ending.is_empty()
+                                || self.person == Some(HcPerson::Second)
+                                    && self.number == Some(HcNumber::Singular))
                             {
                                 local_ending.remove(0);
                             } else if self.verb.pps[0].ends_with("ῡμι") {
@@ -2141,7 +2163,7 @@ impl HcVerbForms for HcGreekVerbForm {
                             } else {
                                 local_ending = String::from("ι");
                             }
-                        } else {
+                        } else if !local_ending.is_empty() {
                             local_ending.remove(0);
                         }
                     } else if self.verb.pps[0].ends_with("στημι")
@@ -2997,7 +3019,9 @@ impl HcVerbForms for HcGreekVerbForm {
         //and optative outside of the present and aorist and future
         //except for oida in perfect tense
         #[allow(clippy::needless_bool)]
-        if self.mood == HcMood::Imperative && self.person == Some(HcPerson::First) {
+        if self.number == Some(HcNumber::Dual) {
+            false
+        } else if self.mood == HcMood::Imperative && self.person == Some(HcPerson::First) {
             false
         } else if (self.mood == HcMood::Subjunctive || self.mood == HcMood::Imperative)
             && self.tense != HcTense::Present
@@ -4760,9 +4784,12 @@ static ENDINGS: &[[&str; 6]; 38] = &[
 #[cfg(test)]
 mod tests {
     use super::*;
+    use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
+    use quick_xml::writer::Writer;
     use std::fs::File;
     use std::io::BufRead;
     use std::io::BufReader;
+    use std::io::{BufWriter, Write};
     use unicode_normalization::UnicodeNormalization;
 
     // #[test]
@@ -6173,18 +6200,10 @@ mod tests {
                         }
                         paradigm_line.clear();
 
-                        let partial = if verb.deponent_type() == HcDeponentType::PartialDeponent {
-                            " (Partial Deponent)"
-                        } else if verb.deponent_type() == HcDeponentType::MiddleDeponent {
-                            " (Middle Deponent)"
-                        } else if verb.deponent_type() == HcDeponentType::PassiveDeponent {
-                            " (Passive Deponent)"
-                        } else if verb.deponent_type() == HcDeponentType::GignomaiDeponent {
-                            " (Deponent gignomai)"
-                        } else if verb.deponent_type() == HcDeponentType::MiddleDeponentHgeomai {
-                            " (Middle Deponent with 6th pp)"
+                        let partial = if verb.deponent_type() == HcDeponentType::NotDeponent {
+                            "".to_string()
                         } else {
-                            ""
+                            format!(" ({})", verb.deponent_type().value())
                         };
 
                         let verb_section = format!(
@@ -6312,6 +6331,148 @@ mod tests {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn write_xml() {
+        let mut form_id = 0;
+        let mut buffer = Vec::new();
+        let mut writer = Writer::new_with_indent(&mut buffer, b' ', 4);
+
+        if let Ok(pp_file) = File::open("testdata/pp.txt") {
+            let pp_reader = BufReader::new(pp_file);
+            for (idx, pp_line) in pp_reader.lines().enumerate() {
+                if let Ok(line) = pp_line {
+                    let verb = Arc::new(
+                        HcGreekVerb::from_string_with_properties(idx as u32, &line).unwrap(),
+                    );
+
+                    let mut elem = BytesStart::new("verb");
+                    elem.push_attribute(("id", idx.to_string().as_str()));
+                    elem.push_attribute(("label", verb.get_verb_lemma().as_str()));
+                    elem.push_attribute(("unit", verb.hq_unit.to_string().as_str()));
+                    elem.push_attribute(("deponent", verb.deponent_type().value()));
+                    writer.write_event(Event::Start(elem)).unwrap();
+                    writer
+                        .write_event(Event::Text(BytesText::new(&verb.get_verb_lemma())))
+                        .unwrap();
+
+                    for x in [
+                        HcTense::Present,
+                        HcTense::Imperfect,
+                        HcTense::Future,
+                        HcTense::Aorist,
+                        HcTense::Perfect,
+                        HcTense::Pluperfect,
+                    ] {
+                        for v in [HcVoice::Active, HcVoice::Middle, HcVoice::Passive] {
+                            for m in [
+                                HcMood::Indicative,
+                                HcMood::Subjunctive,
+                                HcMood::Optative,
+                                HcMood::Imperative,
+                                HcMood::Infinitive,
+                                HcMood::Participle,
+                            ] {
+                                // let section = format!(
+                                //     "{} {} {}",
+                                //     x.value(),
+                                //     get_voice_label(x, v, m, verb.deponent_type()),
+                                //     m.value()
+                                // );
+
+                                for z in [HcNumber::Singular, HcNumber::Dual, HcNumber::Plural] {
+                                    for y in [HcPerson::First, HcPerson::Second, HcPerson::Third] {
+                                        let form = HcGreekVerbForm {
+                                            verb: verb.clone(),
+                                            person: Some(y),
+                                            number: Some(z),
+                                            tense: x,
+                                            voice: v,
+                                            mood: m,
+                                            gender: None,
+                                            case: None,
+                                        };
+                                        let r = match form.get_form(false) {
+                                            Ok(res) => res.last().unwrap().form.to_string(),
+                                            Err(_a) => "NF".to_string(),
+                                        };
+
+                                        let r_d = match form.get_form(true) {
+                                            Ok(res) => res.last().unwrap().form.to_string(),
+                                            Err(_a) => "NDF".to_string(),
+                                        };
+
+                                        // let form_line = format!(
+                                        //     "{}{}: {} ; {}",
+                                        //     y.value(),
+                                        //     z.value(),
+                                        //     str::replace(&r, " /", ","),
+                                        //     str::replace(&r_d, " /", ",")
+                                        // );
+                                        let person_label = if form.person.is_some() {
+                                            form.person.unwrap().value().to_string()
+                                        } else {
+                                            String::from("none")
+                                        };
+                                        let number_label = if form.number.is_some() {
+                                            form.number.unwrap().value().to_string()
+                                        } else {
+                                            String::from("none")
+                                        };
+
+                                        let mut elem = BytesStart::new("form");
+                                        form_id += 1;
+                                        elem.push_attribute(("id", form_id.to_string().as_str()));
+                                        elem.push_attribute(("person", person_label.as_str()));
+                                        elem.push_attribute(("number", number_label.as_str()));
+                                        elem.push_attribute(("tense", form.tense.value()));
+                                        elem.push_attribute(("mood", form.mood.value()));
+                                        elem.push_attribute(("voice", form.voice.value()));
+                                        writer.write_event(Event::Start(elem)).unwrap();
+                                        //writer.write_event(Event::Text(BytesText::new(&verb.get_verb_lemma())));
+
+                                        let mut elemf = BytesStart::new("f");
+                                        elemf.push_attribute(("id", idx.to_string().as_str()));
+                                        writer.write_event(Event::Start(elemf)).unwrap();
+                                        writer
+                                            .write_event(Event::Text(BytesText::new(&r)))
+                                            .unwrap();
+                                        writer.write_event(Event::End(BytesEnd::new("f"))).unwrap();
+
+                                        let mut elemd = BytesStart::new("d");
+                                        elemd.push_attribute(("id", idx.to_string().as_str()));
+                                        writer.write_event(Event::Start(elemd)).unwrap();
+                                        writer
+                                            .write_event(Event::Text(BytesText::new(&r_d)))
+                                            .unwrap();
+                                        writer.write_event(Event::End(BytesEnd::new("d"))).unwrap();
+
+                                        writer
+                                            .write_event(Event::End(BytesEnd::new("form")))
+                                            .unwrap();
+                                        //println!("{}", form_line);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                writer
+                    .write_event(Event::End(BytesEnd::new("verb")))
+                    .unwrap();
+            }
+            let result = writer.into_inner();
+
+            if let Ok(file) = std::fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open("output.xml")
+            {
+                let mut f = BufWriter::new(file);
+                f.write_all(result).unwrap();
             }
         }
     }

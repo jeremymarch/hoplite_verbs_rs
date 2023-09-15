@@ -17,6 +17,7 @@ rand = "0.8.5"
 
 [dev-dependencies]
 criterion = "0.4.0"
+quick-xml = "0.30"
 
 [lib]
 doctest = false # don't run Doc-tests for now
