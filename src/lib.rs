@@ -179,6 +179,21 @@ pub enum HcFormError {
     NotImplemented,
 }
 
+impl HcFormError {
+    fn value(&self) -> &str {
+        match *self {
+            HcFormError::InternalError => "InternalError",
+            HcFormError::BlankPrincipalPartForForm => "BlankPrincipalPart",
+            HcFormError::UnexpectedPrincipalPartEnding => "InvalidPrincipalPart",
+            HcFormError::Deponent => "DeponentNoFormForVoice",
+            HcFormError::IllegalForm => "IllegalForm",
+            HcFormError::DoesNotExist => "DoesNotExist",
+            HcFormError::NotAvailableInUnit => "NoFormForUnit",
+            HcFormError::NotImplemented => "NotImplemented",
+        }
+    }
+}
+
 #[derive(Eq, PartialEq, Debug)]
 enum HcEndings {
     PresentActiveInd,
@@ -6343,21 +6358,23 @@ mod tests {
 
         if let Ok(pp_file) = File::open("testdata/pp.txt") {
             let pp_reader = BufReader::new(pp_file);
-            for (idx, pp_line) in pp_reader.lines().enumerate() {
+            for (verb_idx, pp_line) in pp_reader.lines().enumerate() {
                 if let Ok(line) = pp_line {
                     let verb = Arc::new(
-                        HcGreekVerb::from_string_with_properties(idx as u32, &line).unwrap(),
+                        HcGreekVerb::from_string_with_properties((verb_idx + 1) as u32, &line)
+                            .unwrap(),
                     );
 
                     let mut elem = BytesStart::new("verb");
-                    elem.push_attribute(("id", idx.to_string().as_str()));
+                    elem.push_attribute(("id", (verb_idx + 1).to_string().as_str()));
                     elem.push_attribute(("label", verb.get_verb_lemma().as_str()));
                     elem.push_attribute(("unit", verb.hq_unit.to_string().as_str()));
                     elem.push_attribute(("deponent", verb.deponent_type().value()));
+                    elem.push_attribute(("pps", verb.pps.join(", ").as_str()));
                     writer.write_event(Event::Start(elem)).unwrap();
-                    writer
-                        .write_event(Event::Text(BytesText::new(&verb.get_verb_lemma())))
-                        .unwrap();
+                    // writer
+                    //     .write_event(Event::Text(BytesText::new(&verb.get_verb_lemma())))
+                    //     .unwrap();
 
                     for x in [
                         HcTense::Present,
@@ -6376,51 +6393,40 @@ mod tests {
                                 HcMood::Infinitive,
                                 HcMood::Participle,
                             ] {
-                                // let section = format!(
-                                //     "{} {} {}",
-                                //     x.value(),
-                                //     get_voice_label(x, v, m, verb.deponent_type()),
-                                //     m.value()
-                                // );
-
-                                for z in [HcNumber::Singular, HcNumber::Dual, HcNumber::Plural] {
-                                    for y in [HcPerson::First, HcPerson::Second, HcPerson::Third] {
+                                for z in [
+                                    None,
+                                    Some(HcNumber::Singular),
+                                    Some(HcNumber::Dual),
+                                    Some(HcNumber::Plural),
+                                ] {
+                                    for y in [
+                                        None,
+                                        Some(HcPerson::First),
+                                        Some(HcPerson::Second),
+                                        Some(HcPerson::Third),
+                                    ] {
                                         let form = HcGreekVerbForm {
                                             verb: verb.clone(),
-                                            person: Some(y),
-                                            number: Some(z),
+                                            person: y,
+                                            number: z,
                                             tense: x,
                                             voice: v,
                                             mood: m,
                                             gender: None,
                                             case: None,
                                         };
-                                        let r = match form.get_form(false) {
-                                            Ok(res) => res.last().unwrap().form.to_string(),
-                                            Err(_a) => "NF".to_string(),
-                                        };
+                                        let form_result = form.get_form(false);
+                                        let form_result_decomposed = form.get_form(true);
 
-                                        let r_d = match form.get_form(true) {
-                                            Ok(res) => res.last().unwrap().form.to_string(),
-                                            Err(_a) => "NDF".to_string(),
-                                        };
-
-                                        // let form_line = format!(
-                                        //     "{}{}: {} ; {}",
-                                        //     y.value(),
-                                        //     z.value(),
-                                        //     str::replace(&r, " /", ","),
-                                        //     str::replace(&r_d, " /", ",")
-                                        // );
                                         let person_label = if form.person.is_some() {
                                             form.person.unwrap().value().to_string()
                                         } else {
-                                            String::from("none")
+                                            String::from("None")
                                         };
                                         let number_label = if form.number.is_some() {
                                             form.number.unwrap().value().to_string()
                                         } else {
-                                            String::from("none")
+                                            String::from("None")
                                         };
 
                                         let mut elem = BytesStart::new("form");
@@ -6431,24 +6437,51 @@ mod tests {
                                         elem.push_attribute(("tense", form.tense.value()));
                                         elem.push_attribute(("mood", form.mood.value()));
                                         elem.push_attribute(("voice", form.voice.value()));
+
+                                        if let Err(ref res) = form_result {
+                                            elem.push_attribute(("status", res.value()));
+                                        }
+                                        if let Err(ref res) = form_result_decomposed {
+                                            elem.push_attribute(("statusd", res.value()));
+                                        }
+                                        elem.push_attribute((
+                                            "voicelabel",
+                                            get_voice_label(x, v, m, verb.deponent_type()).as_str(),
+                                        ));
+
                                         writer.write_event(Event::Start(elem)).unwrap();
-                                        //writer.write_event(Event::Text(BytesText::new(&verb.get_verb_lemma())));
-
-                                        let mut elemf = BytesStart::new("f");
-                                        elemf.push_attribute(("id", idx.to_string().as_str()));
-                                        writer.write_event(Event::Start(elemf)).unwrap();
-                                        writer
-                                            .write_event(Event::Text(BytesText::new(&r)))
-                                            .unwrap();
-                                        writer.write_event(Event::End(BytesEnd::new("f"))).unwrap();
-
-                                        let mut elemd = BytesStart::new("d");
-                                        elemd.push_attribute(("id", idx.to_string().as_str()));
-                                        writer.write_event(Event::Start(elemd)).unwrap();
-                                        writer
-                                            .write_event(Event::Text(BytesText::new(&r_d)))
-                                            .unwrap();
-                                        writer.write_event(Event::End(BytesEnd::new("d"))).unwrap();
+                                        if let Ok(res) = form_result {
+                                            let elemf = BytesStart::new("f");
+                                            writer.write_event(Event::Start(elemf)).unwrap();
+                                            writer
+                                                .write_event(Event::Text(BytesText::new(
+                                                    &res.last()
+                                                        .unwrap()
+                                                        .form
+                                                        .to_string()
+                                                        .replace(" /", ","),
+                                                )))
+                                                .unwrap();
+                                            writer
+                                                .write_event(Event::End(BytesEnd::new("f")))
+                                                .unwrap();
+                                        }
+                                        if let Ok(res) = form_result_decomposed {
+                                            let elemd = BytesStart::new("d");
+                                            writer.write_event(Event::Start(elemd)).unwrap();
+                                            writer
+                                                .write_event(Event::Text(BytesText::new(
+                                                    &res.last()
+                                                        .unwrap()
+                                                        .form
+                                                        .to_string()
+                                                        .replace(" /", ","),
+                                                )))
+                                                .unwrap();
+                                            writer
+                                                .write_event(Event::End(BytesEnd::new("d")))
+                                                .unwrap();
+                                        }
 
                                         writer
                                             .write_event(Event::End(BytesEnd::new("form")))
