@@ -422,20 +422,41 @@ impl HcMood {
     }
 }
 
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub enum HcGender {
     Masculine,
     Feminine,
     Neuter,
 }
+impl HcGender {
+    fn value(&self) -> &str {
+        match *self {
+            HcGender::Masculine => "Masculine",
+            HcGender::Feminine => "Feminine",
+            HcGender::Neuter => "Neuter",
+        }
+    }
+}
 
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub enum HcCase {
     Nominative,
     Genitive,
     Dative,
     Accusative,
     Vocative,
+}
+
+impl HcCase {
+    fn value(&self) -> &str {
+        match *self {
+            HcCase::Nominative => "Nominative",
+            HcCase::Genitive => "Genitive",
+            HcCase::Dative => "Dative",
+            HcCase::Accusative => "Accusative",
+            HcCase::Vocative => "Vocative",
+        }
+    }
 }
 
 #[derive(Eq, PartialEq, Debug)]
@@ -6355,13 +6376,17 @@ mod tests {
     }
 
     #[test]
-    fn write_xml() {
+    fn finite_write_xml() {
         let mut form_id = 0;
         let mut buffer = Vec::new();
         let mut writer = Writer::new_with_indent(&mut buffer, b' ', 4);
 
         if let Ok(pp_file) = File::open("testdata/pp.txt") {
             let pp_reader = BufReader::new(pp_file);
+
+            let elem = BytesStart::new("greek-finite-verbs");
+            writer.write_event(Event::Start(elem)).unwrap();
+
             for (verb_idx, pp_line) in pp_reader.lines().enumerate() {
                 if let Ok(line) = pp_line {
                     let verb = Arc::new(
@@ -6376,9 +6401,6 @@ mod tests {
                     elem.push_attribute(("deponent", verb.deponent_type().value()));
                     elem.push_attribute(("pps", verb.pps.join(", ").as_str()));
                     writer.write_event(Event::Start(elem)).unwrap();
-                    // writer
-                    //     .write_event(Event::Text(BytesText::new(&verb.get_verb_lemma())))
-                    //     .unwrap();
 
                     for x in [
                         HcTense::Present,
@@ -6394,8 +6416,6 @@ mod tests {
                                 HcMood::Subjunctive,
                                 HcMood::Optative,
                                 HcMood::Imperative,
-                                HcMood::Infinitive,
-                                HcMood::Participle,
                             ] {
                                 for z in [
                                     None,
@@ -6446,10 +6466,10 @@ mod tests {
                                             elem.push_attribute(("status", res.value()));
                                         }
                                         if let Err(ref res) = form_result_decomposed {
-                                            elem.push_attribute(("statusd", res.value()));
+                                            elem.push_attribute(("status-decomposed", res.value()));
                                         }
                                         elem.push_attribute((
-                                            "voicelabel",
+                                            "voice-label",
                                             get_voice_label(x, v, m, verb.deponent_type()).as_str(),
                                         ));
 
@@ -6501,12 +6521,147 @@ mod tests {
                     .write_event(Event::End(BytesEnd::new("verb")))
                     .unwrap();
             }
+            writer
+                .write_event(Event::End(BytesEnd::new("greek-finite-verbs")))
+                .unwrap();
             let result = writer.into_inner();
 
             if let Ok(file) = std::fs::OpenOptions::new()
                 .create(true)
                 .write(true)
-                .open("output.xml")
+                .truncate(true)
+                .open("testdata/greek-finite-verbs.xml")
+            {
+                let mut f = BufWriter::new(file);
+                f.write_all(result).unwrap();
+            }
+        }
+    }
+
+    #[test]
+    fn infinitive_write_xml() {
+        let mut form_id = 0;
+        let mut buffer = Vec::new();
+        let mut writer = Writer::new_with_indent(&mut buffer, b' ', 4);
+
+        if let Ok(pp_file) = File::open("testdata/pp.txt") {
+            let pp_reader = BufReader::new(pp_file);
+
+            let elem = BytesStart::new("greek-infinitives");
+            writer.write_event(Event::Start(elem)).unwrap();
+
+            for (verb_idx, pp_line) in pp_reader.lines().enumerate() {
+                if let Ok(line) = pp_line {
+                    let verb = Arc::new(
+                        HcGreekVerb::from_string_with_properties((verb_idx + 1) as u32, &line)
+                            .unwrap(),
+                    );
+
+                    let mut elem = BytesStart::new("verb");
+                    elem.push_attribute(("id", (verb_idx + 1).to_string().as_str()));
+                    elem.push_attribute(("label", verb.get_verb_lemma().as_str()));
+                    elem.push_attribute(("unit", verb.hq_unit.to_string().as_str()));
+                    elem.push_attribute(("deponent", verb.deponent_type().value()));
+                    elem.push_attribute(("pps", verb.pps.join(", ").as_str()));
+                    writer.write_event(Event::Start(elem)).unwrap();
+
+                    for x in [
+                        HcTense::Present,
+                        //HcTense::Imperfect,
+                        HcTense::Future,
+                        HcTense::Aorist,
+                        HcTense::Perfect,
+                        //HcTense::Pluperfect,
+                    ] {
+                        for v in [HcVoice::Active, HcVoice::Middle, HcVoice::Passive] {
+                            let form = HcGreekVerbForm {
+                                verb: verb.clone(),
+                                person: None,
+                                number: None,
+                                tense: x,
+                                voice: v,
+                                mood: HcMood::Infinitive,
+                                gender: None,
+                                case: None,
+                            };
+                            let form_result = form.get_form(false);
+                            let form_result_decomposed = form.get_form(true);
+
+                            let person_label = if form.person.is_some() {
+                                form.person.unwrap().value().to_string()
+                            } else {
+                                String::from("None")
+                            };
+                            let number_label = if form.number.is_some() {
+                                form.number.unwrap().value().to_string()
+                            } else {
+                                String::from("None")
+                            };
+
+                            let mut elem = BytesStart::new("form");
+                            form_id += 1;
+                            elem.push_attribute(("id", form_id.to_string().as_str()));
+                            elem.push_attribute(("person", person_label.as_str()));
+                            elem.push_attribute(("number", number_label.as_str()));
+                            elem.push_attribute(("tense", form.tense.value()));
+                            elem.push_attribute(("mood", form.mood.value()));
+                            elem.push_attribute(("voice", form.voice.value()));
+
+                            if let Err(ref res) = form_result {
+                                elem.push_attribute(("status", res.value()));
+                            }
+                            if let Err(ref res) = form_result_decomposed {
+                                elem.push_attribute(("status-decomposed", res.value()));
+                            }
+                            elem.push_attribute((
+                                "voice-label",
+                                get_voice_label(x, v, HcMood::Infinitive, verb.deponent_type())
+                                    .as_str(),
+                            ));
+
+                            writer.write_event(Event::Start(elem)).unwrap();
+                            if let Ok(res) = form_result {
+                                let elemf = BytesStart::new("f");
+                                writer.write_event(Event::Start(elemf)).unwrap();
+                                writer
+                                    .write_event(Event::Text(BytesText::new(
+                                        &res.last().unwrap().form.to_string().replace(" /", ","),
+                                    )))
+                                    .unwrap();
+                                writer.write_event(Event::End(BytesEnd::new("f"))).unwrap();
+                            }
+                            if let Ok(res) = form_result_decomposed {
+                                let elemd = BytesStart::new("d");
+                                writer.write_event(Event::Start(elemd)).unwrap();
+                                writer
+                                    .write_event(Event::Text(BytesText::new(
+                                        &res.last().unwrap().form.to_string().replace(" /", ","),
+                                    )))
+                                    .unwrap();
+                                writer.write_event(Event::End(BytesEnd::new("d"))).unwrap();
+                            }
+
+                            writer
+                                .write_event(Event::End(BytesEnd::new("form")))
+                                .unwrap();
+                            //println!("{}", form_line);
+                        }
+                    }
+                }
+                writer
+                    .write_event(Event::End(BytesEnd::new("verb")))
+                    .unwrap();
+            }
+            writer
+                .write_event(Event::End(BytesEnd::new("greek-infinitives")))
+                .unwrap();
+            let result = writer.into_inner();
+
+            if let Ok(file) = std::fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open("testdata/greek-infinitives.xml")
             {
                 let mut f = BufWriter::new(file);
                 f.write_all(result).unwrap();
