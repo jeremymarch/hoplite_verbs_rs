@@ -552,6 +552,8 @@ impl HcGreekVerb {
             if let Some(s) = ll.next() {
                 if s.contains("CONSONANT_STEM_PERFECT_PI") {
                     properties |= CONSONANT_STEM_PERFECT_PI;
+                } else if s.contains("CONSONANT_STEM_PERFECT_MU_PI") {
+                    properties |= CONSONANT_STEM_PERFECT_MU_PI;
                 } else if s.contains("CONSONANT_STEM_PERFECT_GAMMA") {
                     properties |= CONSONANT_STEM_PERFECT_GAMMA;
                 } else if s.contains("CONSONANT_STEM_PERFECT_KAPPA") {
@@ -564,6 +566,8 @@ impl HcGreekVerb {
                     properties |= CONSONANT_STEM_PERFECT_LAMBDA;
                 } else if s.contains("CONSONANT_STEM_PERFECT_NU") {
                     properties |= CONSONANT_STEM_PERFECT_NU;
+                } else if s.contains("CONSONANT_STEM_PERFECT_SIGMA") {
+                    properties |= CONSONANT_STEM_PERFECT_SIGMA;
                 }
                 if s.contains("PREFIXED") {
                     properties |= PREFIXED;
@@ -612,12 +616,14 @@ impl HcGreekVerb {
     }
     fn is_consonant_stem(&self) -> bool {
         self.properties & CONSONANT_STEM_PERFECT_PI == CONSONANT_STEM_PERFECT_PI
+            || self.properties & CONSONANT_STEM_PERFECT_MU_PI == CONSONANT_STEM_PERFECT_MU_PI
             || self.properties & CONSONANT_STEM_PERFECT_GAMMA == CONSONANT_STEM_PERFECT_GAMMA
             || self.properties & CONSONANT_STEM_PERFECT_KAPPA == CONSONANT_STEM_PERFECT_KAPPA
             || self.properties & CONSONANT_STEM_PERFECT_CHI == CONSONANT_STEM_PERFECT_CHI
             || self.properties & CONSONANT_STEM_PERFECT_BETA == CONSONANT_STEM_PERFECT_BETA
             || self.properties & CONSONANT_STEM_PERFECT_LAMBDA == CONSONANT_STEM_PERFECT_LAMBDA
             || self.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU
+            || self.properties & CONSONANT_STEM_PERFECT_SIGMA == CONSONANT_STEM_PERFECT_SIGMA
     }
 }
 
@@ -696,16 +702,91 @@ fn get_voice_label(
     }
 }
 
+trait ReplaceLast {
+    fn replace_last(&self, r: char) -> String;
+}
+
+impl ReplaceLast for String {
+    fn replace_last(&self, r: char) -> String {
+        self.chars()
+            .enumerate()
+            .map(|(i, c)| if i == self.chars().count() - 1 { r } else { c })
+            .collect::<String>()
+    }
+}
+
 impl HcGreekVerbForm {
-    fn contract_consonants(&self, unaccented_form: &str) -> String {
+    fn contract_consonants(&self, unaccented_form: &str, ending: &str) -> String {
         let mut form = unaccented_form.to_string();
 
-        if form.contains("γσθαι") {
-            form = form.replacen("γσθαι", "χθαι", 1);
-        } else if form.contains("κσθαι") {
-            form = form.replacen("κσθαι", "χθαι", 1);
-        } else if form.contains("χσθαι") {
-            form = form.replacen("χσθαι", "χθαι", 1);
+        // add original consonant when remove ending
+        if self.verb.properties & CONSONANT_STEM_PERFECT_PHI == CONSONANT_STEM_PERFECT_PHI {
+            form = form.replace_last('φ');
+        } else if self.verb.properties & CONSONANT_STEM_PERFECT_MU_PI
+            == CONSONANT_STEM_PERFECT_MU_PI
+        {
+            form.push('π');
+        } else if self.verb.properties & CONSONANT_STEM_PERFECT_KAPPA
+            == CONSONANT_STEM_PERFECT_KAPPA
+        {
+            form = form.replace_last('κ');
+        } else if self.verb.properties & CONSONANT_STEM_PERFECT_PI == CONSONANT_STEM_PERFECT_PI {
+            form = form.replace_last('π');
+        } else if self.verb.properties & CONSONANT_STEM_PERFECT_BETA == CONSONANT_STEM_PERFECT_BETA
+        {
+            form = form.replace_last('β');
+        } else if self.verb.properties & CONSONANT_STEM_PERFECT_CHI == CONSONANT_STEM_PERFECT_CHI {
+            form = form.replace_last('χ');
+        } else if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU {
+            form = form.replace_last('ν');
+        }
+
+        let replacements = [
+            //phi
+            ["φ", "σθ", "φσθ", "φθ"],
+            ["φ", "μ", "φμ", "μμ"],
+            ["φ", "σ", "φσ", "ψ"],
+            ["φ", "τ", "φτ", "πτ"],
+            //pi
+            ["π", "σθ", "πσθ", "φθ"],
+            ["π", "μ", "πμ", "μμ"],
+            ["π", "σ", "πσ", "ψ"],
+            //["π", "τ", "πτ", "πτ"], //no replace
+            //beta
+            ["β", "σθ", "βσθ", "φθ"],
+            ["β", "μ", "βμ", "μμ"],
+            ["β", "σ", "βσ", "ψ"],
+            ["β", "τ", "βτ", "πτ"],
+            //kappa
+            ["κ", "σθ", "κσθ", "χθ"],
+            ["κ", "μ", "κμ", "γμ"],
+            ["κ", "σ", "κσ", "ξ"],
+            //["κ", "τ", "κτ", "κτ"], //no replace
+            //chi
+            ["χ", "σθ", "χσθ", "χθ"],
+            ["χ", "μ", "χμ", "γμ"],
+            ["χ", "σ", "χσ", "ξ"],
+            ["χ", "τ", "χτ", "κτ"],
+            //gamma
+            ["γ", "σθ", "γσθ", "χθ"],
+            //["γ", "μ", "γμ", "γμ"],  //no replace
+            ["γ", "σ", "γσ", "ξ"],
+            ["γ", "τ", "γτ", "κτ"],
+            //sigma
+            ["σ", "σ", "σσ", "σ"],
+            //lambda
+            ["λ", "σθ", "λσθ", "λθ"],
+            //nu
+            ["ν", "σθ", "νσθ", "νθ"],
+            ["ν", "μ", "νμ", "μμ"],
+        ];
+
+        for r in replacements {
+            if form.ends_with(r[0]) && ending.starts_with(r[1]) {
+                form.push_str(ending);
+                form = form.replacen(r[2], r[3], 1);
+                break;
+            }
         }
         form
     }
@@ -2760,18 +2841,17 @@ impl HcVerbForms for HcGreekVerbForm {
                 local_stem, SEPARATOR, future_passive_suffix, local_ending
             ))
         } else {
-            //come take see say find: elthe/ labe/ eide/ eipe/ eyre/
-            if local_stem == "ἐλθ" && local_ending == "ε" {
-                local_ending = "έ".to_string();
-            } else if local_stem == "λαβ" && local_ending == "ε" {
-                local_ending = "έ".to_string();
-            } else if local_stem == "ἰδ" && local_ending == "ε" {
-                local_ending = "έ".to_string();
-            } else if local_stem == "εἰπ" && local_ending == "ε" {
-                local_ending = "έ".to_string();
-            } else if local_stem == "εὑρ" && local_ending == "ε" {
+            //come take see say find: elthe/ labe/ ide/ eipe/ eyre/
+            if local_ending == "ε"
+                && (local_stem == "ἐλθ"
+                    || local_stem == "λαβ"
+                    || local_stem == "ἰδ"
+                    || local_stem == "εἰπ"
+                    || local_stem == "εὑρ")
+            {
                 local_ending = "έ".to_string();
             }
+
             Ok(format!(
                 "{}{}{}",
                 local_stem, future_passive_suffix, local_ending
@@ -3483,92 +3563,97 @@ impl HcVerbForms for HcGreekVerbForm {
                     let mut new_stem = a.clone();
                     let infinitive = if self.tense == HcTense::Perfect
                         && self.voice != HcVoice::Active
-                        && self.verb.properties & CONSONANT_STEM_PERFECT_PHI
-                            == CONSONANT_STEM_PERFECT_PHI
+                        && self.verb.is_consonant_stem()
                     {
-                        new_stem.pop();
-                        format!("{}{}", new_stem, "φθαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && self.verb.properties & CONSONANT_STEM_PERFECT_MU_PI
-                            == CONSONANT_STEM_PERFECT_MU_PI
-                    {
-                        format!("{}{}", new_stem, "φθαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && self.verb.properties & CONSONANT_STEM_PERFECT_KAPPA
-                            == CONSONANT_STEM_PERFECT_KAPPA
-                    {
-                        new_stem.pop();
-                        format!("{}{}", new_stem, "χθαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && self.verb.properties & CONSONANT_STEM_PERFECT_SIGMA
-                            == CONSONANT_STEM_PERFECT_SIGMA
-                    {
-                        format!("{}{}", new_stem, "φθαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && self.verb.properties & CONSONANT_STEM_PERFECT_SIGMA_2
-                            == CONSONANT_STEM_PERFECT_SIGMA_2
-                    {
-                        format!("{}{}", new_stem, "φθαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && self.verb.properties & CONSONANT_STEM_PERFECT_LAMBDA
-                            == CONSONANT_STEM_PERFECT_LAMBDA
-                    {
-                        format!("{}{}", new_stem, "θαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && self.verb.properties & CONSONANT_STEM_PERFECT_PI
-                            == CONSONANT_STEM_PERFECT_PI
-                        && new_stem.ends_with('μ')
-                    //because ὁράω has two
-                    {
-                        new_stem.pop();
-                        format!("{}{}", new_stem, "φθαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && self.verb.properties & CONSONANT_STEM_PERFECT_BETA
-                            == CONSONANT_STEM_PERFECT_BETA
-                    {
-                        new_stem.pop();
-                        format!("{}{}", new_stem, "φθαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && self.verb.properties & CONSONANT_STEM_PERFECT_GAMMA
-                            == CONSONANT_STEM_PERFECT_GAMMA
-                        && new_stem.ends_with('γ')
-                    //because λέγω has two
-                    {
-                        new_stem.pop();
-                        format!("{}{}", new_stem, "χθαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && self.verb.properties & CONSONANT_STEM_PERFECT_CHI
-                            == CONSONANT_STEM_PERFECT_CHI
-                    {
-                        new_stem.pop();
-                        format!("{}{}", new_stem, "χθαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && self.verb.properties & CONSONANT_STEM_PERFECT_NU
-                            == CONSONANT_STEM_PERFECT_NU
-                    {
-                        new_stem.pop();
-                        format!("{}{}", new_stem, "νθαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && new_stem.ends_with("πεπεμ")
-                    {
-                        format!("{}{}", new_stem, "φθαι")
-                    } else if self.tense == HcTense::Perfect
-                        && self.voice != HcVoice::Active
-                        && new_stem.ends_with('σ')
-                    {
-                        new_stem.pop();
-                        format!("{}{}", new_stem, "σθαι")
+                        self.contract_consonants(&new_stem, e)
+                    /*
+                      && self.verb.properties & CONSONANT_STEM_PERFECT_PHI
+                             == CONSONANT_STEM_PERFECT_PHI
+                     {
+                         new_stem.pop();
+                         format!("{}{}", new_stem, "φθαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && self.verb.properties & CONSONANT_STEM_PERFECT_MU_PI
+                             == CONSONANT_STEM_PERFECT_MU_PI
+                     {
+                         format!("{}{}", new_stem, "φθαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && self.verb.properties & CONSONANT_STEM_PERFECT_KAPPA
+                             == CONSONANT_STEM_PERFECT_KAPPA
+                     {
+                         new_stem.pop();
+                         format!("{}{}", new_stem, "χθαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && self.verb.properties & CONSONANT_STEM_PERFECT_SIGMA
+                             == CONSONANT_STEM_PERFECT_SIGMA
+                     {
+                         format!("{}{}", new_stem, "φθαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && self.verb.properties & CONSONANT_STEM_PERFECT_SIGMA_2
+                             == CONSONANT_STEM_PERFECT_SIGMA_2
+                     {
+                         format!("{}{}", new_stem, "φθαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && self.verb.properties & CONSONANT_STEM_PERFECT_LAMBDA
+                             == CONSONANT_STEM_PERFECT_LAMBDA
+                     {
+                         format!("{}{}", new_stem, "θαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && self.verb.properties & CONSONANT_STEM_PERFECT_PI
+                             == CONSONANT_STEM_PERFECT_PI
+                         && new_stem.ends_with('μ')
+                     //because ὁράω has two
+                     {
+                         new_stem.pop();
+                         format!("{}{}", new_stem, "φθαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && self.verb.properties & CONSONANT_STEM_PERFECT_BETA
+                             == CONSONANT_STEM_PERFECT_BETA
+                     {
+                         new_stem.pop();
+                         format!("{}{}", new_stem, "φθαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && self.verb.properties & CONSONANT_STEM_PERFECT_GAMMA
+                             == CONSONANT_STEM_PERFECT_GAMMA
+                         && new_stem.ends_with('γ')
+                     //because λέγω has two
+                     {
+                         new_stem.pop();
+                         format!("{}{}", new_stem, "χθαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && self.verb.properties & CONSONANT_STEM_PERFECT_CHI
+                             == CONSONANT_STEM_PERFECT_CHI
+                     {
+                         new_stem.pop();
+                         format!("{}{}", new_stem, "χθαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && self.verb.properties & CONSONANT_STEM_PERFECT_NU
+                             == CONSONANT_STEM_PERFECT_NU
+                     {
+                         new_stem.pop();
+                         format!("{}{}", new_stem, "νθαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && new_stem.ends_with("πεπεμ")
+                     {
+                         format!("{}{}", new_stem, "φθαι")
+                     } else if self.tense == HcTense::Perfect
+                         && self.voice != HcVoice::Active
+                         && new_stem.ends_with('σ')
+                     {
+                         new_stem.pop();
+                         format!("{}{}", new_stem, "σθαι")
+                    */
                     } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("άω") {
                         if self.voice == HcVoice::Active {
                             new_stem.pop();
@@ -5067,7 +5152,9 @@ mod tests {
         assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "πεφάνθαι");
 
         let consonant_stem = "κελεύω, κελεύσω, ἐκέλευσα, κεκέλευκα, κεκέλευσμαι, ἐκελεύσθην";
-        let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
+        let a = Arc::new(
+            HcGreekVerb::from_string(1, consonant_stem, CONSONANT_STEM_PERFECT_SIGMA, 0).unwrap(),
+        );
         let b = HcGreekVerbForm {
             verb: a.clone(),
             person: None,
@@ -5084,7 +5171,9 @@ mod tests {
         );
 
         let consonant_stem = "πέμπω, πέμψω, ἔπεμψα, πέπομφα, πέπεμμαι, ἐπέμφθην";
-        let a = Arc::new(HcGreekVerb::from_string(1, consonant_stem, REGULAR, 0).unwrap());
+        let a = Arc::new(
+            HcGreekVerb::from_string(1, consonant_stem, CONSONANT_STEM_PERFECT_MU_PI, 0).unwrap(),
+        );
         let b = HcGreekVerbForm {
             verb: a.clone(),
             person: None,
@@ -6506,11 +6595,9 @@ mod tests {
                                                 .write_event(Event::End(BytesEnd::new("d")))
                                                 .unwrap();
                                         }
-
                                         writer
                                             .write_event(Event::End(BytesEnd::new("form")))
                                             .unwrap();
-                                        //println!("{}", form_line);
                                     }
                                 }
                             }
