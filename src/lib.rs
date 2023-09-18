@@ -568,6 +568,8 @@ impl HcGreekVerb {
                     properties |= CONSONANT_STEM_PERFECT_NU;
                 } else if s.contains("CONSONANT_STEM_PERFECT_SIGMA") {
                     properties |= CONSONANT_STEM_PERFECT_SIGMA;
+                } else if s.contains("CONSONANT_STEM_PERFECT_PHI") {
+                    properties |= CONSONANT_STEM_PERFECT_PHI;
                 }
                 if s.contains("PREFIXED") {
                     properties |= PREFIXED;
@@ -624,6 +626,7 @@ impl HcGreekVerb {
             || self.properties & CONSONANT_STEM_PERFECT_LAMBDA == CONSONANT_STEM_PERFECT_LAMBDA
             || self.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU
             || self.properties & CONSONANT_STEM_PERFECT_SIGMA == CONSONANT_STEM_PERFECT_SIGMA
+            || self.properties & CONSONANT_STEM_PERFECT_PHI == CONSONANT_STEM_PERFECT_PHI
     }
 }
 
@@ -716,16 +719,32 @@ impl ReplaceLast for String {
 }
 
 impl HcGreekVerbForm {
-    fn contract_consonants(&self, unaccented_form: &str, ending: &str) -> String {
+    fn contract_consonants(&self, unaccented_form: &str, ending: &str, decompose: bool) -> String {
+        //3rd plural and account for non-consonant stem version of swzw
+        if self.person == Some(HcPerson::Third)
+            && self.number == Some(HcNumber::Plural)
+            && unaccented_form != "σεσω"
+            && unaccented_form != "ἐσεσω"
+            && unaccented_form != "ε ‐ σεσω"
+        {
+            return String::from("—");
+        }
+        if self.person == Some(HcPerson::Second)
+            && self.number == Some(HcNumber::Singular)
+            && (unaccented_form == "ᾐσχυμ"
+                || unaccented_form == "πεφασ"
+                || unaccented_form == "ἐπεφασ"
+                || unaccented_form == "ε ‐ πεφασ")
+        {
+            return String::from("—");
+        }
         let mut form = unaccented_form.to_string();
 
         // add original consonant when remove ending
-        if self.verb.properties & CONSONANT_STEM_PERFECT_PHI == CONSONANT_STEM_PERFECT_PHI {
-            form = form.replace_last('φ');
-        } else if self.verb.properties & CONSONANT_STEM_PERFECT_MU_PI
-            == CONSONANT_STEM_PERFECT_MU_PI
-        {
+        if self.verb.properties & CONSONANT_STEM_PERFECT_MU_PI == CONSONANT_STEM_PERFECT_MU_PI {
             form.push('π');
+        } else if self.verb.properties & CONSONANT_STEM_PERFECT_PHI == CONSONANT_STEM_PERFECT_PHI {
+            form = form.replace_last('φ');
         } else if self.verb.properties & CONSONANT_STEM_PERFECT_KAPPA
             == CONSONANT_STEM_PERFECT_KAPPA
         {
@@ -737,8 +756,18 @@ impl HcGreekVerbForm {
             form = form.replace_last('β');
         } else if self.verb.properties & CONSONANT_STEM_PERFECT_CHI == CONSONANT_STEM_PERFECT_CHI {
             form = form.replace_last('χ');
-        } else if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU {
+        } else if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU
+            && (unaccented_form == "ᾐσχυμ"
+                || ((unaccented_form == "πεφασ"
+                    || unaccented_form == "ἐπεφασ"
+                    || unaccented_form == "ε ‐ πεφασ")
+                    && (self.person != Some(HcPerson::First) || decompose)))
+        {
             form = form.replace_last('ν');
+        }
+
+        if decompose {
+            return format!("{} {} {}", form, SEPARATOR, ending);
         }
 
         let replacements = [
@@ -749,9 +778,10 @@ impl HcGreekVerbForm {
             ["φ", "τ", "φτ", "πτ"],
             //pi
             ["π", "σθ", "πσθ", "φθ"],
+            ["μπ", "μ", "μπμ", "μμ"], //pempw
             ["π", "μ", "πμ", "μμ"],
             ["π", "σ", "πσ", "ψ"],
-            //["π", "τ", "πτ", "πτ"], //no replace
+            ["π", "τ", "πτ", "πτ"], //no replace
             //beta
             ["β", "σθ", "βσθ", "φθ"],
             ["β", "μ", "βμ", "μμ"],
@@ -780,13 +810,17 @@ impl HcGreekVerbForm {
             ["ν", "σθ", "νσθ", "νθ"],
             ["ν", "μ", "νμ", "μμ"],
         ];
-
+        let mut found = false;
         for r in replacements {
             if form.ends_with(r[0]) && ending.starts_with(r[1]) {
                 form.push_str(ending);
                 form = form.replacen(r[2], r[3], 1);
+                found = true;
                 break;
             }
+        }
+        if !found {
+            form.push_str(ending);
         }
         form
     }
@@ -2692,125 +2726,14 @@ impl HcVerbForms for HcGreekVerbForm {
         }
 
         // consonant stem perfects and pluperfects
-        if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
-            && local_stem == "πεπεμ"
-            || local_stem == "ἐπεπεμ"
-            || local_stem == format!("ε {} πεπεμ", SEPARATOR)
+        if self.verb.is_consonant_stem()
+            && ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
+                && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
+            && local_stem != "ἑωρᾱ" //handle non-consonant stem alternate of oraw
+            && local_stem != "ε ‐ ἑωρᾱ"
+            && local_stem != "εἰρη"
         {
-            if local_ending.starts_with("ντ") {
-                return Ok(String::from(BLANK));
-            } else if decompose {
-                local_stem = format!("{}π", local_stem);
-            } else if local_ending.starts_with("σθ") {
-                local_ending.remove(0);
-                local_ending = format!("φ{}", local_ending);
-            } else if local_ending.starts_with('σ') {
-                local_ending.remove(0);
-                local_ending = format!("ψ{}", local_ending);
-            } else if local_ending.starts_with('τ') {
-                local_ending = format!("π{}", local_ending);
-            }
-        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
-            && (local_stem.ends_with('μ') || self.verb.pps[4].ends_with("φασμαι"))
-        {
-            if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU
-                && self.person == Some(HcPerson::Second)
-                && self.number == Some(HcNumber::Singular)
-            {
-                return Ok(String::from(BLANK));
-            }
-
-            if local_ending.starts_with("ντ") {
-                return Ok(String::from(BLANK));
-            } else if decompose {
-                local_stem.pop();
-                if self.verb.properties & CONSONANT_STEM_PERFECT_PI == CONSONANT_STEM_PERFECT_PI {
-                    local_stem = format!("{}π", local_stem);
-                } else if self.verb.properties & CONSONANT_STEM_PERFECT_BETA
-                    == CONSONANT_STEM_PERFECT_BETA
-                {
-                    local_stem = format!("{}β", local_stem);
-                } else if self.verb.properties & CONSONANT_STEM_PERFECT_NU
-                    == CONSONANT_STEM_PERFECT_NU
-                {
-                    local_stem = format!("{}ν", local_stem);
-                } else {
-                    local_stem = format!("{}φ", local_stem);
-                }
-            } else if local_ending.starts_with("σθ") {
-                local_ending.remove(0);
-                local_stem.pop();
-                if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU {
-                    local_ending = format!("ν{}", local_ending);
-                } else {
-                    local_ending = format!("φ{}", local_ending);
-                }
-            } else if local_ending.starts_with('σ') {
-                local_stem.pop();
-                local_ending.remove(0);
-                local_ending = format!("ψ{}", local_ending);
-            } else if local_ending.starts_with('τ') {
-                local_stem.pop();
-                if self.verb.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU {
-                    local_ending = format!("ν{}", local_ending);
-                } else {
-                    local_ending = format!("π{}", local_ending);
-                }
-            }
-        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
-            && local_stem.ends_with('γ')
-        {
-            if local_ending.starts_with("ντ") {
-                return Ok(String::from(BLANK));
-            } else if decompose {
-                local_stem.pop();
-                if self.verb.properties & CONSONANT_STEM_PERFECT_GAMMA
-                    == CONSONANT_STEM_PERFECT_GAMMA
-                {
-                    local_stem = format!("{}γ", local_stem);
-                } else if self.verb.properties & CONSONANT_STEM_PERFECT_CHI
-                    == CONSONANT_STEM_PERFECT_CHI
-                {
-                    local_stem = format!("{}χ", local_stem);
-                } else {
-                    local_stem = format!("{}κ", local_stem);
-                }
-            } else if local_ending.starts_with("σθ") {
-                local_ending.remove(0);
-                local_stem.pop();
-                local_ending = format!("χ{}", local_ending);
-            } else if local_ending.starts_with('σ') {
-                local_stem.pop();
-                local_ending.remove(0);
-                local_ending = format!("ξ{}", local_ending);
-            } else if local_ending.starts_with('τ') {
-                local_stem.pop();
-                local_ending = format!("κ{}", local_ending);
-            }
-        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
-            && local_stem.ends_with('σ')
-        {
-            if local_ending.starts_with("ντ") {
-                return Ok(String::from(BLANK));
-            } else if local_ending.starts_with('σ') && !decompose {
-                local_ending.remove(0);
-            }
-        } else if ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
-            && local_stem.ends_with('λ')
-        {
-            if local_ending.starts_with("ντ") {
-                return Ok(String::from(BLANK));
-            } else if local_ending.starts_with('σ')
-                && !decompose
-                && self.number == Some(HcNumber::Plural)
-            {
-                local_ending.remove(0);
-            }
+            return Ok(self.contract_consonants(&local_stem, &local_ending, decompose));
         }
 
         //future passive
@@ -3565,7 +3488,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         && self.voice != HcVoice::Active
                         && self.verb.is_consonant_stem()
                     {
-                        self.contract_consonants(&new_stem, e)
+                        self.contract_consonants(&new_stem, e, decompose)
                     /*
                       && self.verb.properties & CONSONANT_STEM_PERFECT_PHI
                              == CONSONANT_STEM_PERFECT_PHI
