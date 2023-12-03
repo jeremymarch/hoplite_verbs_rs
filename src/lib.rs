@@ -248,7 +248,7 @@ pub enum HcPerson {
 }
 
 impl HcPerson {
-    fn value(&self) -> &str {
+    pub fn value(&self) -> &str {
         match *self {
             HcPerson::First => "1",
             HcPerson::Second => "2",
@@ -280,7 +280,7 @@ pub enum HcNumber {
 }
 
 impl HcNumber {
-    fn value(&self) -> &str {
+    pub fn value(&self) -> &str {
         match *self {
             HcNumber::Singular => "s",
             HcNumber::Dual => "d",
@@ -314,7 +314,7 @@ pub enum HcTense {
 }
 
 impl HcTense {
-    fn value(&self) -> &str {
+    pub fn value(&self) -> &str {
         match *self {
             HcTense::Present => "Present",
             HcTense::Imperfect => "Imperfect",
@@ -355,7 +355,7 @@ pub enum HcVoice {
 }
 
 impl HcVoice {
-    fn value(&self) -> &str {
+    pub fn value(&self) -> &str {
         match *self {
             HcVoice::Active => "Active",
             HcVoice::Middle => "Middle",
@@ -390,7 +390,7 @@ pub enum HcMood {
 }
 
 impl HcMood {
-    fn value(&self) -> &str {
+    pub fn value(&self) -> &str {
         match *self {
             HcMood::Indicative => "Indicative",
             HcMood::Subjunctive => "Subjunctive",
@@ -430,7 +430,7 @@ pub enum HcGender {
     Neuter,
 }
 impl HcGender {
-    fn value(&self) -> &str {
+    pub fn value(&self) -> &str {
         match *self {
             HcGender::Masculine => "Masculine",
             HcGender::Feminine => "Feminine",
@@ -449,7 +449,7 @@ pub enum HcCase {
 }
 
 impl HcCase {
-    fn value(&self) -> &str {
+    pub fn value(&self) -> &str {
         match *self {
             HcCase::Nominative => "Nominative",
             HcCase::Genitive => "Genitive",
@@ -471,7 +471,7 @@ pub enum HcGreekPrincipalParts {
 }
 
 #[derive(PartialEq, Debug)]
-enum HcDeponentType {
+pub enum HcDeponentType {
     NotDeponent,
     MiddleDeponent,
     PassiveDeponent,
@@ -481,7 +481,7 @@ enum HcDeponentType {
 }
 
 impl HcDeponentType {
-    fn value(&self) -> &str {
+    pub fn value(&self) -> &str {
         match *self {
             HcDeponentType::NotDeponent => "Not Deponent",
             HcDeponentType::MiddleDeponent => "Middle Deponent",
@@ -582,7 +582,7 @@ impl HcGreekVerb {
     }
 
     //page 316 in h&q
-    fn deponent_type(&self) -> HcDeponentType {
+    pub fn deponent_type(&self) -> HcDeponentType {
         if self.pps[0].ends_with("γίγνομαι") {
             //and παραγίγνομαι
             //From Hardy: "I guess γίγνομαι is technically a partial deponent, though in practice I don't think we're in the habit of calling it that.  We simply say that's a deponent (i.e. a middle deponent) with one active PP."
@@ -689,7 +689,7 @@ fn remove_suffix<'a>(s: &'a str, p: &str) -> &'a str {
 }
 */
 
-fn get_voice_label(
+pub fn get_voice_label(
     tense: HcTense,
     voice: HcVoice,
     mood: HcMood,
@@ -2875,6 +2875,7 @@ impl HcVerbForms for HcGreekVerbForm {
         }
     }
 
+    //only call on finite verbs, maybe change to return Option<u32> to handle non-finites?
     fn param_hash(&self) -> u32 {
         let m_count = 4;
         let t_count = 6;
@@ -2887,12 +2888,12 @@ impl HcVerbForms for HcGreekVerbForm {
         let number = if self.number.is_some() {
             self.number.unwrap().to_i16()
         } else {
-            panic!()
+            2 //panic!() //add an extra number, in case of None: it just has to be unique
         };
         let person = if self.person.is_some() {
             self.person.unwrap().to_i16()
         } else {
-            panic!()
+            3 //panic!() //add an extra number, in case of None: it just has to be unique
         };
 
         //calculate unique hash from param values
@@ -2973,7 +2974,7 @@ impl HcVerbForms for HcGreekVerbForm {
             num_with_one += 1;
         }
 
-        //prevent endless loop
+        //prevent endless loop: don't try to change more params than can be changed (if they only have one option)
         let max_params = 5;
         let real_num = if num_with_one + num >= max_params {
             max_params - num_with_one
