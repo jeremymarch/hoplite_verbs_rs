@@ -9,6 +9,7 @@ use std::sync::Arc;
 use itertools::Itertools;
 use rand::prelude::SliceRandom;
 use rand::Rng;
+use std::collections::HashSet;
 
 //mod latin;
 mod special_verbs;
@@ -671,8 +672,10 @@ pub trait HcVerbForms {
         num_changes: u8,
         highest_unit: Option<i16>,
         parameters: &VerbParameters,
+        filter_forms: Option<&HashSet<u32>>,
     ) -> HcGreekVerbForm;
     fn block_for_hq_unit(&self, unit: Option<i16>) -> bool;
+    fn param_hash(&self) -> u32;
 }
 
 /*
@@ -2872,12 +2875,43 @@ impl HcVerbForms for HcGreekVerbForm {
         }
     }
 
+    fn param_hash(&self) -> u32 {
+        let m_count = 4;
+        let t_count = 6;
+        let n_count = 2;
+        let p_count = 3;
+
+        let voice = self.voice.to_i16();
+        let mood = self.mood.to_i16();
+        let tense = self.tense.to_i16();
+        let number = if self.number.is_some() {
+            self.number.unwrap().to_i16()
+        } else {
+            panic!()
+        };
+        let person = if self.person.is_some() {
+            self.person.unwrap().to_i16()
+        } else {
+            panic!()
+        };
+
+        //calculate unique hash from param values
+        (voice * m_count * t_count * n_count * p_count
+            + mood * t_count * n_count * p_count
+            + tense * n_count * p_count
+            + number * p_count
+            + person)
+            .try_into()
+            .unwrap()
+    }
+
     // add param for top unit
     fn random_form(
         &self,
         num_changes: u8,
         highest_unit: Option<i16>,
         parameters: &VerbParameters,
+        filter_forms: Option<&HashSet<u32>>, //previously used forms we don't want to return
     ) -> HcGreekVerbForm {
         let mut pf: HcGreekVerbForm;
         let mut num_skipped = 0;
@@ -2897,7 +2931,9 @@ impl HcVerbForms for HcGreekVerbForm {
                     {
                         //println!("rand4: {:?} {:?} {:?} {:?}", res.last().unwrap().form, self.block_middle_passive(&pf), pf.block_for_hq_unit(highest_unit), highest_unit);
                         continue;
-                    } else {
+                    } else if filter_forms.is_none()
+                        || !filter_forms.unwrap().contains(&pf.param_hash())
+                    {
                         break;
                     }
                 } //only 3rd pl consonant stem perfects/pluperfects return - now
@@ -4851,6 +4887,180 @@ mod tests {
     //         }
     //     }
     // }
+
+    #[test]
+    fn test_random() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let verb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
+        let a = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Future,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::Second),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Future,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let c = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::Third),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Future,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+
+        let max_changes = 1;
+        let highest_unit = 2;
+        let verb_params = VerbParameters {
+            persons: vec![HcPerson::First, HcPerson::Second, HcPerson::Third],
+            numbers: vec![HcNumber::Singular, HcNumber::Plural],
+            tenses: vec![HcTense::Present, HcTense::Imperfect],
+            voices: vec![HcVoice::Active],
+            moods: vec![HcMood::Indicative],
+        };
+
+        let mut form_filter = HashSet::new();
+        form_filter.insert(b.param_hash());
+        form_filter.insert(c.param_hash());
+
+        for _i in 0..10_000 {
+            let d = a.random_form(
+                max_changes,
+                Some(highest_unit),
+                &verb_params,
+                Some(&form_filter),
+            );
+            assert!(!form_filter.contains(&d.param_hash()));
+            assert_ne!(d.param_hash(), c.param_hash()); //the random form should never equal c because c was added to filter HashSet
+        }
+    }
+
+    #[test]
+    fn test_random_param_change_distribution() {
+        let mut persons = [0, 0, 0];
+        let mut numbers = [0, 0];
+        let mut tenses = [0, 0, 0, 0, 0, 0];
+        let mut moods = [0, 0, 0, 0];
+        let mut voices = [0, 0, 0];
+        let mut param_hash = 0;
+
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let verb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
+        let mut a = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Future,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+
+        let num_changes = 2;
+        let parameters = VerbParameters {
+            persons: vec![HcPerson::First, HcPerson::Second, HcPerson::Third],
+            numbers: vec![HcNumber::Singular, HcNumber::Plural],
+            tenses: vec![
+                HcTense::Present,
+                HcTense::Imperfect,
+                HcTense::Future,
+                HcTense::Aorist,
+                HcTense::Perfect,
+                HcTense::Pluperfect,
+            ],
+            voices: vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive],
+            moods: vec![
+                HcMood::Indicative,
+                HcMood::Subjunctive,
+                HcMood::Optative,
+                HcMood::Imperative,
+            ],
+        };
+
+        let count = 100_000;
+        for _i in 0..count {
+            a.change_params(num_changes, &parameters);
+            persons[a.person.unwrap().to_i16() as usize] += 1;
+            numbers[a.number.unwrap().to_i16() as usize] += 1;
+            tenses[a.tense.to_i16() as usize] += 1;
+            moods[a.mood.to_i16() as usize] += 1;
+            voices[a.voice.to_i16() as usize] += 1;
+
+            param_hash += a.param_hash();
+        }
+        //sum of hash divided by count should be half of total number of possible forms (432 = 216)
+        assert!(
+            (param_hash as f64 / count as f64) > 214.0
+                && (param_hash as f64 / count as f64) < 218.0
+        );
+
+        //check distribution of each param:
+        assert!(
+            (persons[0] as f64 / count as f64) > 0.31 && (persons[0] as f64 / count as f64) < 0.35
+        );
+        assert!(
+            (persons[1] as f64 / count as f64) > 0.31 && (persons[1] as f64 / count as f64) < 0.35
+        );
+        assert!(
+            (persons[2] as f64 / count as f64) > 0.31 && (persons[2] as f64 / count as f64) < 0.35
+        );
+
+        assert!(
+            (numbers[0] as f64 / count as f64) > 0.48 && (numbers[0] as f64 / count as f64) < 0.52
+        );
+        assert!(
+            (numbers[1] as f64 / count as f64) > 0.48 && (numbers[1] as f64 / count as f64) < 0.52
+        );
+
+        assert!(
+            (tenses[0] as f64 / count as f64) > 0.14 && (tenses[0] as f64 / count as f64) < 0.18
+        );
+        assert!(
+            (tenses[1] as f64 / count as f64) > 0.14 && (tenses[1] as f64 / count as f64) < 0.18
+        );
+        assert!(
+            (tenses[2] as f64 / count as f64) > 0.14 && (tenses[2] as f64 / count as f64) < 0.18
+        );
+        assert!(
+            (tenses[3] as f64 / count as f64) > 0.14 && (tenses[3] as f64 / count as f64) < 0.18
+        );
+        assert!(
+            (tenses[4] as f64 / count as f64) > 0.14 && (tenses[4] as f64 / count as f64) < 0.18
+        );
+        assert!(
+            (tenses[5] as f64 / count as f64) > 0.14 && (tenses[5] as f64 / count as f64) < 0.18
+        );
+
+        assert!((moods[0] as f64 / count as f64) > 0.23 && (moods[0] as f64 / count as f64) < 0.27);
+        assert!((moods[1] as f64 / count as f64) > 0.23 && (moods[1] as f64 / count as f64) < 0.27);
+        assert!((moods[2] as f64 / count as f64) > 0.23 && (moods[2] as f64 / count as f64) < 0.27);
+        assert!((moods[3] as f64 / count as f64) > 0.23 && (moods[3] as f64 / count as f64) < 0.27);
+
+        assert!(
+            (voices[0] as f64 / count as f64) > 0.31 && (voices[0] as f64 / count as f64) < 0.35
+        );
+        assert!(
+            (voices[1] as f64 / count as f64) > 0.31 && (voices[1] as f64 / count as f64) < 0.35
+        );
+        assert!(
+            (voices[2] as f64 / count as f64) > 0.31 && (voices[2] as f64 / count as f64) < 0.35
+        );
+    }
 
     #[test]
     fn test_participles() {
