@@ -8,7 +8,6 @@ use std::sync::Arc;
 
 use itertools::Itertools;
 use rand::prelude::SliceRandom;
-use rand::Rng;
 use std::collections::HashSet;
 
 //mod latin;
@@ -238,6 +237,15 @@ enum HcEndings {
     AoristOptativeEchw,
     NotImplemented,
     //NumEndings,
+}
+
+#[derive(PartialEq)]
+pub enum HcParameters {
+    Person,
+    Number,
+    Tense,
+    Mood,
+    Voice,
 }
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
@@ -666,7 +674,12 @@ pub trait HcVerbForms {
     fn get_infinitive_endings(&self, _stem: &str) -> Option<Vec<&str>>;
     fn get_label(&self) -> String;
     fn is_deponent(&self, stem: &str) -> bool;
-    fn change_params(&mut self, num: u8, parameters: &VerbParameters);
+    fn change_params(
+        &mut self,
+        n_params_to_change: u8,
+        parameters: &VerbParameters,
+        params_do_not_change: &mut [HcParameters],
+    );
     fn random_form(
         &self,
         num_changes: u8,
@@ -2918,7 +2931,7 @@ impl HcVerbForms for HcGreekVerbForm {
         let mut num_skipped = 0;
         loop {
             pf = self.clone();
-            pf.change_params(num_changes, parameters);
+            pf.change_params(num_changes, parameters, &mut []);
             let vf = pf.get_form(false);
             if num_skipped > 2000 {
                 break;
@@ -2948,52 +2961,61 @@ impl HcVerbForms for HcGreekVerbForm {
     }
 
     // num params to change must be equal or less than num params with more than one value
-    fn change_params(&mut self, num: u8, parameters: &VerbParameters) {
+    // params_do_not_change: pass in params from last change, so we don't change the same ones again
+    fn change_params(
+        &mut self,
+        n_params_to_change: u8,
+        parameters: &VerbParameters,
+        params_do_not_change: &mut [HcParameters],
+    ) {
         if self.person.is_none() || self.number.is_none() {
             return;
         }
-        let mut num_with_one = 0;
+
+        let mut possible_params = vec![
+            HcParameters::Person,
+            HcParameters::Number,
+            HcParameters::Tense,
+            HcParameters::Mood,
+            HcParameters::Voice,
+        ];
+
         if parameters.persons.len() == 1 {
             self.person = Some(parameters.persons[0]);
-            num_with_one += 1;
+            possible_params.retain(|e| *e != HcParameters::Person);
         }
         if parameters.numbers.len() == 1 {
             self.number = Some(parameters.numbers[0]);
-            num_with_one += 1;
+            possible_params.retain(|e| *e != HcParameters::Number);
         }
         if parameters.tenses.len() == 1 {
             self.tense = parameters.tenses[0];
-            num_with_one += 1;
+            possible_params.retain(|e| *e != HcParameters::Tense);
         }
         if parameters.moods.len() == 1 {
             self.mood = parameters.moods[0];
-            num_with_one += 1;
+            possible_params.retain(|e| *e != HcParameters::Mood);
         }
         if parameters.voices.len() == 1 {
             self.voice = parameters.voices[0];
-            num_with_one += 1;
+            possible_params.retain(|e| *e != HcParameters::Voice);
         }
 
-        //prevent endless loop: don't try to change more params than can be changed (if they only have one option)
-        let max_params = 5;
-        let real_num = if num_with_one + num >= max_params {
-            max_params - num_with_one
-        } else {
-            num
-        };
-
-        let mut params_changed: Vec<u8> = vec![];
         let mut rng = rand::thread_rng();
 
-        while params_changed.len() < real_num.into() {
-            let p = rng.gen_range(0..=4);
-            if params_changed.contains(&p) {
-                continue;
+        if !params_do_not_change.is_empty() {
+            params_do_not_change.shuffle(&mut rng); //shuffle, so not always first param
+            if let Some(aa) = params_do_not_change.first() {
+                possible_params.retain(|e| *e != *aa);
             }
+        }
 
-            //remove current value from param vec to be sure it is not re-selected; must be at least two values to change
+        possible_params.shuffle(&mut rng);
+        possible_params.truncate(n_params_to_change.into());
+
+        for p in possible_params {
             match p {
-                0 if parameters.persons.len() > 1 => {
+                HcParameters::Person => {
                     self.person = Some(
                         **parameters
                             .persons
@@ -3003,9 +3025,8 @@ impl HcVerbForms for HcGreekVerbForm {
                             .choose(&mut rand::thread_rng())
                             .unwrap(),
                     );
-                    params_changed.push(p);
                 }
-                1 if parameters.numbers.len() > 1 => {
+                HcParameters::Number => {
                     self.number = Some(
                         **parameters
                             .numbers
@@ -3015,9 +3036,8 @@ impl HcVerbForms for HcGreekVerbForm {
                             .choose(&mut rand::thread_rng())
                             .unwrap(),
                     );
-                    params_changed.push(p);
                 }
-                2 if parameters.tenses.len() > 1 => {
+                HcParameters::Tense => {
                     self.tense = **parameters
                         .tenses
                         .iter()
@@ -3025,9 +3045,8 @@ impl HcVerbForms for HcGreekVerbForm {
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
                         .unwrap();
-                    params_changed.push(p);
                 }
-                3 if parameters.voices.len() > 1 => {
+                HcParameters::Voice => {
                     self.voice = **parameters
                         .voices
                         .iter()
@@ -3035,9 +3054,8 @@ impl HcVerbForms for HcGreekVerbForm {
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
                         .unwrap();
-                    params_changed.push(p);
                 }
-                4 if parameters.moods.len() > 1 => {
+                HcParameters::Mood => {
                     self.mood = **parameters
                         .moods
                         .iter()
@@ -3045,9 +3063,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         .collect::<Vec<_>>()
                         .choose(&mut rand::thread_rng())
                         .unwrap();
-                    params_changed.push(p);
                 }
-                _ => (),
             }
         }
     }
@@ -4995,7 +5011,7 @@ mod tests {
 
         let count = 100_000;
         for _i in 0..count {
-            a.change_params(num_changes, &parameters);
+            a.change_params(num_changes, &parameters, &mut []);
             persons[a.person.unwrap().to_i16() as usize] += 1;
             numbers[a.number.unwrap().to_i16() as usize] += 1;
             tenses[a.tense.to_i16() as usize] += 1;
