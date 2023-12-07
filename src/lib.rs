@@ -699,6 +699,7 @@ pub trait HcVerbForms {
     ) -> (HcGreekVerbForm, Diagnostics);
     fn block_for_hq_unit(&self, unit: Option<i16>) -> bool;
     fn param_hash(&self) -> u32;
+    fn extract_params_from_hash(&mut self, value: u32);
 }
 
 /*
@@ -2900,10 +2901,10 @@ impl HcVerbForms for HcGreekVerbForm {
 
     //only call on finite verbs, maybe change to return Option<u32> to handle non-finites?
     fn param_hash(&self) -> u32 {
-        let m_count = 4;
-        let t_count = 6;
-        let n_count = 2;
         let p_count = 3;
+        let n_count = 2;
+        let t_count = 6;
+        let m_count = 4;
 
         let voice = self.voice.to_i16();
         let mood = self.mood.to_i16();
@@ -2927,6 +2928,33 @@ impl HcVerbForms for HcGreekVerbForm {
             + person)
             .try_into()
             .unwrap()
+    }
+
+    fn extract_params_from_hash(&mut self, value: u32) {
+        let p_count = 3;
+        let n_count = 2;
+        let t_count = 6;
+        let m_count = 4;
+
+        let voice = value / (m_count * t_count * n_count * p_count);
+        let remaining = value % (m_count * t_count * n_count * p_count);
+
+        let mood = remaining / (t_count * n_count * p_count);
+        let remaining = remaining % (t_count * n_count * p_count);
+
+        let tense = remaining / (n_count * p_count);
+        let remaining = remaining % (n_count * p_count);
+
+        let number = remaining / p_count;
+        let person = remaining % p_count;
+
+        self.person = Some(HcPerson::from_i16(person.try_into().unwrap()));
+        self.number = Some(HcNumber::from_i16(number.try_into().unwrap()));
+        self.tense = HcTense::from_i16(tense.try_into().unwrap());
+        self.mood = HcMood::from_i16(mood.try_into().unwrap());
+        self.voice = HcVoice::from_i16(voice.try_into().unwrap());
+
+        //(person, number, tense, mood, voice)
     }
 
     // add param for top unit
@@ -4985,6 +5013,39 @@ mod tests {
     //         }
     //     }
     // }
+
+    #[test]
+    fn test_param_hash() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let verb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
+        let a = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Future,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+
+        //b has different params from a
+        let mut b = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::Third),
+            number: Some(HcNumber::Plural),
+            tense: HcTense::Present,
+            voice: HcVoice::Passive,
+            mood: HcMood::Imperative,
+            gender: None,
+            case: None,
+        };
+
+        let hash = a.param_hash();
+        b.extract_params_from_hash(hash); //this should set b's params to equal a: thus the forms are equal
+                                          //test round trip to param hash to form again
+        assert_eq!(a, b);
+    }
 
     #[test]
     fn test_random2() {
