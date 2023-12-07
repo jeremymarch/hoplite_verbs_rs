@@ -1,6 +1,6 @@
 [package]
 name = "hoplite_verbs_rs"
-version = "0.4.2"
+version = "0.4.3"
 authors = ["jeremymarch <jmarch@gradcenter.cuny.edu>"]
 edition = "2021"
 
@@ -14,6 +14,7 @@ unicode-segmentation = "1.10.1"
 
 itertools = "0.12.0"
 rand = "0.8.5"
+tracing = "0.1.40"
 
 [dev-dependencies]
 criterion = "0.5.1"

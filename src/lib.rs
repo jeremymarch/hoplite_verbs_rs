@@ -9,9 +9,19 @@ use std::sync::Arc;
 use itertools::Itertools;
 use rand::prelude::SliceRandom;
 use std::collections::HashSet;
+use tracing::error;
 
 //mod latin;
 mod special_verbs;
+
+#[derive(Debug)]
+pub struct Diagnostics {
+    pub dash: usize,
+    pub middle_passive: usize,
+    pub blocked_for_unit: usize,
+    pub filtered: usize,
+    pub illegal: usize,
+}
 
 trait RReplacen {
     fn rreplacen(&self, pat: &str, to: &str, count: usize) -> Self;
@@ -679,14 +689,14 @@ pub trait HcVerbForms {
         n_params_to_change: u8,
         parameters: &VerbParameters,
         params_do_not_change: &mut [HcParameters],
-    );
+    ) -> Vec<HcParameters>;
     fn random_form(
         &self,
         num_changes: u8,
         highest_unit: Option<i16>,
         parameters: &VerbParameters,
         filter_forms: Option<&HashSet<u32>>,
-    ) -> HcGreekVerbForm;
+    ) -> (HcGreekVerbForm, Diagnostics);
     fn block_for_hq_unit(&self, unit: Option<i16>) -> bool;
     fn param_hash(&self) -> u32;
 }
@@ -2926,14 +2936,48 @@ impl HcVerbForms for HcGreekVerbForm {
         highest_unit: Option<i16>,
         parameters: &VerbParameters,
         filter_forms: Option<&HashSet<u32>>, //previously used forms we don't want to return
-    ) -> HcGreekVerbForm {
+    ) -> (HcGreekVerbForm, Diagnostics) {
         let mut pf: HcGreekVerbForm;
         let mut num_skipped = 0;
+        let mut ignore_filter = false;
+
+        let mut diag = Diagnostics {
+            dash: 0,
+            middle_passive: 0,
+            blocked_for_unit: 0,
+            filtered: 0,
+            illegal: 0,
+        };
+
         loop {
             pf = self.clone();
-            pf.change_params(num_changes, parameters, &mut []);
+            pf.change_params(
+                num_changes,
+                parameters,
+                &mut [HcParameters::Person, HcParameters::Number],
+            );
             let vf = pf.get_form(false);
             if num_skipped > 2000 {
+                println!(
+                    "AAABBB error: {}",
+                    if filter_forms.is_some() {
+                        filter_forms.unwrap().len()
+                    } else {
+                        222
+                    }
+                );
+                error!("random form 2000 cycles");
+                ignore_filter = true;
+            } else if num_skipped > 4000 {
+                println!(
+                    "AAABBB2 error: {}",
+                    if filter_forms.is_some() {
+                        filter_forms.unwrap().len()
+                    } else {
+                        222
+                    }
+                );
+                error!("random form 4000 cycles");
                 break;
             }
             num_skipped += 1;
@@ -2942,22 +2986,58 @@ impl HcVerbForms for HcGreekVerbForm {
                     if res.last().unwrap().form == "—"
                         || self.block_middle_passive(&pf)
                         || pf.block_for_hq_unit(highest_unit)
+                        || (filter_forms.is_some()
+                            && !ignore_filter
+                            && filter_forms.unwrap().contains(&pf.param_hash()))
                     {
-                        //println!("rand4: {:?} {:?} {:?} {:?}", res.last().unwrap().form, self.block_middle_passive(&pf), pf.block_for_hq_unit(highest_unit), highest_unit);
+                        if self.block_middle_passive(&pf) {
+                            diag.middle_passive += 1;
+                        } else if pf.block_for_hq_unit(highest_unit) {
+                            diag.blocked_for_unit += 1;
+                        } else if filter_forms.is_some()
+                            && !ignore_filter
+                            && filter_forms.unwrap().contains(&pf.param_hash())
+                        {
+                            diag.filtered += 1;
+                        } else if res.last().unwrap().form == "—" {
+                            diag.dash += 1;
+                        }
+
+                        let reason = if self.block_middle_passive(&pf) {
+                            String::from("middle/passive just used")
+                        } else if pf.block_for_hq_unit(highest_unit) {
+                            format!("not in unit: {:?}", highest_unit)
+                        } else if filter_forms.is_some()
+                            && !ignore_filter
+                            && filter_forms.unwrap().contains(&pf.param_hash())
+                        {
+                            "already used".to_string()
+                        } else if res.last().unwrap().form == "—" {
+                            format!("block bad form {:?}", res)
+                        } else {
+                            String::from("unknown reason")
+                        };
+                        println!(
+                            "\t{}: {:?} {:?}",
+                            num_skipped,
+                            res.last().unwrap().form,
+                            reason
+                        );
+
                         continue;
-                    } else if filter_forms.is_none()
-                        || !filter_forms.unwrap().contains(&pf.param_hash())
-                    {
+                    } else {
+                        println!("{}", res.last().unwrap().form);
                         break;
                     }
                 } //only 3rd pl consonant stem perfects/pluperfects return - now
-                Err(_e) => {
-                    /*println!("continue {:?}", e);*/
+                Err(e) => {
+                    diag.illegal += 1;
+                    println!("\t{}: {:?}", num_skipped, e);
                     continue;
                 }
             }
         }
-        pf
+        (pf, diag)
     }
 
     // num params to change must be equal or less than num params with more than one value
@@ -2967,11 +3047,7 @@ impl HcVerbForms for HcGreekVerbForm {
         n_params_to_change: u8,
         parameters: &VerbParameters,
         params_do_not_change: &mut [HcParameters],
-    ) {
-        if self.person.is_none() || self.number.is_none() {
-            return;
-        }
-
+    ) -> Vec<HcParameters> {
         let mut possible_params = vec![
             HcParameters::Person,
             HcParameters::Number,
@@ -3001,9 +3077,13 @@ impl HcVerbForms for HcGreekVerbForm {
             possible_params.retain(|e| *e != HcParameters::Voice);
         }
 
+        if self.person.is_none() || self.number.is_none() || possible_params.is_empty() {
+            return vec![];
+        }
+
         let mut rng = rand::thread_rng();
 
-        if !params_do_not_change.is_empty() {
+        if !params_do_not_change.is_empty() && possible_params.len() > 1 {
             params_do_not_change.shuffle(&mut rng); //shuffle, so not always first param
             if let Some(aa) = params_do_not_change.first() {
                 possible_params.retain(|e| *e != *aa);
@@ -3013,7 +3093,7 @@ impl HcVerbForms for HcGreekVerbForm {
         possible_params.shuffle(&mut rng);
         possible_params.truncate(n_params_to_change.into());
 
-        for p in possible_params {
+        for p in &possible_params {
             match p {
                 HcParameters::Person => {
                     self.person = Some(
@@ -3066,6 +3146,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
             }
         }
+        possible_params
     }
 
     fn get_description(&self, p: &HcGreekVerbForm, start: &str, end: &str) -> String {
@@ -4906,6 +4987,60 @@ mod tests {
     // }
 
     #[test]
+    fn test_random2() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let verb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
+        let a = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Future,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+
+        let max_changes = 2;
+        let highest_unit = 2;
+        let verb_params = VerbParameters {
+            persons: vec![HcPerson::First, HcPerson::Second, HcPerson::Third],
+            numbers: vec![HcNumber::Singular, HcNumber::Plural],
+            tenses: vec![
+                HcTense::Present,
+                HcTense::Imperfect,
+                HcTense::Future,
+                HcTense::Aorist,
+                HcTense::Perfect,
+                HcTense::Pluperfect,
+            ],
+            voices: vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive],
+            moods: vec![
+                HcMood::Indicative,
+                HcMood::Subjunctive,
+                HcMood::Optative,
+                HcMood::Imperative,
+            ],
+        };
+
+        let mut form_filter = HashSet::new();
+        // form_filter.insert(b.param_hash());
+        // form_filter.insert(c.param_hash());
+
+        for _i in 0..10 {
+            let (d, _diag) = a.random_form(
+                max_changes,
+                Some(highest_unit),
+                &verb_params,
+                Some(&form_filter),
+            );
+            form_filter.insert(d.param_hash());
+            //assert!(!form_filter.contains(&d.param_hash()));
+            //assert_ne!(d.param_hash(), c.param_hash()); //the random form should never equal c because c was added to filter HashSet
+        }
+    }
+
+    #[test]
     fn test_random() {
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
         let verb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
@@ -4955,7 +5090,7 @@ mod tests {
         form_filter.insert(c.param_hash());
 
         for _i in 0..10_000 {
-            let d = a.random_form(
+            let (d, _diag) = a.random_form(
                 max_changes,
                 Some(highest_unit),
                 &verb_params,
@@ -4963,6 +5098,49 @@ mod tests {
             );
             assert!(!form_filter.contains(&d.param_hash()));
             assert_ne!(d.param_hash(), c.param_hash()); //the random form should never equal c because c was added to filter HashSet
+        }
+    }
+
+    #[test]
+    fn test_change_param_block_last_param_change() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let verb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
+        let mut a = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+
+        let num_changes = 2;
+        let parameters = VerbParameters {
+            persons: vec![HcPerson::First, HcPerson::Second, HcPerson::Third],
+            numbers: vec![HcNumber::Singular, HcNumber::Plural],
+            tenses: vec![
+                HcTense::Present,
+                HcTense::Imperfect,
+                HcTense::Future,
+                HcTense::Aorist,
+                HcTense::Perfect,
+                HcTense::Pluperfect,
+            ],
+            voices: vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive],
+            moods: vec![
+                HcMood::Indicative,
+                HcMood::Subjunctive,
+                HcMood::Optative,
+                HcMood::Imperative,
+            ],
+        };
+
+        let count = 10_000;
+        for _i in 0..count {
+            a.change_params(num_changes, &parameters, &mut [HcParameters::Tense]);
+            assert_eq!(a.tense, HcTense::Present); //don't change tense if tense is passed in above
         }
     }
 
