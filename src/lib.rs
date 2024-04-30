@@ -2,6 +2,10 @@
 #![allow(clippy::if_same_then_else)] //for clarity let's leave these
 #![allow(clippy::collapsible_if)]
 
+// consonant stem infinitives
+// υι diphthong accents circumflex (perf act nom, acc sing, nom pl.)
+// fut. pass. ησ
+
 pub extern crate polytonic_greek;
 use polytonic_greek::*;
 use std::sync::Arc;
@@ -671,6 +675,7 @@ static SEPARATOR: &str = "‐";
 static BLANK: &str = "—";
 
 pub trait HcVerbForms {
+    fn is_contracted_verb(&self, form: &str) -> bool;
     fn is_legal_form(&self) -> bool;
     fn is_legal_deponent(&self, pp: &str) -> bool;
     fn get_description(&self, prev: &HcGreekVerbForm, start: &str, end: &str) -> String;
@@ -964,7 +969,898 @@ impl HcGreekVerbForm {
         stem.to_string()
     }
 
-    fn accent_verb_persistent(&self, word: &str) -> String {
+    fn accent_participle(&self, word: &str) -> String {
+        let mut syllables = analyze_syllable_quantities(
+            word,
+            self.person,
+            self.number,
+            self.tense,
+            self.mood,
+            self.verb.properties,
+        );
+        syllables.reverse();
+
+        const ULTIMA: usize = 0;
+        const PENULT: usize = 1;
+        const ANTEPENULT: usize = 2;
+        let mut accent;
+        let mut accent_position = match self.tense {
+            HcTense::Present | HcTense::Future => match self.voice {
+                HcVoice::Active => match self.number {
+                    Some(HcNumber::Singular) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Genitive) | Some(HcCase::Dative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Feminine) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Plural) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                            if syllables.len() > 2 {
+                                ANTEPENULT
+                            } else if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Genitive) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => ULTIMA,
+                            None => PENULT,
+                        },
+                        Some(HcCase::Dative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => todo!(),
+                },
+                HcVoice::Middle | HcVoice::Passive => match self.number {
+                    Some(HcNumber::Singular) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Genitive) | Some(HcCase::Dative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Plural) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                            if syllables.len() > 2 {
+                                ANTEPENULT
+                            } else if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Genitive) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        Some(HcCase::Dative) => {
+                            if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => todo!(),
+                },
+            },
+            HcTense::Aorist => match self.voice {
+                HcVoice::Active => match self.number {
+                    Some(HcNumber::Singular) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Genitive) | Some(HcCase::Dative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Feminine) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Plural) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                            if syllables.len() > 2 {
+                                ANTEPENULT
+                            } else if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Genitive) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => ULTIMA,
+                            None => PENULT,
+                        },
+                        Some(HcCase::Dative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => todo!(),
+                },
+                HcVoice::Middle => match self.number {
+                    Some(HcNumber::Singular) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Genitive) | Some(HcCase::Dative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Plural) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                            if syllables.len() > 2 {
+                                ANTEPENULT
+                            } else if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Genitive) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        Some(HcCase::Dative) => {
+                            if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => todo!(),
+                },
+                HcVoice::Passive => match self.number {
+                    Some(HcNumber::Singular) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => ULTIMA,
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Genitive) | Some(HcCase::Dative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Plural) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                            if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Genitive) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => ULTIMA,
+                            None => PENULT,
+                        },
+                        Some(HcCase::Dative) => {
+                            if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => todo!(),
+                },
+            },
+            HcTense::Perfect => match self.voice {
+                HcVoice::Active => match self.number {
+                    Some(HcNumber::Singular) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => ULTIMA,
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Genitive) | Some(HcCase::Dative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Plural) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                            if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Genitive) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => ULTIMA,
+                            None => PENULT,
+                        },
+                        Some(HcCase::Dative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => todo!(),
+                },
+                HcVoice::Middle | HcVoice::Passive => match self.number {
+                    Some(HcNumber::Singular) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        Some(HcCase::Genitive) | Some(HcCase::Dative) => {
+                            if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 2 {
+                                    ANTEPENULT
+                                } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => todo!(),
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Plural) => match self.case {
+                        Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                            if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Genitive) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        Some(HcCase::Dative) => {
+                            if syllables.len() > 1 {
+                                PENULT
+                            } else {
+                                ULTIMA
+                            }
+                        }
+                        Some(HcCase::Accusative) => match self.gender {
+                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Feminine) => {
+                                if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            None => PENULT,
+                        },
+                        None => todo!(),
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => todo!(),
+                },
+            },
+            _ => return String::new(),
+        };
+
+        if syllables.len() > 2
+            && !syllables.first().unwrap().is_long
+            && syllables[1].is_long
+            && accent_position == PENULT
+        {
+            accent = HGK_CIRCUMFLEX;
+        } else if syllables.len() > 2 && syllables.first().unwrap().is_long {
+            accent = HGK_ACUTE;
+        } else if syllables.len() == 2
+            && !syllables.first().unwrap().is_long
+            && syllables[1].is_long
+            && accent_position == PENULT
+        {
+            accent = HGK_CIRCUMFLEX;
+        } else {
+            accent = HGK_ACUTE;
+        }
+
+        if self.is_contracted_verb(word) && self.voice == HcVoice::Active {
+            if self.gender == Some(HcGender::Masculine) || self.gender == Some(HcGender::Neuter) {
+                if (self.case == Some(HcCase::Nominative)
+                    && self.number == Some(HcNumber::Singular))
+                    || (self.case == Some(HcCase::Vocative)
+                        && self.number == Some(HcNumber::Singular))
+                    || (self.gender == Some(HcGender::Neuter)
+                        && self.case == Some(HcCase::Accusative)
+                        && self.number == Some(HcNumber::Singular))
+                {
+                    accent_position = ULTIMA;
+                    accent = HGK_CIRCUMFLEX;
+                } else if self.number == Some(HcNumber::Plural)
+                    && self.case == Some(HcCase::Genitive)
+                {
+                    accent_position = PENULT;
+                    accent = HGK_ACUTE;
+                } else {
+                    accent_position = PENULT;
+                    accent = HGK_CIRCUMFLEX;
+                }
+            } else if self.gender == Some(HcGender::Feminine) {
+                if self.case == Some(HcCase::Nominative)
+                    || self.case == Some(HcCase::Vocative)
+                    || (self.case == Some(HcCase::Accusative)
+                        && self.number == Some(HcNumber::Singular))
+                {
+                    accent_position = PENULT;
+                    accent = HGK_CIRCUMFLEX;
+                } else if self.case == Some(HcCase::Genitive)
+                    && self.number == Some(HcNumber::Plural)
+                {
+                    accent_position = ULTIMA;
+                    accent = HGK_CIRCUMFLEX;
+                } else {
+                    accent_position = PENULT;
+                    accent = HGK_ACUTE;
+                }
+            }
+        }
+
+        let letter_index = syllables[accent_position].index;
+        self.accent_syllable(word, letter_index, accent)
+    }
+
+    fn accent_infinitive(&self, word: &str) -> String {
         let mut syllables = analyze_syllable_quantities(
             word,
             self.person,
@@ -2109,7 +3005,11 @@ impl HcGreekVerbForm {
             form = form.replacen("οω", "ω", 1);
         }
 
-        self.accent_verb_contracted(&form, orig_syl, ending)
+        if self.mood != HcMood::Participle && self.mood != HcMood::Infinitive {
+            self.accent_verb_contracted(&form, orig_syl, ending)
+        } else {
+            form
+        }
 
         //unaccented_form.to_string()
     }
@@ -2982,29 +3882,29 @@ impl HcVerbForms for HcGreekVerbForm {
             pf.change_params(
                 num_changes,
                 parameters,
-                &mut [HcParameters::Person, HcParameters::Number],
+                &mut [], //HcParameters::Person, HcParameters::Number
             );
             let vf = pf.get_form(false);
             if num_skipped > 2000 {
-                println!(
-                    "AAABBB error: {}",
-                    if filter_forms.is_some() {
-                        filter_forms.unwrap().len()
-                    } else {
-                        222
-                    }
-                );
+                // println!(
+                //     "AAABBB error: {}",
+                //     if filter_forms.is_some() {
+                //         filter_forms.unwrap().len()
+                //     } else {
+                //         222
+                //     }
+                // );
                 error!("random form 2000 cycles");
                 ignore_filter = true;
             } else if num_skipped > 4000 {
-                println!(
-                    "AAABBB2 error: {}",
-                    if filter_forms.is_some() {
-                        filter_forms.unwrap().len()
-                    } else {
-                        222
-                    }
-                );
+                // println!(
+                //     "AAABBB2 error: {}",
+                //     if filter_forms.is_some() {
+                //         filter_forms.unwrap().len()
+                //     } else {
+                //         222
+                //     }
+                // );
                 error!("random form 4000 cycles");
                 break;
             }
@@ -3031,7 +3931,7 @@ impl HcVerbForms for HcGreekVerbForm {
                             diag.dash += 1;
                         }
 
-                        let reason = if self.block_middle_passive(&pf) {
+                        let _reason = if self.block_middle_passive(&pf) {
                             String::from("middle/passive just used")
                         } else if pf.block_for_hq_unit(highest_unit) {
                             format!("not in unit: {:?}", highest_unit)
@@ -3045,22 +3945,22 @@ impl HcVerbForms for HcGreekVerbForm {
                         } else {
                             String::from("unknown reason")
                         };
-                        println!(
-                            "\t{}: {:?} {:?}",
-                            num_skipped,
-                            res.last().unwrap().form,
-                            reason
-                        );
+                        // println!(
+                        //     "\t{}: {:?} {:?}",
+                        //     num_skipped,
+                        //     res.last().unwrap().form,
+                        //     reason
+                        // );
 
                         continue;
                     } else {
-                        println!("{}", res.last().unwrap().form);
+                        //println!("{}", res.last().unwrap().form);
                         break;
                     }
                 } //only 3rd pl consonant stem perfects/pluperfects return - now
-                Err(e) => {
+                Err(_e) => {
                     diag.illegal += 1;
-                    println!("\t{}: {:?}", num_skipped, e);
+                    //println!("\t{}: {:?}", num_skipped, e);
                     continue;
                 }
             }
@@ -3651,94 +4551,6 @@ impl HcVerbForms for HcGreekVerbForm {
                         && self.verb.is_consonant_stem()
                     {
                         self.contract_consonants(&new_stem, e, decompose)
-                    /*
-                      && self.verb.properties & CONSONANT_STEM_PERFECT_PHI
-                             == CONSONANT_STEM_PERFECT_PHI
-                     {
-                         new_stem.pop();
-                         format!("{}{}", new_stem, "φθαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && self.verb.properties & CONSONANT_STEM_PERFECT_MU_PI
-                             == CONSONANT_STEM_PERFECT_MU_PI
-                     {
-                         format!("{}{}", new_stem, "φθαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && self.verb.properties & CONSONANT_STEM_PERFECT_KAPPA
-                             == CONSONANT_STEM_PERFECT_KAPPA
-                     {
-                         new_stem.pop();
-                         format!("{}{}", new_stem, "χθαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && self.verb.properties & CONSONANT_STEM_PERFECT_SIGMA
-                             == CONSONANT_STEM_PERFECT_SIGMA
-                     {
-                         format!("{}{}", new_stem, "φθαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && self.verb.properties & CONSONANT_STEM_PERFECT_SIGMA_2
-                             == CONSONANT_STEM_PERFECT_SIGMA_2
-                     {
-                         format!("{}{}", new_stem, "φθαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && self.verb.properties & CONSONANT_STEM_PERFECT_LAMBDA
-                             == CONSONANT_STEM_PERFECT_LAMBDA
-                     {
-                         format!("{}{}", new_stem, "θαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && self.verb.properties & CONSONANT_STEM_PERFECT_PI
-                             == CONSONANT_STEM_PERFECT_PI
-                         && new_stem.ends_with('μ')
-                     //because ὁράω has two
-                     {
-                         new_stem.pop();
-                         format!("{}{}", new_stem, "φθαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && self.verb.properties & CONSONANT_STEM_PERFECT_BETA
-                             == CONSONANT_STEM_PERFECT_BETA
-                     {
-                         new_stem.pop();
-                         format!("{}{}", new_stem, "φθαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && self.verb.properties & CONSONANT_STEM_PERFECT_GAMMA
-                             == CONSONANT_STEM_PERFECT_GAMMA
-                         && new_stem.ends_with('γ')
-                     //because λέγω has two
-                     {
-                         new_stem.pop();
-                         format!("{}{}", new_stem, "χθαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && self.verb.properties & CONSONANT_STEM_PERFECT_CHI
-                             == CONSONANT_STEM_PERFECT_CHI
-                     {
-                         new_stem.pop();
-                         format!("{}{}", new_stem, "χθαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && self.verb.properties & CONSONANT_STEM_PERFECT_NU
-                             == CONSONANT_STEM_PERFECT_NU
-                     {
-                         new_stem.pop();
-                         format!("{}{}", new_stem, "νθαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && new_stem.ends_with("πεπεμ")
-                     {
-                         format!("{}{}", new_stem, "φθαι")
-                     } else if self.tense == HcTense::Perfect
-                         && self.voice != HcVoice::Active
-                         && new_stem.ends_with('σ')
-                     {
-                         new_stem.pop();
-                         format!("{}{}", new_stem, "σθαι")
-                    */
                     } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("άω") {
                         if self.voice == HcVoice::Active {
                             new_stem.pop();
@@ -3954,7 +4766,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     let fff =
                         if !hgk_has_diacritics(&infinitive, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE)
                         {
-                            self.accent_verb_persistent(infinitive.as_str())
+                            self.accent_infinitive(infinitive.as_str())
                         } else {
                             infinitive
                         };
@@ -3964,7 +4776,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 //end handle infinitives
                 else if self.mood == HcMood::Participle {
                     let new_stem = a.clone();
-                    let ptc = if self.tense == HcTense::Present {
+                    let mut ptc = if self.tense == HcTense::Present {
                         if self.voice == HcVoice::Active {
                             format!("{}{}", new_stem, e)
                         } else if self.voice == HcVoice::Middle {
@@ -3978,7 +4790,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         } else if self.voice == HcVoice::Middle {
                             format!("{}{}", new_stem, e)
                         } else {
-                            format!("{}{}", new_stem, e)
+                            format!("{}ησ{}", new_stem, e)
                         }
                     } else if self.tense == HcTense::Aorist {
                         if self.voice == HcVoice::Active {
@@ -3999,8 +4811,12 @@ impl HcVerbForms for HcGreekVerbForm {
                     } else {
                         String::from("")
                     };
+
+                    if self.is_contracted_verb(&ptc) {
+                        ptc = self.contract_verb(&ptc, e);
+                    }
                     let fff = if !hgk_has_diacritics(&ptc, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) {
-                        self.accent_verb_persistent(ptc.as_str())
+                        self.accent_participle(ptc.as_str())
                     } else {
                         ptc
                     };
@@ -4047,20 +4863,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     /* contracted future and present */
                     if self.mood != HcMood::Infinitive
                         && self.mood != HcMood::Participle
-                        && ((self.tense == HcTense::Imperfect || self.tense == HcTense::Present)
-                            && (self.verb.pps[0].ends_with("άω")
-                                || self.verb.pps[0].ends_with("έω")
-                                || self.verb.pps[0].ends_with("όω")
-                                || self.verb.pps[0].ends_with("άομαι")
-                                || self.verb.pps[0].ends_with("έομαι")
-                                || self.verb.pps[0].ends_with("όομαι")))
-                        || (self.mood != HcMood::Infinitive
-                            && self.tense == HcTense::Future
-                            && self.voice != HcVoice::Passive
-                            && (self.verb.pps[1].ends_with('ῶ')
-                                || (accented_form.starts_with("ἐρ")
-                                    && self.verb.pps[1].starts_with("ἐρῶ"))
-                                || self.verb.pps[1].ends_with("οῦμαι")))
+                        && self.is_contracted_verb(&accented_form)
                     {
                         add_accent_collector.push(self.contract_verb(&accented_form, e));
                     } else if self.mood != HcMood::Infinitive && self.mood != HcMood::Participle {
@@ -4300,6 +5103,23 @@ impl HcVerbForms for HcGreekVerbForm {
         }
     }
 
+    //this needs to be refactored
+    fn is_contracted_verb(&self, form: &str) -> bool {
+        (self.tense == HcTense::Imperfect || self.tense == HcTense::Present)
+            && (self.verb.pps[0].ends_with("άω")
+                || self.verb.pps[0].ends_with("έω")
+                || self.verb.pps[0].ends_with("όω")
+                || self.verb.pps[0].ends_with("άομαι")
+                || self.verb.pps[0].ends_with("έομαι")
+                || self.verb.pps[0].ends_with("όομαι"))
+            || (self.mood != HcMood::Infinitive
+                && self.tense == HcTense::Future
+                && self.voice != HcVoice::Passive
+                && (self.verb.pps[1].ends_with('ῶ')
+                    || (form.starts_with("ἐρ") && self.verb.pps[1].starts_with("ἐρῶ"))
+                    || self.verb.pps[1].ends_with("οῦμαι")))
+    }
+
     fn get_pp_num(&self) -> HcGreekPrincipalParts {
         match self.tense {
             HcTense::Present => HcGreekPrincipalParts::First,
@@ -4342,17 +5162,413 @@ impl HcVerbForms for HcGreekVerbForm {
     fn get_participle_endings(&self, _stem: &str) -> Option<Vec<&str>> {
         match self.tense {
             HcTense::Present | HcTense::Future => match self.voice {
-                HcVoice::Active => Some(vec!["ων"]),
-                _ => Some(vec!["άμενος"]),
+                HcVoice::Active => match self.number {
+                    Some(HcNumber::Singular) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ων"]),
+                            Some(HcCase::Genitive) => Some(vec!["οντος"]),
+                            Some(HcCase::Dative) => Some(vec!["οντι"]),
+                            Some(HcCase::Accusative) => Some(vec!["οντα"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ουσα"]),
+                            Some(HcCase::Genitive) => Some(vec!["ουσης"]),
+                            Some(HcCase::Dative) => Some(vec!["ουσῃ"]),
+                            Some(HcCase::Accusative) => Some(vec!["ουσαν"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ον"]),
+                            Some(HcCase::Genitive) => Some(vec!["οντος"]),
+                            Some(HcCase::Dative) => Some(vec!["οντι"]),
+                            Some(HcCase::Accusative) => Some(vec!["ον"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Plural) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["οντες"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["οντων"]),
+                            Some(HcCase::Dative) => Some(vec!["ουσι(ν)"]),
+                            Some(HcCase::Accusative) => Some(vec!["οντας"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["ουσαι"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["ουσῶν"]),
+                            Some(HcCase::Dative) => Some(vec!["ουσαις"]),
+                            Some(HcCase::Accusative) => Some(vec!["ουσᾱς"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["οντα"]),
+                            Some(HcCase::Genitive) => Some(vec!["οντων"]),
+                            Some(HcCase::Dative) => Some(vec!["ουσι(ν)"]),
+                            Some(HcCase::Accusative) => Some(vec!["οντα"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => None,
+                },
+                HcVoice::Middle | HcVoice::Passive => match self.number {
+                    Some(HcNumber::Singular) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) => Some(vec!["ομενος"]),
+                            Some(HcCase::Genitive) => Some(vec!["ομενου"]),
+                            Some(HcCase::Dative) => Some(vec!["ομενῳ"]),
+                            Some(HcCase::Accusative) => Some(vec!["ομενον"]),
+                            Some(HcCase::Vocative) => Some(vec!["ομενε"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["ομενη"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["ομενης"]),
+                            Some(HcCase::Dative) => Some(vec!["ομενῃ"]),
+                            Some(HcCase::Accusative) => Some(vec!["ομενην"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["ομενον"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["ομενου"]),
+                            Some(HcCase::Dative) => Some(vec!["ομενῳ"]),
+                            Some(HcCase::Accusative) => Some(vec!["ομενον"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Plural) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["ομενοι"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["ομενων"]),
+                            Some(HcCase::Dative) => Some(vec!["ομενοις"]),
+                            Some(HcCase::Accusative) => Some(vec!["ομενους"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["ομεναι"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["ομενων"]),
+                            Some(HcCase::Dative) => Some(vec!["ομεναις"]),
+                            Some(HcCase::Accusative) => Some(vec!["ομενᾱς"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["ομενα"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["ομενων"]),
+                            Some(HcCase::Dative) => Some(vec!["ομενοις"]),
+                            Some(HcCase::Accusative) => Some(vec!["ομενα"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => None,
+                },
             },
             HcTense::Aorist => match self.voice {
-                HcVoice::Active => Some(vec!["ας"]),
-                HcVoice::Middle => Some(vec!["άμενος"]),
-                _ => Some(vec!["είς"]),
+                HcVoice::Active => match self.number {
+                    Some(HcNumber::Singular) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ᾱς"]),
+                            Some(HcCase::Genitive) => Some(vec!["αντος"]),
+                            Some(HcCase::Dative) => Some(vec!["αντι"]),
+                            Some(HcCase::Accusative) => Some(vec!["αντα"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ᾱσα"]),
+                            Some(HcCase::Genitive) => Some(vec!["ᾱσης"]),
+                            Some(HcCase::Dative) => Some(vec!["ᾱσῃ"]),
+                            Some(HcCase::Accusative) => Some(vec!["ᾱσαν"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["αν"]),
+                            Some(HcCase::Genitive) => Some(vec!["αντος"]),
+                            Some(HcCase::Dative) => Some(vec!["αντι"]),
+                            Some(HcCase::Accusative) => Some(vec!["αν"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Plural) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["αντες"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["αντων"]),
+                            Some(HcCase::Dative) => Some(vec!["ᾱσι(ν)"]),
+                            Some(HcCase::Accusative) => Some(vec!["αντας"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ᾱσαι"]),
+                            Some(HcCase::Genitive) => Some(vec!["ᾱσῶν"]),
+                            Some(HcCase::Dative) => Some(vec!["ᾱσαις"]),
+                            Some(HcCase::Accusative) => Some(vec!["ᾱσᾱς"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["αντα"]),
+                            Some(HcCase::Genitive) => Some(vec!["αντων"]),
+                            Some(HcCase::Dative) => Some(vec!["ᾱσι(ν)"]),
+                            Some(HcCase::Accusative) => Some(vec!["αντα"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => None,
+                },
+                HcVoice::Middle => match self.number {
+                    Some(HcNumber::Singular) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) => Some(vec!["αμενος"]),
+                            Some(HcCase::Genitive) => Some(vec!["αμενου"]),
+                            Some(HcCase::Dative) => Some(vec!["αμενῳ"]),
+                            Some(HcCase::Accusative) => Some(vec!["αμενον"]),
+                            Some(HcCase::Vocative) => Some(vec!["αμενε"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["αμενη"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["αμενης"]),
+                            Some(HcCase::Dative) => Some(vec!["αμενῃ"]),
+                            Some(HcCase::Accusative) => Some(vec!["αμενην"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["αμενον"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["αμενου"]),
+                            Some(HcCase::Dative) => Some(vec!["αμενῳ"]),
+                            Some(HcCase::Accusative) => Some(vec!["αμενον"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Plural) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["αμενοι"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["αμενων"]),
+                            Some(HcCase::Dative) => Some(vec!["αμενοις"]),
+                            Some(HcCase::Accusative) => Some(vec!["αμενους"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["αμεναι"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["αμενων"]),
+                            Some(HcCase::Dative) => Some(vec!["αμεναις"]),
+                            Some(HcCase::Accusative) => Some(vec!["αμενᾱς"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["αμενα"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["αμενων"]),
+                            Some(HcCase::Dative) => Some(vec!["αμενοις"]),
+                            Some(HcCase::Accusative) => Some(vec!["αμενα"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => None,
+                },
+                HcVoice::Passive => match self.number {
+                    Some(HcNumber::Singular) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["εις"]),
+                            Some(HcCase::Genitive) => Some(vec!["εντος"]),
+                            Some(HcCase::Dative) => Some(vec!["εντι"]),
+                            Some(HcCase::Accusative) => Some(vec!["εντα"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["εισα"]),
+                            Some(HcCase::Genitive) => Some(vec!["εισης"]),
+                            Some(HcCase::Dative) => Some(vec!["εισῃ"]),
+                            Some(HcCase::Accusative) => Some(vec!["εισαν"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["εν"]),
+                            Some(HcCase::Genitive) => Some(vec!["εντος"]),
+                            Some(HcCase::Dative) => Some(vec!["εντι"]),
+                            Some(HcCase::Accusative) => Some(vec!["εν"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Plural) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["εντες"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["εντων"]),
+                            Some(HcCase::Dative) => Some(vec!["εισι(ν)"]),
+                            Some(HcCase::Accusative) => Some(vec!["εντας"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["εισαι"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["εισῶν"]),
+                            Some(HcCase::Dative) => Some(vec!["εισαις"]),
+                            Some(HcCase::Accusative) => Some(vec!["εισᾱς"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["εντα"]),
+                            Some(HcCase::Genitive) => Some(vec!["εντων"]),
+                            Some(HcCase::Dative) => Some(vec!["εισι(ν)"]),
+                            Some(HcCase::Accusative) => Some(vec!["εντα"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => None,
+                },
             },
             HcTense::Perfect => match self.voice {
-                HcVoice::Active => Some(vec!["ώς"]),
-                _ => Some(vec!["μένος"]),
+                HcVoice::Active => match self.number {
+                    Some(HcNumber::Singular) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ως"]),
+                            Some(HcCase::Genitive) => Some(vec!["οτος"]),
+                            Some(HcCase::Dative) => Some(vec!["οτι"]),
+                            Some(HcCase::Accusative) => Some(vec!["οτα"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["υια"]),
+                            Some(HcCase::Genitive) => Some(vec!["υιᾱς"]),
+                            Some(HcCase::Dative) => Some(vec!["υιᾱͅ"]),
+                            Some(HcCase::Accusative) => Some(vec!["υιαν"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ος"]),
+                            Some(HcCase::Genitive) => Some(vec!["οτος"]),
+                            Some(HcCase::Dative) => Some(vec!["οτι"]),
+                            Some(HcCase::Accusative) => Some(vec!["ος"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Plural) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["οτες"]),
+                            Some(HcCase::Genitive) => Some(vec!["οτων"]),
+                            Some(HcCase::Dative) => Some(vec!["οσι(ν)"]),
+                            Some(HcCase::Accusative) => Some(vec!["οτας"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["υιαι"]),
+                            Some(HcCase::Genitive) => Some(vec!["υιῶν"]),
+                            Some(HcCase::Dative) => Some(vec!["υιαις"]),
+                            Some(HcCase::Accusative) => Some(vec!["υιᾱς"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["οτα"]),
+                            Some(HcCase::Genitive) => Some(vec!["οτων"]),
+                            Some(HcCase::Dative) => Some(vec!["οσι(ν)"]),
+                            Some(HcCase::Accusative) => Some(vec!["οτα"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => None,
+                },
+                HcVoice::Middle | HcVoice::Passive => match self.number {
+                    Some(HcNumber::Singular) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) => Some(vec!["μενος"]),
+                            Some(HcCase::Genitive) => Some(vec!["μενου"]),
+                            Some(HcCase::Dative) => Some(vec!["μενῳ"]),
+                            Some(HcCase::Accusative) => Some(vec!["μενον"]),
+                            Some(HcCase::Vocative) => Some(vec!["μενε"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["μενη"]),
+                            Some(HcCase::Genitive) => Some(vec!["μενης"]),
+                            Some(HcCase::Dative) => Some(vec!["μενῃ"]),
+                            Some(HcCase::Accusative) => Some(vec!["μενην"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["μενον"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["μενου"]),
+                            Some(HcCase::Dative) => Some(vec!["μενῳ"]),
+                            Some(HcCase::Accusative) => Some(vec!["μενον"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Plural) => match self.gender {
+                        Some(HcGender::Masculine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["μενοι"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["μενων"]),
+                            Some(HcCase::Dative) => Some(vec!["μενοις"]),
+                            Some(HcCase::Accusative) => Some(vec!["μενους"]),
+                            None => None,
+                        },
+                        Some(HcGender::Feminine) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => {
+                                Some(vec!["μεναι"])
+                            }
+                            Some(HcCase::Genitive) => Some(vec!["μενων"]),
+                            Some(HcCase::Dative) => Some(vec!["μεναις"]),
+                            Some(HcCase::Accusative) => Some(vec!["μενᾱς"]),
+                            None => None,
+                        },
+                        Some(HcGender::Neuter) => match self.case {
+                            Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["μενα"]),
+                            Some(HcCase::Genitive) => Some(vec!["μενων"]),
+                            Some(HcCase::Dative) => Some(vec!["μενοις"]),
+                            Some(HcCase::Accusative) => Some(vec!["μενα"]),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    Some(HcNumber::Dual) => todo!(),
+                    None => None,
+                },
             },
             _ => None,
         }
@@ -4734,6 +5950,7 @@ impl HcVerbForms for HcGreekVerbForm {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct SyllableAnalysis {
     letters: String,
     is_long: bool,
@@ -4852,7 +6069,7 @@ fn analyze_syllable_quantities(
                 }
             }
             HgkLetterType::HgkShortVowel => {
-                if x.letter == 'υ'
+                if (x.letter == 'υ' && last_letter != 'ι')
                     || x.letter == 'ι' && (x.diacritics & HGK_DIAERESIS) != HGK_DIAERESIS
                 {
                     last_letter = x.letter;
@@ -4864,7 +6081,10 @@ fn analyze_syllable_quantities(
                     });
                 } else {
                     if last_letter != '\u{0000}'
-                        && (x.letter == 'ε' || x.letter == 'α' || x.letter == 'ο')
+                        && (x.letter == 'ε'
+                            || x.letter == 'α'
+                            || x.letter == 'ο'
+                            || x.letter == 'υ')
                     {
                         res.pop();
                         let mut s = String::from(x.letter);
@@ -5015,6 +6235,102 @@ mod tests {
     // }
 
     #[test]
+    fn test_analyze_syllables() {
+        let word = "αι";
+        let syllables = analyze_syllable_quantities(
+            word,
+            Some(HcPerson::First),
+            Some(HcNumber::Singular),
+            HcTense::Present,
+            HcMood::Indicative,
+            0,
+        );
+        assert_eq!(
+            syllables,
+            vec![SyllableAnalysis {
+                letters: String::from("αι"),
+                is_long: false,
+                index: 0
+            }]
+        );
+
+        let word = "βαιβω";
+        let syllables = analyze_syllable_quantities(
+            word,
+            Some(HcPerson::First),
+            Some(HcNumber::Singular),
+            HcTense::Present,
+            HcMood::Indicative,
+            0,
+        );
+        assert_eq!(
+            syllables,
+            vec![
+                SyllableAnalysis {
+                    letters: String::from("αι"),
+                    is_long: true,
+                    index: 2
+                },
+                SyllableAnalysis {
+                    letters: String::from("ω"),
+                    is_long: true,
+                    index: 0
+                }
+            ]
+        );
+
+        let word = "βῡβω";
+        let syllables = analyze_syllable_quantities(
+            word,
+            Some(HcPerson::First),
+            Some(HcNumber::Singular),
+            HcTense::Present,
+            HcMood::Indicative,
+            0,
+        );
+        assert_eq!(
+            syllables,
+            vec![
+                SyllableAnalysis {
+                    letters: String::from("ῡ"),
+                    is_long: true,
+                    index: 2
+                },
+                SyllableAnalysis {
+                    letters: String::from("ω"),
+                    is_long: true,
+                    index: 0
+                }
+            ]
+        );
+
+        let word = "βυιβω";
+        let syllables = analyze_syllable_quantities(
+            word,
+            Some(HcPerson::First),
+            Some(HcNumber::Singular),
+            HcTense::Present,
+            HcMood::Indicative,
+            0,
+        );
+        assert_eq!(
+            syllables,
+            vec![
+                SyllableAnalysis {
+                    letters: String::from("υι"),
+                    is_long: true,
+                    index: 2
+                },
+                SyllableAnalysis {
+                    letters: String::from("ω"),
+                    is_long: true,
+                    index: 0
+                }
+            ]
+        );
+    }
+
+    #[test]
     fn test_param_hash() {
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
         let verb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR, 0).unwrap());
@@ -5046,6 +6362,105 @@ mod tests {
                                           //test round trip to param hash to form again
         assert_eq!(a, b);
     }
+    /*
+        #[test]
+        fn test_oida() {
+            // All elements can be initialized to the same value.
+            let mut results: [usize; 432] = [0; 432];
+
+            let oida = "οἶδα, εἴσομαι, —, —, —, —";
+            let verb = Arc::new(HcGreekVerb::from_string(1, oida, REGULAR, 0).unwrap());
+            let a = HcGreekVerbForm {
+                verb: verb.clone(),
+                person: Some(HcPerson::First),
+                number: Some(HcNumber::Singular),
+                tense: HcTense::Perfect,
+                voice: HcVoice::Active,
+                mood: HcMood::Indicative,
+                gender: None,
+                case: None,
+            };
+
+            let first_hash = a.param_hash() as usize;
+            let mut idx: usize = 0;
+
+            let max_changes = 2;
+            let highest_unit = 20;
+            let verb_params = VerbParameters {
+                persons: vec![HcPerson::First, HcPerson::Second, HcPerson::Third],
+                numbers: vec![HcNumber::Singular, HcNumber::Plural],
+                tenses: vec![
+                    HcTense::Present,
+                    HcTense::Imperfect,
+                    HcTense::Future,
+                    HcTense::Aorist,
+                    HcTense::Perfect,
+                    HcTense::Pluperfect,
+                ],
+                voices: vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive],
+                moods: vec![
+                    HcMood::Indicative,
+                    HcMood::Subjunctive,
+                    HcMood::Optative,
+                    HcMood::Imperative,
+                ],
+            };
+
+            //let mut form_filter:HashSet<u32> = HashSet::new();
+            // form_filter.insert(b.param_hash());
+            // form_filter.insert(c.param_hash());
+
+            let count = 100_000;
+
+            for i in 0..count {
+                let (a, _diag) = a.random_form(max_changes, Some(highest_unit), &verb_params, None);
+                println!(
+                    "{} {}",
+                    a.param_hash(),
+                    a.get_form(false).unwrap().last().unwrap().form
+                );
+                idx = a.param_hash() as usize;
+                results[idx] += 1;
+
+                // if i % 10 == 0 {
+                //     form_filter.clear();
+                // }
+                //form_filter.insert(d.param_hash());
+                //assert!(!form_filter.contains(&d.param_hash()));
+                //assert_ne!(d.param_hash(), c.param_hash()); //the random form should never equal c because c was added to filter HashSet
+            }
+            //assert_eq!(0, results[0]);
+
+            let mut b = HcGreekVerbForm {
+                verb: verb.clone(),
+                person: Some(HcPerson::Second),
+                number: Some(HcNumber::Singular),
+                tense: HcTense::Perfect,
+                voice: HcVoice::Active,
+                mood: HcMood::Indicative,
+                gender: None,
+                case: None,
+            };
+            let m: Vec<(usize, f64)> = results
+                .iter()
+                .enumerate()
+                .map(|(i, e)| (i, (*e as f64 / count as f64)))
+                .filter(|e| e.1 != 0.0)
+                .collect();
+
+            //println!("count {} {:?}", results[b.param_hash() as usize], m);
+            for i in m {
+                b.extract_params_from_hash(i.0.try_into().unwrap());
+                println!("{} {:?}", i.0, b);
+            }
+            assert!(
+                results[b.param_hash() as usize] / count > 30 / count
+                    && results[b.param_hash() as usize] / count < 34 / count,
+                "b.param_hash() {}",
+                results[b.param_hash() as usize] / count
+            );
+        }
+    */
 
     #[test]
     fn test_random2() {
@@ -5318,6 +6733,120 @@ mod tests {
         );
     }
 
+    //same as above, but with oida = same results
+    #[test]
+    fn test_random_param_change_distribution_oida() {
+        let mut persons = [0, 0, 0];
+        let mut numbers = [0, 0];
+        let mut tenses = [0, 0, 0, 0, 0, 0];
+        let mut moods = [0, 0, 0, 0];
+        let mut voices = [0, 0, 0];
+        let mut param_hash = 0;
+
+        let oida = "οἶδα, εἴσομαι, —, —, —, —";
+        let verb = Arc::new(HcGreekVerb::from_string(1, oida, REGULAR, 0).unwrap());
+        let mut a = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Future,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+
+        let num_changes = 2;
+        let parameters = VerbParameters {
+            persons: vec![HcPerson::First, HcPerson::Second, HcPerson::Third],
+            numbers: vec![HcNumber::Singular, HcNumber::Plural],
+            tenses: vec![
+                HcTense::Present,
+                HcTense::Imperfect,
+                HcTense::Future,
+                HcTense::Aorist,
+                HcTense::Perfect,
+                HcTense::Pluperfect,
+            ],
+            voices: vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive],
+            moods: vec![
+                HcMood::Indicative,
+                HcMood::Subjunctive,
+                HcMood::Optative,
+                HcMood::Imperative,
+            ],
+        };
+
+        let count = 100_000;
+        for _i in 0..count {
+            a.change_params(num_changes, &parameters, &mut []);
+            persons[a.person.unwrap().to_i16() as usize] += 1;
+            numbers[a.number.unwrap().to_i16() as usize] += 1;
+            tenses[a.tense.to_i16() as usize] += 1;
+            moods[a.mood.to_i16() as usize] += 1;
+            voices[a.voice.to_i16() as usize] += 1;
+
+            param_hash += a.param_hash();
+        }
+        //sum of hash divided by count should be half of total number of possible forms (432 = 216)
+        assert!(
+            (param_hash as f64 / count as f64) > 214.0
+                && (param_hash as f64 / count as f64) < 218.0
+        );
+
+        //check distribution of each param:
+        assert!(
+            (persons[0] as f64 / count as f64) > 0.31 && (persons[0] as f64 / count as f64) < 0.35
+        );
+        assert!(
+            (persons[1] as f64 / count as f64) > 0.31 && (persons[1] as f64 / count as f64) < 0.35
+        );
+        assert!(
+            (persons[2] as f64 / count as f64) > 0.31 && (persons[2] as f64 / count as f64) < 0.35
+        );
+
+        assert!(
+            (numbers[0] as f64 / count as f64) > 0.48 && (numbers[0] as f64 / count as f64) < 0.52
+        );
+        assert!(
+            (numbers[1] as f64 / count as f64) > 0.48 && (numbers[1] as f64 / count as f64) < 0.52
+        );
+
+        assert!(
+            (tenses[0] as f64 / count as f64) > 0.14 && (tenses[0] as f64 / count as f64) < 0.18
+        );
+        assert!(
+            (tenses[1] as f64 / count as f64) > 0.14 && (tenses[1] as f64 / count as f64) < 0.18
+        );
+        assert!(
+            (tenses[2] as f64 / count as f64) > 0.14 && (tenses[2] as f64 / count as f64) < 0.18
+        );
+        assert!(
+            (tenses[3] as f64 / count as f64) > 0.14 && (tenses[3] as f64 / count as f64) < 0.18
+        );
+        assert!(
+            (tenses[4] as f64 / count as f64) > 0.14 && (tenses[4] as f64 / count as f64) < 0.18
+        );
+        assert!(
+            (tenses[5] as f64 / count as f64) > 0.14 && (tenses[5] as f64 / count as f64) < 0.18
+        );
+
+        assert!((moods[0] as f64 / count as f64) > 0.23 && (moods[0] as f64 / count as f64) < 0.27);
+        assert!((moods[1] as f64 / count as f64) > 0.23 && (moods[1] as f64 / count as f64) < 0.27);
+        assert!((moods[2] as f64 / count as f64) > 0.23 && (moods[2] as f64 / count as f64) < 0.27);
+        assert!((moods[3] as f64 / count as f64) > 0.23 && (moods[3] as f64 / count as f64) < 0.27);
+
+        assert!(
+            (voices[0] as f64 / count as f64) > 0.31 && (voices[0] as f64 / count as f64) < 0.35
+        );
+        assert!(
+            (voices[1] as f64 / count as f64) > 0.31 && (voices[1] as f64 / count as f64) < 0.35
+        );
+        assert!(
+            (voices[2] as f64 / count as f64) > 0.31 && (voices[2] as f64 / count as f64) < 0.35
+        );
+    }
+
     #[test]
     fn test_participles() {
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
@@ -5333,6 +6862,66 @@ mod tests {
             case: Some(HcCase::Nominative),
         };
         assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λῡ́ων");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: None,
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Present,
+            voice: HcVoice::Active,
+            mood: HcMood::Participle,
+            gender: Some(HcGender::Masculine),
+            case: Some(HcCase::Genitive),
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λῡ́οντος");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: None,
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Future,
+            voice: HcVoice::Active,
+            mood: HcMood::Participle,
+            gender: Some(HcGender::Masculine),
+            case: Some(HcCase::Nominative),
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λῡ́σων");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: None,
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Aorist,
+            voice: HcVoice::Active,
+            mood: HcMood::Participle,
+            gender: Some(HcGender::Masculine),
+            case: Some(HcCase::Nominative),
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λῡ́σᾱς");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: None,
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Aorist,
+            voice: HcVoice::Passive,
+            mood: HcMood::Participle,
+            gender: Some(HcGender::Masculine),
+            case: Some(HcCase::Nominative),
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λυθείς");
+
+        let b = HcGreekVerbForm {
+            verb: a.clone(),
+            person: None,
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Perfect,
+            voice: HcVoice::Active,
+            mood: HcMood::Participle,
+            gender: Some(HcGender::Masculine),
+            case: Some(HcCase::Nominative),
+        };
+        assert_eq!(b.get_form(false).unwrap().last().unwrap().form, "λελυκώς");
     }
 
     #[test]
@@ -7138,6 +8727,179 @@ mod tests {
                 .write(true)
                 .truncate(true)
                 .open("testdata/greek-infinitives.xml")
+            {
+                let mut f = BufWriter::new(file);
+                f.write_all(result).unwrap();
+            }
+        }
+    }
+
+    #[test]
+    fn participle_write_xml() {
+        let mut form_id = 0;
+        let mut buffer = Vec::new();
+        let mut writer = Writer::new_with_indent(&mut buffer, b' ', 4);
+
+        if let Ok(pp_file) = File::open("testdata/pp.txt") {
+            let pp_reader = BufReader::new(pp_file);
+
+            let elem = BytesStart::new("greek-participles");
+            writer.write_event(Event::Start(elem)).unwrap();
+
+            for (verb_idx, pp_line) in pp_reader.lines().enumerate() {
+                if let Ok(line) = pp_line {
+                    let verb = Arc::new(
+                        HcGreekVerb::from_string_with_properties((verb_idx + 1) as u32, &line)
+                            .unwrap(),
+                    );
+
+                    let mut elem = BytesStart::new("verb");
+                    elem.push_attribute(("id", (verb_idx + 1).to_string().as_str()));
+                    elem.push_attribute(("label", verb.get_verb_lemma().as_str()));
+                    elem.push_attribute(("unit", verb.hq_unit.to_string().as_str()));
+                    elem.push_attribute(("deponent", verb.deponent_type().value()));
+                    elem.push_attribute(("pps", verb.pps.join(", ").as_str()));
+                    writer.write_event(Event::Start(elem)).unwrap();
+
+                    for x in [
+                        HcTense::Present,
+                        // HcTense::Future,
+                        // HcTense::Aorist,
+                        // HcTense::Perfect,
+                    ] {
+                        for v in [
+                            HcVoice::Active,
+                            // HcVoice::Middle,
+                            // HcVoice::Passive,
+                        ] {
+                            for z in [
+                                Some(HcNumber::Singular),
+                                Some(HcNumber::Dual),
+                                Some(HcNumber::Plural),
+                            ] {
+                                for c in [
+                                    Some(HcCase::Nominative),
+                                    Some(HcCase::Genitive),
+                                    Some(HcCase::Dative),
+                                    Some(HcCase::Accusative),
+                                    Some(HcCase::Vocative),
+                                ] {
+                                    for g in [
+                                        Some(HcGender::Masculine),
+                                        Some(HcGender::Feminine),
+                                        Some(HcGender::Neuter),
+                                    ] {
+                                        let form = HcGreekVerbForm {
+                                            verb: verb.clone(),
+                                            person: None,
+                                            number: z,
+                                            tense: x,
+                                            voice: v,
+                                            mood: HcMood::Participle,
+                                            gender: g,
+                                            case: c,
+                                        };
+                                        let form_result = form.get_form(false);
+                                        let form_result_decomposed = form.get_form(true);
+
+                                        let person_label = if form.person.is_some() {
+                                            form.person.unwrap().value().to_string()
+                                        } else {
+                                            String::from("None")
+                                        };
+                                        let number_label = if form.number.is_some() {
+                                            form.number.unwrap().value().to_string()
+                                        } else {
+                                            String::from("None")
+                                        };
+
+                                        let mut elem = BytesStart::new("form");
+                                        form_id += 1;
+                                        elem.push_attribute(("id", form_id.to_string().as_str()));
+                                        elem.push_attribute(("person", person_label.as_str()));
+                                        elem.push_attribute(("number", number_label.as_str()));
+                                        elem.push_attribute(("tense", form.tense.value()));
+                                        elem.push_attribute(("mood", form.mood.value()));
+                                        elem.push_attribute(("voice", form.voice.value()));
+                                        elem.push_attribute(("case", form.case.unwrap().value()));
+                                        elem.push_attribute((
+                                            "gender",
+                                            form.gender.unwrap().value(),
+                                        ));
+
+                                        if let Err(ref res) = form_result {
+                                            elem.push_attribute(("status", res.value()));
+                                        }
+                                        if let Err(ref res) = form_result_decomposed {
+                                            elem.push_attribute(("status-decomposed", res.value()));
+                                        }
+                                        elem.push_attribute((
+                                            "voice-label",
+                                            get_voice_label(
+                                                x,
+                                                v,
+                                                HcMood::Participle,
+                                                verb.deponent_type(),
+                                            )
+                                            .as_str(),
+                                        ));
+
+                                        writer.write_event(Event::Start(elem)).unwrap();
+                                        if let Ok(res) = form_result {
+                                            let elemf = BytesStart::new("f");
+                                            writer.write_event(Event::Start(elemf)).unwrap();
+                                            writer
+                                                .write_event(Event::Text(BytesText::new(
+                                                    &res.last()
+                                                        .unwrap()
+                                                        .form
+                                                        .to_string()
+                                                        .replace(" /", ","),
+                                                )))
+                                                .unwrap();
+                                            writer
+                                                .write_event(Event::End(BytesEnd::new("f")))
+                                                .unwrap();
+                                        }
+                                        if let Ok(res) = form_result_decomposed {
+                                            let elemd = BytesStart::new("d");
+                                            writer.write_event(Event::Start(elemd)).unwrap();
+                                            writer
+                                                .write_event(Event::Text(BytesText::new(
+                                                    &res.last()
+                                                        .unwrap()
+                                                        .form
+                                                        .to_string()
+                                                        .replace(" /", ","),
+                                                )))
+                                                .unwrap();
+                                            writer
+                                                .write_event(Event::End(BytesEnd::new("d")))
+                                                .unwrap();
+                                        }
+                                        writer
+                                            .write_event(Event::End(BytesEnd::new("form")))
+                                            .unwrap();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                writer
+                    .write_event(Event::End(BytesEnd::new("verb")))
+                    .unwrap();
+            }
+            writer
+                .write_event(Event::End(BytesEnd::new("greek-participles")))
+                .unwrap();
+            let result = writer.into_inner();
+
+            if let Ok(file) = std::fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open("testdata/greek-participles.xml")
             {
                 let mut f = BufWriter::new(file);
                 f.write_all(result).unwrap();
