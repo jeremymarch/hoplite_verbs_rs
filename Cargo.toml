@@ -10,7 +10,7 @@ edition = "2021"
 # polytonic-greek = { path = "../polytonic-greek" }
 polytonic-greek = { git = "https://github.com/jeremymarch/polytonic-greek", version = "0.5.1" }
 unicode-normalization = { version = "0.1.22", default-features = false }
-unicode-segmentation = "1.11.0"
+unicode-segmentation = "1.10.1"
 
 itertools = "0.12.1"
 rand = "0.8.5"
