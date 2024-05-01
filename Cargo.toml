@@ -1,6 +1,6 @@
 [package]
 name = "hoplite_verbs_rs"
-version = "0.4.3"
+version = "0.4.4"
 authors = ["jeremymarch <jmarch@gradcenter.cuny.edu>"]
 edition = "2021"
 
@@ -9,10 +9,10 @@ edition = "2021"
 [dependencies]
 # polytonic-greek = { path = "../polytonic-greek" }
 polytonic-greek = { git = "https://github.com/jeremymarch/polytonic-greek", version = "0.5.0" }
-unicode-normalization = { version = "0.1.22", default-features = false }
-unicode-segmentation = "1.10.1"
+unicode-normalization = { version = "0.1.23", default-features = false }
+unicode-segmentation = "1.11.0"
 
-itertools = "0.12.0"
+itertools = "0.12.1"
 rand = "0.8.5"
 tracing = "0.1.40"
 
