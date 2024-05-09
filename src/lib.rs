@@ -1632,7 +1632,7 @@ impl HcGreekVerbForm {
                             None => todo!(),
                         },
                         Some(HcCase::Accusative) => match self.gender {
-                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                            Some(HcGender::Masculine) => {
                                 if syllables.len() > 1 {
                                     PENULT
                                 } else {
@@ -1646,6 +1646,7 @@ impl HcGreekVerbForm {
                                     ULTIMA
                                 }
                             }
+                            Some(HcGender::Neuter) => ULTIMA,
                             None => todo!(),
                         },
                         None => todo!(),
@@ -1738,13 +1739,7 @@ impl HcGreekVerbForm {
                                     ULTIMA
                                 }
                             }
-                            Some(HcGender::Neuter) => {
-                                if syllables.len() > 1 {
-                                    PENULT
-                                } else {
-                                    ULTIMA
-                                }
-                            }
+                            Some(HcGender::Neuter) => ULTIMA,
                             None => todo!(),
                         },
                         None => todo!(),
@@ -1834,10 +1829,17 @@ impl HcGreekVerbForm {
                             }
                         }
                         Some(HcCase::Accusative) => match self.gender {
-                            Some(HcGender::Masculine) | Some(HcGender::Neuter) => {
+                            Some(HcGender::Masculine) => {
                                 if syllables.len() > 2 {
                                     ANTEPENULT
                                 } else if syllables.len() > 1 {
+                                    PENULT
+                                } else {
+                                    ULTIMA
+                                }
+                            }
+                            Some(HcGender::Neuter) => {
+                                if syllables.len() > 1 {
                                     PENULT
                                 } else {
                                     ULTIMA
