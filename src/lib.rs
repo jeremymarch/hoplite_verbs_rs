@@ -639,17 +639,25 @@ impl HcGreekVerb {
             HcDeponentType::NotDeponent
         }
     }
-    fn is_consonant_stem(&self) -> bool {
-        self.properties & CONSONANT_STEM_PERFECT_PI == CONSONANT_STEM_PERFECT_PI
-            || self.properties & CONSONANT_STEM_PERFECT_MU_PI == CONSONANT_STEM_PERFECT_MU_PI
-            || self.properties & CONSONANT_STEM_PERFECT_GAMMA == CONSONANT_STEM_PERFECT_GAMMA
-            || self.properties & CONSONANT_STEM_PERFECT_KAPPA == CONSONANT_STEM_PERFECT_KAPPA
-            || self.properties & CONSONANT_STEM_PERFECT_CHI == CONSONANT_STEM_PERFECT_CHI
-            || self.properties & CONSONANT_STEM_PERFECT_BETA == CONSONANT_STEM_PERFECT_BETA
-            || self.properties & CONSONANT_STEM_PERFECT_LAMBDA == CONSONANT_STEM_PERFECT_LAMBDA
-            || self.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU
-            || self.properties & CONSONANT_STEM_PERFECT_SIGMA == CONSONANT_STEM_PERFECT_SIGMA
-            || self.properties & CONSONANT_STEM_PERFECT_PHI == CONSONANT_STEM_PERFECT_PHI
+
+    fn is_consonant_stem(&self, pp: &str) -> bool {
+        if !pp.is_empty() {
+            pp.ends_with("γμαι")
+                || pp.ends_with("σμαι")
+                || pp.ends_with("μμαι")
+                || pp.ends_with("λμαι")
+        } else {
+            self.properties & CONSONANT_STEM_PERFECT_PI == CONSONANT_STEM_PERFECT_PI
+                || self.properties & CONSONANT_STEM_PERFECT_MU_PI == CONSONANT_STEM_PERFECT_MU_PI
+                || self.properties & CONSONANT_STEM_PERFECT_GAMMA == CONSONANT_STEM_PERFECT_GAMMA
+                || self.properties & CONSONANT_STEM_PERFECT_KAPPA == CONSONANT_STEM_PERFECT_KAPPA
+                || self.properties & CONSONANT_STEM_PERFECT_CHI == CONSONANT_STEM_PERFECT_CHI
+                || self.properties & CONSONANT_STEM_PERFECT_BETA == CONSONANT_STEM_PERFECT_BETA
+                || self.properties & CONSONANT_STEM_PERFECT_LAMBDA == CONSONANT_STEM_PERFECT_LAMBDA
+                || self.properties & CONSONANT_STEM_PERFECT_NU == CONSONANT_STEM_PERFECT_NU
+                || self.properties & CONSONANT_STEM_PERFECT_SIGMA == CONSONANT_STEM_PERFECT_SIGMA
+                || self.properties & CONSONANT_STEM_PERFECT_PHI == CONSONANT_STEM_PERFECT_PHI
+        }
     }
 }
 
@@ -683,7 +691,13 @@ pub trait HcVerbForms {
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> Option<String>;
     fn strip_ending(&self, pp_num: usize, form: String) -> Result<String, &str>;
-    fn add_ending(&self, stem: &str, ending: &str, decompose: bool) -> Result<String, &str>;
+    fn add_ending(
+        &self,
+        full_stem: &str,
+        stem: &str,
+        ending: &str,
+        decompose: bool,
+    ) -> Result<String, &str>;
     fn get_endings(&self, stem: &str) -> Option<Vec<&str>>;
     fn get_participle_endings(&self, _stem: &str) -> Option<Vec<&str>>;
     fn get_infinitive_endings(&self, _stem: &str) -> Option<Vec<&str>>;
@@ -3242,7 +3256,13 @@ impl HcVerbForms for HcGreekVerbForm {
         }
     }
 
-    fn add_ending(&self, stem: &str, ending: &str, decompose: bool) -> Result<String, &str> {
+    fn add_ending(
+        &self,
+        full_stem: &str,
+        stem: &str,
+        ending: &str,
+        decompose: bool,
+    ) -> Result<String, &str> {
         let mut local_stem = stem.to_string();
         let mut local_ending = ending.to_string();
 
@@ -3769,12 +3789,9 @@ impl HcVerbForms for HcGreekVerbForm {
         }
 
         // consonant stem perfects and pluperfects
-        if self.verb.is_consonant_stem()
-            && ((self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
-                && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive))
-            && local_stem != "ἑωρᾱ" //handle non-consonant stem alternate of oraw
-            && local_stem != "ε ‐ ἑωρᾱ"
-            && local_stem != "εἰρη"
+        if self.verb.is_consonant_stem(full_stem)
+            && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
+            && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)
         {
             return Ok(self.contract_consonants(&local_stem, &local_ending, decompose));
         }
@@ -3839,7 +3856,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 let is_future_optative =
                     self.tense == HcTense::Future && self.mood == HcMood::Optative;
 
-                let is_consonant_stem_third_plural = self.verb.is_consonant_stem()
+                let is_consonant_stem_third_plural = self.verb.is_consonant_stem("")
                     && (self.tense == HcTense::Perfect || self.tense == HcTense::Pluperfect)
                     && (self.voice == HcVoice::Middle || self.voice == HcVoice::Passive)
                     && self.person == Some(HcPerson::Third)
@@ -4665,7 +4682,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     let mut new_stem = a.clone();
                     let infinitive = if self.tense == HcTense::Perfect
                         && self.voice != HcVoice::Active
-                        && self.verb.is_consonant_stem()
+                        && self.verb.is_consonant_stem(full_stem)
                     {
                         self.contract_consonants(&new_stem, e, decompose)
                     } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("άω") {
@@ -4950,7 +4967,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 } else {
                     a.to_owned()
                 };
-                let y = self.add_ending(&stem, &ending, decompose);
+                let y = self.add_ending(full_stem, &stem, &ending, decompose);
 
                 let y = match y {
                     Ok(y) => y,
@@ -7946,7 +7963,7 @@ mod tests {
             gender: None,
             case: None,
         };
-        assert!(cons_stem_verb.is_consonant_stem());
+        assert!(cons_stem_verb.is_consonant_stem(""));
 
         assert!(vf.block_for_hq_unit(Some(2)));
         assert!(vf.block_for_hq_unit(Some(3)));
