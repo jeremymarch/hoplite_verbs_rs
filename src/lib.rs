@@ -969,7 +969,7 @@ impl HcGreekVerbForm {
         stem.to_string()
     }
 
-    fn accent_participle(&self, word: &str) -> String {
+    fn accent_participle(&self, word: &str, stem: &str) -> String {
         let mut syllables = analyze_syllable_quantities(
             word,
             self.person,
@@ -1238,8 +1238,7 @@ impl HcGreekVerbForm {
             },
             HcTense::Aorist => match self.voice {
                 HcVoice::Active => {
-                    if self.verb.pps[2].ends_with("ον") || self.verb.pps[2].ends_with("όμην")
-                    {
+                    if stem.ends_with("ον") || stem.ends_with("ομην") {
                         match self.number {
                             Some(HcNumber::Singular) => match self.case {
                                 Some(HcCase::Nominative) | Some(HcCase::Vocative) => match self
@@ -4543,7 +4542,7 @@ impl HcVerbForms for HcGreekVerbForm {
         //     if y.is_err() {
         //         return Err("error stripping ending");
         //     }
-        //     pps_without_ending.push(y.unwra p());
+        //     pps_without_ending.push(y.unwrap());
         // }
 
         // let f = pps_without_ending.join(" / ");
@@ -4572,19 +4571,20 @@ impl HcVerbForms for HcGreekVerbForm {
         let mut add_ending_collector = Vec::new();
         let mut add_accent_collector = Vec::new();
 
-        for (alt_pp_idx, a) in pps_without_ending.iter().enumerate() {
+        for (alt_pp_idx, full_stem) in pps_without_ending.iter().enumerate() {
+            //why not wait to strip ending in the loop?
             let endings_for_form = if self.mood == HcMood::Infinitive {
-                match self.get_infinitive_endings(a) {
+                match self.get_infinitive_endings(full_stem) {
                     Some(e) => e,
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
             } else if self.mood == HcMood::Participle {
-                match self.get_participle_endings(a) {
+                match self.get_participle_endings(full_stem) {
                     Some(e) => e,
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
             } else {
-                match self.get_endings(a) {
+                match self.get_endings(full_stem) {
                     Some(e) => e,
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
@@ -4592,11 +4592,11 @@ impl HcVerbForms for HcGreekVerbForm {
 
             for e in endings_for_form {
                 //skip middle deponent pp if voice is active
-                if a.ends_with("ομην") && self.voice == HcVoice::Active {
+                if full_stem.ends_with("ομην") && self.voice == HcVoice::Active {
                     continue;
                 }
 
-                let a = match self.strip_ending(pp_num, a.to_string()) {
+                let a = match self.strip_ending(pp_num, full_stem.to_string()) {
                     Ok(res) => res,
                     Err(_) => return Err(HcFormError::UnexpectedPrincipalPartEnding), //("error stripping ending");
                 };
@@ -4933,7 +4933,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         ptc = self.contract_verb(&ptc, e);
                     }
                     let fff = if !hgk_has_diacritics(&ptc, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) {
-                        self.accent_participle(ptc.as_str())
+                        self.accent_participle(ptc.as_str(), full_stem)
                     } else {
                         ptc
                     };
@@ -5276,7 +5276,7 @@ impl HcVerbForms for HcGreekVerbForm {
         }
     }
 
-    fn get_participle_endings(&self, _stem: &str) -> Option<Vec<&str>> {
+    fn get_participle_endings(&self, stem: &str) -> Option<Vec<&str>> {
         match self.tense {
             HcTense::Present | HcTense::Future => match self.voice {
                 HcVoice::Active => match self.number {
@@ -5401,8 +5401,7 @@ impl HcVerbForms for HcGreekVerbForm {
             },
             HcTense::Aorist => match self.voice {
                 HcVoice::Active => {
-                    if self.verb.pps[2].ends_with("ον") || self.verb.pps[2].ends_with("όμην")
-                    {
+                    if stem.ends_with("ον") || stem.ends_with("ομην") {
                         match self.number {
                             Some(HcNumber::Singular) => match self.gender {
                                 Some(HcGender::Masculine) => match self.case {
@@ -5535,8 +5534,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     }
                 }
                 HcVoice::Middle => {
-                    if self.verb.pps[2].ends_with("ον") || self.verb.pps[2].ends_with("όμην")
-                    {
+                    if stem.ends_with("ον") || stem.ends_with("ομην") {
                         match self.number {
                             Some(HcNumber::Singular) => match self.gender {
                                 Some(HcGender::Masculine) => match self.case {
