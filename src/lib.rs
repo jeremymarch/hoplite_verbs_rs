@@ -6492,6 +6492,26 @@ static ENDINGS: &[[&str; 6]; 38] = &[
     ["οιην", "οιης", "οιη", "οιμεν", "οιτε", "οιεν"],
 ];
 
+pub fn check_pps(input: &str, verb: &HcGreekVerb) -> Vec<bool> {
+    let pps = input.split(',').collect::<Vec<_>>();
+    if pps.len() != 6 || verb.pps.len() != 6 {
+        //todo
+        //if pps count is not 6, could check if there are 6 semi-colons or 6 slashes
+        //and split on that instead of immediately failing
+        return vec![false, false, false, false, false, false];
+    }
+    let mut is_correct_pps: Vec<bool> = Vec::new();
+    for (i, p) in pps.iter().enumerate() {
+        let d = &verb.pps[i];
+        is_correct_pps.push(hgk_compare_multiple_forms(
+            d.replace(['/', ';'], ",").trim(),
+            p.replace("---", "—").replace(['/', ';'], ",").trim(),
+            true,
+        ));
+    }
+    is_correct_pps
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -6514,6 +6534,37 @@ mod tests {
     //         }
     //     }
     // }
+
+    #[test]
+    fn test_check_pps() {
+        let luw = "λω, λσω, ἔλῡσα, λέλυκ, λέλυμαι, ἐλύθη";
+        let luw_correct = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let verb = HcGreekVerb::from_string(1, luw_correct, 0x0000, 0).unwrap();
+        assert_eq!(
+            check_pps(luw, &verb),
+            vec![true, true, true, false, true, false]
+        );
+
+        let blaptw = "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην";
+        let blaptw_correct = "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην";
+        let verb2 = HcGreekVerb::from_string(1, blaptw_correct, 0x0000, 0).unwrap();
+        assert_eq!(
+            check_pps(blaptw, &verb2),
+            vec![true, true, true, true, true, true]
+        );
+
+        let blaptw2 = "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάφθην / ἐβλάβην";
+        assert_eq!(
+            check_pps(blaptw2, &verb2),
+            vec![true, true, true, true, true, true]
+        );
+
+        let blaptw3 = "βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάφθην ; ἐβλάβην";
+        assert_eq!(
+            check_pps(blaptw3, &verb2),
+            vec![true, true, true, true, true, true]
+        );
+    }
 
     #[test]
     fn test_analyze_syllables() {
