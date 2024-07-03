@@ -1844,9 +1844,7 @@ impl HcGreekVerbForm {
                         }
                         Some(HcCase::Accusative) => match self.gender {
                             Some(HcGender::Masculine) => {
-                                if syllables.len() > 2 {
-                                    ANTEPENULT
-                                } else if syllables.len() > 1 {
+                                if syllables.len() > 1 {
                                     PENULT
                                 } else {
                                     ULTIMA
