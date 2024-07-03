@@ -699,6 +699,7 @@ pub trait HcVerbForms {
         decompose: bool,
     ) -> Result<String, &str>;
     fn get_endings(&self, stem: &str) -> Option<Vec<&str>>;
+    fn adjust_stem(&self, full_stem: &str, stem: &str, decompose: bool) -> Option<String>;
     fn get_participle_endings(&self, _stem: &str) -> Option<Vec<&str>>;
     fn get_infinitive_endings(&self, _stem: &str) -> Option<Vec<&str>>;
     fn get_label(&self) -> String;
@@ -4909,7 +4910,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
                 //end handle infinitives
                 else if self.mood == HcMood::Participle {
-                    let new_stem = a.clone();
+                    let new_stem = self.adjust_stem(full_stem, &a, true).unwrap(); //a.clone();
                     let mut ptc = if self.tense == HcTense::Present {
                         if self.voice == HcVoice::Active {
                             format!("{}{}", new_stem, e)
@@ -6229,6 +6230,48 @@ impl HcVerbForms for HcGreekVerbForm {
 
         Some(ENDINGS[ending as usize][person_number].split(',').collect())
     }
+
+    fn adjust_stem(&self, full_stem: &str, stem: &str, decompose: bool) -> Option<String> {
+        let mut local_stem = stem.to_string();
+        //e.g full_stem: δωκα, stem: δωκ
+        //println!("abc{}, {}", full_stem, stem);
+
+        if self.tense == HcTense::Present {
+            if full_stem.starts_with("διδωμι") {
+                local_stem = local_stem.replace('ω', "ο");
+            } else if full_stem.starts_with("τιθημι") {
+                local_stem = local_stem.replace('η', "ε");
+            } else if full_stem.starts_with("ἱστημι") {
+                local_stem = local_stem.replace('η', "α");
+            }
+        } else if self.tense == HcTense::Aorist && self.voice == HcVoice::Active {
+            //mixed aorist
+            if full_stem.ends_with("κα")
+                && (self.number == Some(HcNumber::Plural)
+                    || self.mood != HcMood::Indicative
+                    || self.voice != HcVoice::Active)
+            {
+                if full_stem.ends_with("δωκα") {
+                    local_stem = local_stem.replacen("ωκ", "ο", 1);
+                } else if full_stem.ends_with("θηκα")
+                    || full_stem.ends_with("ἡκα")
+                    || full_stem.ends_with("ηκα")
+                {
+                    if full_stem.ends_with("ηκα")
+                        && !decompose
+                        && (self.number == Some(HcNumber::Plural) || self.voice != HcVoice::Active)
+                    {
+                        local_stem = local_stem.replacen("ηκ", "ε", 1);
+                    } else if full_stem.ends_with("ἡκα") && !decompose {
+                        local_stem = local_stem.replacen("ἡκ", "εἱ", 1);
+                    } else {
+                        local_stem = local_stem.replacen("ηκ", "ε", 1);
+                    }
+                }
+            }
+        }
+        Some(local_stem)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -6422,6 +6465,232 @@ fn analyze_syllable_quantities(
     res
 }
 
+#[derive(Eq, PartialEq, Debug)]
+enum HcPtcEndings {
+    PresentActiveMasc,
+    PresentActiveFem,
+    PresentActiveNeut,
+
+    PresentMiddleMasc,
+    PresentMiddleFem,
+    PresentMiddleNeut,
+
+    AoristActiveMasc,
+    AoristActiveFem,
+    AoristActiveNeut,
+
+    AoristMiddleMasc,
+    AoristMiddleFem,
+    AoristMiddleNeut,
+
+    AoristPassiveMasc,
+    AoristPassiveFem,
+    AoristPassiveNeut,
+
+    PerfectActiveMasc,
+    PerfectActiveFem,
+    PerfectActiveNeut,
+
+    PerfectMiddleMasc,
+    PerfectMiddleFem,
+    PerfectMiddleNeut,
+}
+
+static PTC_ENDINGS: &[[&str; 8]; 21] = &[
+    [
+        "ων",
+        "οντος",
+        "οντι",
+        "οντα",
+        "οντες",
+        "οντων",
+        "ουσι(ν)",
+        "οντας",
+    ],
+    [
+        "ουσα",
+        "ουσης",
+        "ουσῃ",
+        "ουσαν",
+        "ουσαι",
+        "ουσῶν",
+        "ουσαις",
+        "ουσᾱς",
+    ],
+    [
+        "oν",
+        "οντος",
+        "οντι",
+        "ον",
+        "οντa",
+        "οντων",
+        "ουσι(ν)",
+        "οντα",
+    ],
+    [
+        "ομενος",
+        "ομενου",
+        "ομενι",
+        "ομενα",
+        "ομενοι",
+        "ομενων",
+        "ομενοις",
+        "ομενους",
+    ],
+    [
+        "ομενη",
+        "ομενης",
+        "ομενῃ",
+        "ομενην",
+        "ομεναι",
+        "ομενων",
+        "ομεναις",
+        "ομενᾱς",
+    ],
+    [
+        "ομενον",
+        "ομενου",
+        "ομενι",
+        "ομενον",
+        "ομενα",
+        "ομενων",
+        "ομενοις",
+        "ομενα",
+    ],
+    [
+        "ᾱς",
+        "αντος",
+        "αντι",
+        "αντα",
+        "αντες",
+        "αντων",
+        "ᾱσι(ν)",
+        "αντας",
+    ],
+    [
+        "ᾱσα",
+        "ᾱσης",
+        "ᾱσῃ",
+        "ᾱσαν",
+        "ᾱσαι",
+        "ᾱσῶν",
+        "ᾱσαις",
+        "ᾱσᾱς",
+    ],
+    [
+        "αν",
+        "αντος",
+        "αντι",
+        "αν",
+        "αντa",
+        "αντων",
+        "ᾱσι(ν)",
+        "αντα",
+    ],
+    [
+        "αμενος",
+        "αμενου",
+        "αμενι",
+        "αμενα",
+        "αμενοι",
+        "αμενων",
+        "αμενοις",
+        "αμενους",
+    ],
+    [
+        "αμενη",
+        "αμενης",
+        "αμενῃ",
+        "αμενην",
+        "αμεναι",
+        "αμενων",
+        "αμεναις",
+        "αμενᾱς",
+    ],
+    [
+        "αμενον",
+        "αμενου",
+        "αμενι",
+        "αμενον",
+        "αμενα",
+        "αμενων",
+        "αμενοις",
+        "αμενα",
+    ],
+    [
+        "εις",
+        " εντος",
+        "εντι",
+        "εντα",
+        "εντες",
+        "εντων",
+        "εισι(ν)",
+        "εντας",
+    ],
+    [
+        "εισα",
+        "εισης",
+        "εισῃ",
+        "εισαν",
+        "εισαι",
+        "εισῶν",
+        "εισαις",
+        "εισᾱς",
+    ],
+    [
+        "εν",
+        "εντος",
+        "εντι",
+        "εν",
+        "εντa",
+        "εντων",
+        "εισι(ν)",
+        "εντα",
+    ],
+    ["ως", "οτος", "οτι", "οτα", "οτες", "οτων", "οσι(ν)", "οτας"],
+    [
+        "υια",
+        "υιᾱς",
+        "υιᾱͅ",
+        "υιαν",
+        "υιαι",
+        "υιῶν",
+        "υιαις",
+        "υιᾱς",
+    ],
+    ["oς", "οτος", "οτι", "ος", "οτa", "οτων", "οσι(ν)", "οτα"],
+    [
+        "μενος",
+        "μενου",
+        "μενι",
+        "μενα",
+        "μενοι",
+        "μενων",
+        "μενοις",
+        "μενους",
+    ],
+    [
+        "μενη",
+        "μενης",
+        "μενῃ",
+        "μενην",
+        "μεναι",
+        "μενων",
+        "μεναις",
+        "μενᾱς",
+    ],
+    [
+        "μενον",
+        "μενου",
+        "μενι",
+        "μενον",
+        "μενα",
+        "μενων",
+        "μενοις",
+        "μενα",
+    ],
+];
+
 static ENDINGS: &[[&str; 6]; 38] = &[
     ["ω", "εις", "ει", "ομεν", "ετε", "ουσι(ν)"], //, "Present Active Indicative" },
     ["ον", "ες", "ε(ν)", "ομεν", "ετε", "ον"],    //, "Imperfect Active Indicative" },
@@ -6512,6 +6781,99 @@ pub fn check_pps(input: &str, verb: &HcGreekVerb) -> Vec<bool> {
     is_correct_pps
 }
 
+fn separate_prefixes(form: &str) -> Option<Vec<&str>> {
+    let prefixes = vec![
+        Prefixes {
+            prefix: "μεταν",
+            separated: vec!["μετα", "ανα"],
+        },
+        Prefixes {
+            prefix: "ἐπαν",
+            separated: vec!["ἐπι", "ανα"],
+        },
+        Prefixes {
+            prefix: "ἀπο",
+            separated: vec!["ἀπο"],
+        },
+        Prefixes {
+            prefix: "ἀπ",
+            separated: vec!["ἀπο"],
+        },
+        Prefixes {
+            prefix: "ἀφ",
+            separated: vec!["ἀπο"],
+        },
+        Prefixes {
+            prefix: "ἀνα",
+            separated: vec!["ἀνα"],
+        },
+        Prefixes {
+            prefix: "καθ",
+            separated: vec!["κατα"],
+        },
+        Prefixes {
+            prefix: "κατα",
+            separated: vec!["κατα"],
+        },
+        Prefixes {
+            prefix: "μετα",
+            separated: vec!["μετα"],
+        },
+        Prefixes {
+            prefix: "ἐπι",
+            separated: vec!["ἐπι"],
+        },
+        Prefixes {
+            prefix: "παρα",
+            separated: vec!["παρα"],
+        },
+        Prefixes {
+            prefix: "ὑπ",
+            separated: vec!["ὑπο"],
+        },
+        Prefixes {
+            prefix: "ὑπο",
+            separated: vec!["ὑπο"],
+        },
+        Prefixes {
+            prefix: "δια",
+            separated: vec!["δια"],
+        },
+        Prefixes {
+            prefix: "ἐξ",
+            separated: vec!["ἐκ"],
+        },
+        Prefixes {
+            prefix: "ἐκ",
+            separated: vec!["ἐκ"],
+        },
+        Prefixes {
+            prefix: "συμ",
+            separated: vec!["συν"],
+        },
+        Prefixes {
+            prefix: "συν",
+            separated: vec!["συν"],
+        },
+        Prefixes {
+            prefix: "προ",
+            separated: vec!["προ"],
+        },
+    ];
+
+    for p in prefixes {
+        if form.starts_with(p.prefix) {
+            return Some(p.separated);
+        }
+    }
+    None
+}
+
+struct Prefixes<'a> {
+    prefix: &'a str,
+    separated: Vec<&'a str>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -6523,17 +6885,76 @@ mod tests {
     use std::io::{BufWriter, Write};
     use unicode_normalization::UnicodeNormalization;
 
-    // #[test]
-    // fn separate_prefix_test() {
-    //     let stem = "ἀποδίδωμι";
-    //     let stem = "μετανισταμαι";
-    //     let pre = vec![("ἀπο", vec!["ἀπο", ""], ""), ("μετανι", vec!["μετα", "ανα", ""], "ἱ")];
-    //     for p in pre {
-    //         if stem.starts_with(p.0) {
-    //             assert_eq!(stem.replacen(p.0, format!("{}{}", p.1.join(" - "), p.2).as_str(), 1), "ἀπο - δίδωμι");
-    //         }
-    //     }
-    // }
+    #[test]
+    fn as_test() {
+        let luw_correct = "δίδωμι, δώσω, ἔδωκα, δέδωκα, δέδομαι, ἐδόθην";
+        let verb = Arc::new(HcGreekVerb::from_string(1, luw_correct, 0x0000, 0).unwrap());
+        let a = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: None,
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Aorist,
+            voice: HcVoice::Active,
+            mood: HcMood::Participle,
+            gender: Some(HcGender::Masculine),
+            case: Some(HcCase::Genitive),
+        };
+        assert_eq!(a.get_form(false).unwrap().last().unwrap().form, "δόντος");
+    }
+
+    #[test]
+    fn adjust_stem_test() {
+        let luw_correct = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let verb = Arc::new(HcGreekVerb::from_string(1, luw_correct, 0x0000, 0).unwrap());
+        let a = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Plural),
+            tense: HcTense::Aorist,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let stem = a.adjust_stem("ἔδωκα", "δωκ", false);
+        assert_eq!(Some(String::from("δο")), stem);
+        let stem = a.adjust_stem("ἔθηκα", "θηκ", false);
+        assert_eq!(Some(String::from("θε")), stem);
+        let stem = a.adjust_stem("ἡκα", "ἡκ", false);
+        assert_eq!(Some(String::from("εἱ")), stem);
+
+        let a = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::First),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Aorist,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let stem = a.adjust_stem("ἔδωκα", "δωκ", false);
+        assert_eq!(Some(String::from("δωκ")), stem);
+        let stem = a.adjust_stem("ἔθηκα", "θηκ", false);
+        assert_eq!(Some(String::from("θηκ")), stem);
+        let stem = a.adjust_stem("ἡκα", "ἡκ", false);
+        assert_eq!(Some(String::from("ἡκ")), stem);
+    }
+
+    #[test]
+    fn separate_prefixes_test() {
+        let stem = "μετανισταμαι";
+        let prefixes = separate_prefixes(stem);
+        assert_eq!(Some(vec!["μετα", "ανα"]), prefixes);
+
+        let stem = "ἀποδίδωμι";
+        let prefixes = separate_prefixes(stem);
+        assert_eq!(Some(vec!["ἀπο"]), prefixes);
+
+        let stem = "ἵσταμαι";
+        let prefixes = separate_prefixes(stem);
+        assert_eq!(None, prefixes);
+    }
 
     #[test]
     fn test_check_pps() {
@@ -9095,18 +9516,14 @@ mod tests {
 
                     for x in [
                         HcTense::Present,
-                        // HcTense::Future,
-                        // HcTense::Aorist,
-                        // HcTense::Perfect,
+                        HcTense::Future,
+                        HcTense::Aorist,
+                        HcTense::Perfect,
                     ] {
-                        for v in [
-                            HcVoice::Active,
-                            // HcVoice::Middle,
-                            // HcVoice::Passive,
-                        ] {
+                        for v in [HcVoice::Active, HcVoice::Middle, HcVoice::Passive] {
                             for z in [
                                 Some(HcNumber::Singular),
-                                Some(HcNumber::Dual),
+                                //Some(HcNumber::Dual),
                                 Some(HcNumber::Plural),
                             ] {
                                 for c in [
