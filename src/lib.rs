@@ -1926,6 +1926,28 @@ impl HcGreekVerbForm {
             _ => return String::new(),
         };
 
+        if stem.ends_with("μι") || stem.ends_with("κα") {
+            if (self.tense == HcTense::Present || self.tense == HcTense::Aorist)
+                && self.voice == HcVoice::Active
+            {
+                if self.number == Some(HcNumber::Singular)
+                    && (self.gender == Some(HcGender::Masculine)
+                        && (self.case == Some(HcCase::Nominative)
+                            || self.case == Some(HcCase::Vocative))
+                        || (self.gender == Some(HcGender::Neuter)
+                            && (self.case == Some(HcCase::Nominative)
+                                || self.case == Some(HcCase::Accusative)
+                                || self.case == Some(HcCase::Vocative))))
+                {
+                    accent_position = ULTIMA
+                } else if syllables.len() > 1 {
+                    accent_position = PENULT
+                } else {
+                    accent_position = ULTIMA
+                }
+            }
+        }
+
         if syllables.len() > 2
             && !syllables.first().unwrap().is_long
             && syllables[1].is_long
@@ -4909,6 +4931,56 @@ impl HcVerbForms for HcGreekVerbForm {
                 //end handle infinitives
                 else if self.mood == HcMood::Participle {
                     let new_stem = self.adjust_stem(full_stem, &a, true).unwrap(); //a.clone();
+
+                    let mut e = e.to_string();
+                    if self.verb.pps[0].ends_with("μι")
+                        && (self.tense == HcTense::Present
+                            || (self.tense == HcTense::Aorist && self.voice != HcVoice::Passive))
+                    {
+                        e.remove(0); //remove first character of ending
+
+                        if self.voice == HcVoice::Active
+                            && self.gender == Some(HcGender::Masculine)
+                            && (self.case == Some(HcCase::Nominative)
+                                || self.case == Some(HcCase::Vocative))
+                            && self.number == Some(HcNumber::Singular)
+                        {
+                            if new_stem.ends_with('ο') {
+                                e = String::from("υς");
+                            } else if new_stem.ends_with('ε') {
+                                e = String::from("ις");
+                            } else if new_stem.ends_with('α') {
+                                e = String::from("̄ς"); //0304 (macron) + sigma
+                            }
+                        } else if self.voice == HcVoice::Active
+                            && self.number == Some(HcNumber::Plural)
+                            && self.case == Some(HcCase::Dative)
+                            && (self.gender == Some(HcGender::Masculine)
+                                || self.gender == Some(HcGender::Neuter))
+                        {
+                            if new_stem.ends_with('ο') {
+                                e = String::from("υσι(ν)");
+                            } else if new_stem.ends_with('ε') {
+                                e = String::from("ισι(ν)");
+                            } else if new_stem.ends_with('α') {
+                                e = String::from("̄σι(ν)"); //0304 (macron) + sigma
+                            }
+                        } else if self.gender == Some(HcGender::Feminine) {
+                            if new_stem.ends_with('ο') && self.tense == HcTense::Aorist {
+                                e = e.replacen('̄', "υ", 1);
+                            } else if new_stem.ends_with('ε') {
+                                if self.tense == HcTense::Aorist {
+                                    e = e.replacen('̄', "ι", 1);
+                                } else {
+                                    e = e.replace('υ', "ι");
+                                }
+                            }
+                            // else if new_stem.ends_with("α") {
+                            //     e = e.replace("υ", ""); //0304 (macron) + sigma
+                            // }
+                        }
+                    }
+
                     let mut ptc = if self.tense == HcTense::Present {
                         if self.voice == HcVoice::Active {
                             format!("{}{}", new_stem, e)
@@ -4946,7 +5018,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     };
 
                     if self.is_contracted_verb(&ptc) {
-                        ptc = self.contract_verb(&ptc, e);
+                        ptc = self.contract_verb(&ptc, &e);
                     }
                     let fff = if !hgk_has_diacritics(&ptc, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) {
                         self.accent_participle(ptc.as_str(), full_stem)
@@ -6235,14 +6307,14 @@ impl HcVerbForms for HcGreekVerbForm {
         //println!("abc{}, {}", full_stem, stem);
 
         if self.tense == HcTense::Present {
-            if full_stem.starts_with("διδωμι") {
+            if full_stem.ends_with("διδωμι") {
                 local_stem = local_stem.replace('ω', "ο");
-            } else if full_stem.starts_with("τιθημι") {
+            } else if full_stem.ends_with("τιθημι") {
                 local_stem = local_stem.replace('η', "ε");
-            } else if full_stem.starts_with("ἱστημι") {
+            } else if full_stem.ends_with("ἱστημι") {
                 local_stem = local_stem.replace('η', "α");
             }
-        } else if self.tense == HcTense::Aorist && self.voice == HcVoice::Active {
+        } else if self.tense == HcTense::Aorist && self.voice != HcVoice::Passive {
             //mixed aorist
             if full_stem.ends_with("κα")
                 && (self.number == Some(HcNumber::Plural)
