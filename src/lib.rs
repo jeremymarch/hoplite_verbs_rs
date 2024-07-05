@@ -4991,6 +4991,22 @@ impl HcVerbForms for HcGreekVerbForm {
                             //     e = e.replace("υ", ""); //0304 (macron) + sigma
                             // }
                         }
+                    } else if full_stem.ends_with("ῡμι") && self.tense == HcTense::Present {
+                        if self.voice == HcVoice::Active
+                            && self.gender == Some(HcGender::Masculine)
+                            && (self.case == Some(HcCase::Nominative)
+                                || self.case == Some(HcCase::Vocative))
+                            && self.number == Some(HcNumber::Singular)
+                        {
+                            e = String::from("̄ς");
+                        } else {
+                            e.remove(0); //remove first character of ending
+                            if e.starts_with('υ') {
+                                e = e.replace('υ', "̄");
+                            }
+                        }
+                    } else if full_stem.ends_with("υμαι") && self.tense == HcTense::Present {
+                        e.remove(0); //remove first character of ending
                     }
 
                     let mut ptc = if self.tense == HcTense::Present {
@@ -6380,6 +6396,8 @@ impl HcVerbForms for HcGreekVerbForm {
                 local_stem = local_stem.replace('η', "ε");
             } else if full_stem.ends_with("ἱστημι") {
                 local_stem = local_stem.replace('η', "α");
+            } else if full_stem.ends_with("ῡμι") {
+                local_stem = local_stem.replace('ῡ', "υ");
             }
         } else if self.tense == HcTense::Aorist && self.voice != HcVoice::Passive {
             //mixed aorist
