@@ -1927,7 +1927,7 @@ impl HcGreekVerbForm {
             _ => return String::new(),
         };
 
-        if stem.ends_with("μι") || stem.ends_with("κα") {
+        if stem.ends_with("μι") || stem.ends_with("κα") || stem.ends_with("ην") {
             if (self.tense == HcTense::Present || self.tense == HcTense::Aorist)
                 && self.voice == HcVoice::Active
             {
@@ -6394,7 +6394,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 local_stem = local_stem.replace('ω', "ο");
             } else if full_stem.ends_with("τιθημι") {
                 local_stem = local_stem.replace('η', "ε");
-            } else if full_stem.ends_with("ἱστημι") {
+            } else if full_stem.ends_with("ἱστημι") || full_stem.ends_with("ιστημι") {
                 local_stem = local_stem.replace('η', "α");
             } else if full_stem.ends_with("ῡμι") {
                 local_stem = local_stem.replace('ῡ', "υ");
