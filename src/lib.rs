@@ -4943,7 +4943,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     let new_stem = self.adjust_stem(full_stem, &a, true).unwrap(); //a.clone();
 
                     let mut e = e.to_string();
-                    if (full_stem.ends_with("μι") || full_stem.ends_with("κα")) && !full_stem.ends_with("γκα") && !full_stem.ends_with("ῡμι") //enen
+                    if (full_stem.ends_with("μι") || full_stem.ends_with("κα") || full_stem.ends_with("αμαι")) && !full_stem.ends_with("γκα") && !full_stem.ends_with("ῡμι") //enen
                         && (self.tense == HcTense::Present
                             || (self.tense == HcTense::Aorist && self.voice != HcVoice::Passive))
                     {
