@@ -4943,7 +4943,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     let new_stem = self.adjust_stem(full_stem, &a, true).unwrap(); //a.clone();
 
                     let mut e = e.to_string();
-                    if (full_stem.ends_with("μι") || full_stem.ends_with("κα") || full_stem.ends_with("στην")) && !full_stem.ends_with("γκα") && !full_stem.ends_with("ῡμι") //enen
+                    if (full_stem.ends_with("μι") || full_stem.ends_with("κα")) && !full_stem.ends_with("γκα") && !full_stem.ends_with("ῡμι") //enen
                         && (self.tense == HcTense::Present
                             || (self.tense == HcTense::Aorist && self.voice != HcVoice::Passive))
                     {
@@ -4991,6 +4991,11 @@ impl HcVerbForms for HcGreekVerbForm {
                             //     e = e.replace("υ", ""); //0304 (macron) + sigma
                             // }
                         }
+                    } else if full_stem.ends_with("ην")
+                        && self.tense == HcTense::Aorist
+                        && self.voice == HcVoice::Active
+                    {
+                        e.remove(0); //remove first character of ending
                     } else if full_stem.ends_with("ῡμι") && self.tense == HcTense::Present {
                         if self.voice == HcVoice::Active
                             && self.gender == Some(HcGender::Masculine)
@@ -6423,7 +6428,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         local_stem = local_stem.replacen("ηκ", "ε", 1);
                     }
                 }
-            } else if full_stem.ends_with("στην") {
+            } else if full_stem.ends_with("ην") && self.voice == HcVoice::Active {
                 local_stem = local_stem.replace('η', "α");
             }
         } else if self.mood == HcMood::Participle
