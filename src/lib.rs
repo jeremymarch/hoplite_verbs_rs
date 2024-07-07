@@ -4496,7 +4496,9 @@ impl HcVerbForms for HcGreekVerbForm {
                 return Ok(steps);
             }
         } else if self.verb.pps[0] == "φημί" {
-            if self.tense == HcTense::Present || self.tense == HcTense::Imperfect {
+            if (self.tense == HcTense::Present || self.tense == HcTense::Imperfect)
+                && self.mood != HcMood::Participle
+            {
                 let fff = special_verbs::get_fhmi(self, decompose);
                 if fff.is_empty() {
                     return Err(HcFormError::IllegalForm);
@@ -6445,6 +6447,8 @@ impl HcVerbForms for HcGreekVerbForm {
                 local_stem = local_stem.replace('η', "ε");
             } else if full_stem.ends_with("ῑημι") {
                 local_stem = local_stem.replace('η', "ε");
+            } else if full_stem.ends_with("φημι") {
+                local_stem = local_stem.replace('η', "α");
             }
         } else if self.tense == HcTense::Aorist && self.voice != HcVoice::Passive {
             //mixed aorist
