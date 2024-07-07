@@ -4997,17 +4997,17 @@ impl HcVerbForms for HcGreekVerbForm {
                             // }
                         }
                     } else if full_stem.ends_with("ἑα") //ihmi
-                        && self.tense == HcTense::Aorist
-                        && self.voice == HcVoice::Active
-                    {
+                        && self.tense == HcTense::Aorist {
                         e.remove(0); //remove first character of ending
-                        e = e.replacen('̄', "ι", 1);
+                        if self.voice == HcVoice::Active {
+                            e = e.replacen('̄', "ι", 1);
+                        }
                     } else if full_stem.ends_with("εα") //afihmi, synihmi
-                        && self.tense == HcTense::Aorist
-                        && self.voice == HcVoice::Active
-                    {
+                        && self.tense == HcTense::Aorist {
                         e.remove(0); //remove first character of ending
-                        e = e.replacen('̄', "ι", 1);
+                        if self.voice == HcVoice::Active {
+                            e = e.replacen('̄', "ι", 1);
+                        }
                     } else if full_stem.ends_with("ην")
                         && self.tense == HcTense::Aorist
                         && self.voice == HcVoice::Active
