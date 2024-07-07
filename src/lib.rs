@@ -5084,6 +5084,9 @@ impl HcVerbForms for HcGreekVerbForm {
                     if self.is_contracted_verb(&ptc) {
                         ptc = self.contract_verb(&ptc, &e);
                     }
+                    //if ptc.starts_with("-ἑι") {
+                        ptc = ptc.replace("-ἑι", "-εἱ"); //fix breathing position on certain ihmi aorist active ptcs
+                    //}
                     let fff = if !hgk_has_diacritics(&ptc, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) {
                         self.accent_participle(ptc.as_str(), full_stem)
                     } else {
