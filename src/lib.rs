@@ -4513,7 +4513,9 @@ impl HcVerbForms for HcGreekVerbForm {
                 return Err(HcFormError::IllegalForm);
             }
         } else if self.verb.pps[0] == "κεῖμαι" {
-            if self.tense == HcTense::Present || self.tense == HcTense::Imperfect {
+            if (self.tense == HcTense::Present || self.tense == HcTense::Imperfect)
+                && self.mood != HcMood::Participle
+            {
                 let fff = special_verbs::get_keimai(self, decompose);
                 if fff.is_empty() {
                     return Err(HcFormError::IllegalForm);
@@ -4948,7 +4950,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     let new_stem = self.adjust_stem(full_stem, &a, true).unwrap(); //a.clone();
 
                     let mut e = e.to_string();
-                    if (full_stem.ends_with("μι") || full_stem.ends_with("κα") || full_stem.ends_with("αμαι")) && !full_stem.ends_with("γκα") && !full_stem.ends_with("ῡμι") //enen
+                    if (full_stem.ends_with("μι") || full_stem.ends_with("κα") || full_stem.ends_with("αμαι") || full_stem.ends_with("κειμαι")) && !full_stem.ends_with("γκα") && !full_stem.ends_with("ῡμι") //enen
                         && (self.tense == HcTense::Present
                             || (self.tense == HcTense::Aorist && self.voice != HcVoice::Passive))
                     {
