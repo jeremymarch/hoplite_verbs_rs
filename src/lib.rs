@@ -4997,13 +4997,15 @@ impl HcVerbForms for HcGreekVerbForm {
                             // }
                         }
                     } else if full_stem.ends_with("ἑα") //ihmi
-                        && self.tense == HcTense::Aorist {
+                        && self.tense == HcTense::Aorist
+                    {
                         e.remove(0); //remove first character of ending
                         if self.voice == HcVoice::Active {
                             e = e.replacen('̄', "ι", 1);
                         }
                     } else if full_stem.ends_with("εα") //afihmi, synihmi
-                        && self.tense == HcTense::Aorist {
+                        && self.tense == HcTense::Aorist
+                    {
                         e.remove(0); //remove first character of ending
                         if self.voice == HcVoice::Active {
                             e = e.replacen('̄', "ι", 1);
@@ -5084,9 +5086,9 @@ impl HcVerbForms for HcGreekVerbForm {
                     if self.is_contracted_verb(&ptc) {
                         ptc = self.contract_verb(&ptc, &e);
                     }
-                    //if ptc.starts_with("-ἑι") {
+                    if ptc.starts_with("-ἑι") {
                         ptc = ptc.replace("-ἑι", "-εἱ"); //fix breathing position on certain ihmi aorist active ptcs
-                    //}
+                    }
                     let fff = if !hgk_has_diacritics(&ptc, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) {
                         self.accent_participle(ptc.as_str(), full_stem)
                     } else {
