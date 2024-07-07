@@ -6417,6 +6417,10 @@ impl HcVerbForms for HcGreekVerbForm {
                 local_stem = local_stem.replace('η', "α");
             } else if full_stem.ends_with("ῡμι") {
                 local_stem = local_stem.replace('ῡ', "υ");
+            } else if full_stem.ends_with("ῑ̔ημι") {
+                local_stem = local_stem.replace('η', "ε");
+            } else if full_stem.ends_with("ῑημι") {
+                local_stem = local_stem.replace('η', "ε");
             }
         } else if self.tense == HcTense::Aorist && self.voice != HcVoice::Passive {
             //mixed aorist
