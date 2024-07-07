@@ -4996,6 +4996,20 @@ impl HcVerbForms for HcGreekVerbForm {
                         && self.voice == HcVoice::Active
                     {
                         e.remove(0); //remove first character of ending
+                    } else if full_stem.ends_with("ων")
+                        && self.tense == HcTense::Aorist
+                        && self.voice == HcVoice::Active
+                    {
+                        e.remove(0); //remove first character of ending
+                        if self.gender == Some(HcGender::Feminine)
+                            || (self.gender == Some(HcGender::Masculine)
+                                && self.number == Some(HcNumber::Singular))
+                            || (self.gender != Some(HcGender::Feminine)
+                                && self.number == Some(HcNumber::Plural)
+                                && self.case == Some(HcCase::Dative))
+                        {
+                            e = e.replacen('̄', "υ", 1);
+                        }
                     } else if full_stem.ends_with("ῡμι") && self.tense == HcTense::Present {
                         if self.voice == HcVoice::Active
                             && self.gender == Some(HcGender::Masculine)
@@ -6430,6 +6444,8 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
             } else if full_stem.ends_with("ην") && self.voice == HcVoice::Active {
                 local_stem = local_stem.replace('η', "α");
+            } else if full_stem.ends_with("ων") && self.voice == HcVoice::Active {
+                local_stem = local_stem.replace('ω', "ο");
             }
         } else if self.mood == HcMood::Participle
             && self.tense == HcTense::Perfect
