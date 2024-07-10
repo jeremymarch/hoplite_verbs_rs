@@ -4508,8 +4508,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     explanation: String::from("def"),
                 });
                 return Ok(steps);
-            } else if self.voice != HcVoice::Active
-            {
+            } else if self.voice != HcVoice::Active {
                 /*fix me?*/
                 return Err(HcFormError::IllegalForm);
             }
@@ -5436,12 +5435,12 @@ impl HcVerbForms for HcGreekVerbForm {
         }
     }
 
-// still need ptcs for these verbs:
-// ἀποθνῄσκω: Perfect
-// εἰμί
-// εἶμι
-// οἶδα
-// σύνοιδα
+    // still need ptcs for these verbs:
+    // ἀποθνῄσκω: Perfect
+    // εἰμί
+    // εἶμι
+    // οἶδα
+    // σύνοιδα
     fn get_participle_endings_isthmi(&self, _stem: &str) -> Option<Vec<&str>> {
         match self.number {
             Some(HcNumber::Singular) => match self.gender {
