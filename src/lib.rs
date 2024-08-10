@@ -4399,28 +4399,25 @@ impl HcVerbForms for HcGreekVerbForm {
 
         let mut steps = Vec::new();
 
-        let f = self.verb.pps.join(", ");
-        let e = "Principal Parts".to_string();
         steps.push(Step {
-            form: f,
-            explanation: e,
+            form: self.verb.pps.join(", "),
+            explanation: "Principal Parts".to_string(),
         });
 
         //1 get pp
         let pp_num = self.get_pp_num() as usize;
-        let f = &self.verb.pps[pp_num - 1];
-        let e = "Choose Principal Part".to_string();
+        let principal_part = &self.verb.pps[pp_num - 1];
         steps.push(Step {
-            form: f.to_string(),
-            explanation: e,
+            form: principal_part.to_string(),
+            explanation: "Choose Principal Part".to_string(),
         });
 
-        if f == BLANK {
+        if principal_part == BLANK {
             return Err(HcFormError::BlankPrincipalPartForForm);
         }
 
         //2 is legal deponent?
-        if !self.is_legal_deponent(f) {
+        if !self.is_legal_deponent(principal_part) {
             return Err(HcFormError::Deponent);
         }
 
@@ -4572,52 +4569,47 @@ impl HcVerbForms for HcGreekVerbForm {
             }
         }
 
-        //let mut pps_without_ending = Vec::new();
         //strip accent: internally (not as a step)
         //let f = hgk_strip_diacritics_and_replace_circumflex_with_macron(f, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
-        let f = hgk_strip_diacritics(f, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
+        let pp_string_without_accent =
+            hgk_strip_diacritics(principal_part, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
 
-        let mut pps_without_ending = f
+        let pp_with_alts_without_accent = pp_string_without_accent
             .split(" / ")
             .map(|e| e.to_string())
             .collect::<Vec<String>>();
 
-        let mut pps_add_augment = Vec::new();
-        //add augment to imperfect or pluperfect
-        if self.tense == HcTense::Imperfect || self.tense == HcTense::Pluperfect {
-            for a in &pps_without_ending {
-                pps_add_augment.push(self.add_augment(a, decompose));
-            }
-            pps_without_ending = pps_add_augment;
-        }
-        /* remove augment from non-indicative aorists and future passives */
-        else if (self.tense == HcTense::Aorist && self.mood == HcMood::Indicative && decompose)
-            || (self.tense == HcTense::Aorist && self.mood != HcMood::Indicative)
-            || (self.tense == HcTense::Future && self.voice == HcVoice::Passive)
-        {
-            for a in &pps_without_ending {
-                pps_add_augment.push(self.deaugment(a, decompose));
-            }
-            pps_without_ending = pps_add_augment;
-        }
-
         let mut add_ending_collector = Vec::new();
         let mut add_accent_collector = Vec::new();
 
-        for full_stem in pps_without_ending.iter() {
-            //why not wait to strip ending in the loop?
+        for full_stem_orig in pp_with_alts_without_accent.iter() {
+            // full_stem has augment added or removed as required
+            let full_stem = if self.tense == HcTense::Imperfect || self.tense == HcTense::Pluperfect
+            {
+                self.add_augment(full_stem_orig, decompose)
+            } else if (self.tense == HcTense::Aorist
+                && self.mood == HcMood::Indicative
+                && decompose)
+                || (self.tense == HcTense::Aorist && self.mood != HcMood::Indicative)
+                || (self.tense == HcTense::Future && self.voice == HcVoice::Passive)
+            {
+                self.deaugment(full_stem_orig, decompose)
+            } else {
+                full_stem_orig.to_owned()
+            };
+
             let endings_for_form = if self.mood == HcMood::Infinitive {
-                match self.get_infinitive_endings(full_stem) {
+                match self.get_infinitive_endings(&full_stem) {
                     Some(e) => e,
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
             } else if self.mood == HcMood::Participle {
-                match self.get_participle_endings(full_stem) {
+                match self.get_participle_endings(&full_stem) {
                     Some(e) => e,
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
             } else {
-                match self.get_endings(full_stem) {
+                match self.get_endings(&full_stem) {
                     Some(e) => e,
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
@@ -4629,11 +4621,12 @@ impl HcVerbForms for HcGreekVerbForm {
                     continue;
                 }
 
-                let a = match self.strip_ending(pp_num, full_stem.to_string()) {
+                let pp_without_ending = match self.strip_ending(pp_num, full_stem.to_string()) {
                     Ok(res) => res,
                     Err(_) => return Err(HcFormError::UnexpectedPrincipalPartEnding), //("error stripping ending");
                 };
 
+                //log removal of ending?
                 // let f = a.join(" / ");
                 // let e = "Remove ending from Principal Part".to_string();
                 // steps.push(Step{form:f, explanation:e});
@@ -4644,7 +4637,10 @@ impl HcVerbForms for HcGreekVerbForm {
                     && self.person == Some(HcPerson::Second)
                     && self.number == Some(HcNumber::Singular)
                 {
-                    if a.ends_with('θ') || a.ends_with('φ') || a.ends_with('χ') {
+                    if pp_without_ending.ends_with('θ')
+                        || pp_without_ending.ends_with('φ')
+                        || pp_without_ending.ends_with('χ')
+                    {
                         if e == "ηθι" {
                             continue;
                         }
@@ -4654,14 +4650,14 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
 
                 // root aorist: skip middle voice
-                if (a.ends_with("στη")
-                    || a.ends_with("φθη")
-                    || a.ends_with("βη")
-                    || a.ends_with("γνω"))
+                if (full_stem.ends_with("στην")
+                    || full_stem.ends_with("φθην")
+                    || full_stem.ends_with("βην")
+                    || full_stem.ends_with("γνων"))
                     && self.tense == HcTense::Aorist
                     && self.voice == HcVoice::Middle
                 {
-                    if pps_without_ending.len() > 1 {
+                    if pp_with_alts_without_accent.len() > 1 {
                         continue; //if non-root alternate
                     } else {
                         return Err(HcFormError::InternalError); //only root, so no form
@@ -4670,7 +4666,7 @@ impl HcVerbForms for HcGreekVerbForm {
 
                 //attic greek does not form future passive from βλάπτω's βλαφθ 6th pp stem
                 if self.verb.pps[0].starts_with("βλάπτω")
-                    && a == "βλαφθ"
+                    && pp_without_ending == "βλαφθ"
                     && self.tense == HcTense::Future
                     && self.voice == HcVoice::Passive
                 {
@@ -4679,8 +4675,9 @@ impl HcVerbForms for HcGreekVerbForm {
 
                 // skip alternate here because same, could remove this now that we're removing duplicates later?
                 if self.verb.pps[0].starts_with("σῴζω")
-                    && ((a.ends_with("σεσω") && self.person == Some(HcPerson::Second))
-                        || (a.ends_with("σεσωσ")
+                    && ((pp_without_ending.ends_with("σεσω")
+                        && self.person == Some(HcPerson::Second))
+                        || (pp_without_ending.ends_with("σεσωσ")
                             && self.person == Some(HcPerson::Third)
                             && self.number == Some(HcNumber::Plural)))
                 {
@@ -4696,7 +4693,8 @@ impl HcVerbForms for HcGreekVerbForm {
                 if self.mood == HcMood::Infinitive {
                     //println!("alt pp {}, {}, {}", alt_pp_idx, self.verb.pps[2], self.verb.pps[2].split('/').collect::<Vec<_>>()[alt_pp_idx]);
                     //let mut new_stem = a.clone();
-                    let infinitive = self.get_infinitive(full_stem, &a, e, decompose);
+                    let infinitive =
+                        self.get_infinitive(&full_stem, &pp_without_ending, e, decompose);
 
                     let fff =
                         if !hgk_has_diacritics(&infinitive, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE)
@@ -4710,7 +4708,9 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
                 //end handle infinitives
                 else if self.mood == HcMood::Participle {
-                    let new_stem = self.adjust_stem(full_stem, &a, true).unwrap(); //a.clone();
+                    let new_stem = self
+                        .adjust_stem(&full_stem, &pp_without_ending, true)
+                        .unwrap(); //a.clone();
 
                     let mut e = e.to_string();
                     if (full_stem.ends_with("μι") || full_stem.ends_with("κα") || full_stem.ends_with("αμαι") || full_stem.ends_with("κειμαι")) && !full_stem.ends_with("γκα") && !full_stem.ends_with("ῡμι") //enen
@@ -4829,7 +4829,7 @@ impl HcVerbForms for HcGreekVerbForm {
                         ptc = ptc.replace("-ἑι", "-εἱ"); //fix breathing position on certain ihmi aorist active ptcs
                     }
                     let fff = if !hgk_has_diacritics(&ptc, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) {
-                        self.accent_participle(ptc.as_str(), full_stem)
+                        self.accent_participle(ptc.as_str(), &full_stem)
                     } else {
                         ptc
                     };
@@ -4842,11 +4842,11 @@ impl HcVerbForms for HcGreekVerbForm {
                     && self.voice == HcVoice::Passive
                     && self.mood == HcMood::Subjunctive
                 {
-                    format!("{}ε", a.to_owned())
+                    format!("{}ε", pp_without_ending.to_owned())
                 } else {
-                    a.to_owned()
+                    pp_without_ending.to_owned()
                 };
-                let y = self.add_ending(full_stem, &stem, &ending, decompose);
+                let y = self.add_ending(&full_stem, &stem, &ending, decompose);
 
                 let y = match y {
                     Ok(y) => y,
