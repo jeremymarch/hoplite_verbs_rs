@@ -708,7 +708,6 @@ pub trait HcVerbForms {
     ) -> Result<String, &str>;
     fn get_endings(&self, stem: &str) -> Option<Vec<&str>>;
     fn adjust_stem(&self, full_stem: &str, stem: &str, decompose: bool) -> Option<String>;
-    fn get_participle_endings_isthmi(&self, stem: &str) -> Option<Vec<&str>>;
 
     fn get_participle_endings(&self, _stem: &str) -> Option<Vec<&str>>;
     fn get_infinitive_endings(&self, _stem: &str) -> Option<Vec<&str>>;
@@ -4633,15 +4632,6 @@ impl HcVerbForms for HcGreekVerbForm {
                     Some(e) => e,
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
-            } else if self.mood == HcMood::Participle
-                && self.tense == HcTense::Perfect
-                && self.voice == HcVoice::Active
-                && full_stem.ends_with("στηκα")
-            {
-                match self.get_participle_endings_isthmi(full_stem) {
-                    Some(e) => e,
-                    None => return Err(HcFormError::InternalError), //("Illegal form ending");,
-                }
             } else if self.mood == HcMood::Participle {
                 match self.get_participle_endings(full_stem) {
                     Some(e) => e,
@@ -5209,61 +5199,6 @@ impl HcVerbForms for HcGreekVerbForm {
     // εἶμι
     // οἶδα
     // σύνοιδα
-    fn get_participle_endings_isthmi(&self, _stem: &str) -> Option<Vec<&str>> {
-        match self.number {
-            Some(HcNumber::Singular) => match self.gender {
-                Some(HcGender::Masculine) => match self.case {
-                    Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ως"]),
-                    Some(HcCase::Genitive) => Some(vec!["ωτος"]),
-                    Some(HcCase::Dative) => Some(vec!["ωτι"]),
-                    Some(HcCase::Accusative) => Some(vec!["ωτα"]),
-                    None => None,
-                },
-                Some(HcGender::Feminine) => match self.case {
-                    Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ωσα"]),
-                    Some(HcCase::Genitive) => Some(vec!["ωσης"]),
-                    Some(HcCase::Dative) => Some(vec!["ωσῃ"]),
-                    Some(HcCase::Accusative) => Some(vec!["ωσαν"]),
-                    None => None,
-                },
-                Some(HcGender::Neuter) => match self.case {
-                    Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ος"]),
-                    Some(HcCase::Genitive) => Some(vec!["ωτος"]),
-                    Some(HcCase::Dative) => Some(vec!["ωτι"]),
-                    Some(HcCase::Accusative) => Some(vec!["ος"]),
-                    None => None,
-                },
-                None => None,
-            },
-            Some(HcNumber::Plural) => match self.gender {
-                Some(HcGender::Masculine) => match self.case {
-                    Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ωτες"]),
-                    Some(HcCase::Genitive) => Some(vec!["ωτων"]),
-                    Some(HcCase::Dative) => Some(vec!["ωσι(ν)"]),
-                    Some(HcCase::Accusative) => Some(vec!["ωτας"]),
-                    None => None,
-                },
-                Some(HcGender::Feminine) => match self.case {
-                    Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ωσαι"]),
-                    Some(HcCase::Genitive) => Some(vec!["ωσῶν"]),
-                    Some(HcCase::Dative) => Some(vec!["ωσαις"]),
-                    Some(HcCase::Accusative) => Some(vec!["ωσᾱς"]),
-                    None => None,
-                },
-                Some(HcGender::Neuter) => match self.case {
-                    Some(HcCase::Nominative) | Some(HcCase::Vocative) => Some(vec!["ωτα"]),
-                    Some(HcCase::Genitive) => Some(vec!["ωτων"]),
-                    Some(HcCase::Dative) => Some(vec!["ωσι(ν)"]),
-                    Some(HcCase::Accusative) => Some(vec!["ωτα"]),
-                    None => None,
-                },
-                None => None,
-            },
-            Some(HcNumber::Dual) => todo!(),
-            None => None,
-        }
-    }
-
     fn get_participle_endings(&self, stem: &str) -> Option<Vec<&str>> {
         let num_idx = match self.number {
             Some(HcNumber::Singular) => 0,
@@ -5284,8 +5219,29 @@ impl HcVerbForms for HcGreekVerbForm {
         if case_idx == 4 && num_idx == 5 {
             case_idx = 0; //voc pl == nom pl
         }
+        let isthmi_perfect_suffix = "στηκα";
+        let second_aorist_active = "ον";
+        let second_aorist_middle = "ομην";
 
-        let idx = if (self.tense == HcTense::Present || self.tense == HcTense::Future)
+        let idx = if self.tense == HcTense::Perfect
+            && self.voice == HcVoice::Active
+            && stem.ends_with(isthmi_perfect_suffix)
+            && self.gender == Some(HcGender::Masculine)
+        {
+            21
+        } else if self.tense == HcTense::Perfect
+            && self.voice == HcVoice::Active
+            && stem.ends_with(isthmi_perfect_suffix)
+            && self.gender == Some(HcGender::Feminine)
+        {
+            22
+        } else if self.tense == HcTense::Perfect
+            && self.voice == HcVoice::Active
+            && stem.ends_with(isthmi_perfect_suffix)
+            && self.gender == Some(HcGender::Neuter)
+        {
+            23
+        } else if (self.tense == HcTense::Present || self.tense == HcTense::Future)
             && self.voice == HcVoice::Active
             && self.gender == Some(HcGender::Masculine)
         {
@@ -5318,19 +5274,19 @@ impl HcVerbForms for HcGreekVerbForm {
         } else if self.tense == HcTense::Aorist
             && self.voice == HcVoice::Active
             && self.gender == Some(HcGender::Masculine)
-            && stem.ends_with("ον")
+            && stem.ends_with(second_aorist_active)
         {
             0
         } else if self.tense == HcTense::Aorist
             && self.voice == HcVoice::Active
             && self.gender == Some(HcGender::Feminine)
-            && stem.ends_with("ον")
+            && stem.ends_with(second_aorist_active)
         {
             1
         } else if self.tense == HcTense::Aorist
             && self.voice == HcVoice::Active
             && self.gender == Some(HcGender::Neuter)
-            && stem.ends_with("ον")
+            && stem.ends_with(second_aorist_active)
         {
             2
         } else if self.tense == HcTense::Aorist
@@ -5351,19 +5307,19 @@ impl HcVerbForms for HcGreekVerbForm {
         } else if self.tense == HcTense::Aorist
             && self.voice == HcVoice::Middle
             && self.gender == Some(HcGender::Masculine)
-            && (stem.ends_with("ον") || stem.ends_with("ομην"))
+            && (stem.ends_with(second_aorist_active) || stem.ends_with(second_aorist_middle))
         {
             3
         } else if self.tense == HcTense::Aorist
             && self.voice == HcVoice::Middle
             && self.gender == Some(HcGender::Feminine)
-            && (stem.ends_with("ον") || stem.ends_with("ομην"))
+            && (stem.ends_with(second_aorist_active) || stem.ends_with(second_aorist_middle))
         {
             4
         } else if self.tense == HcTense::Aorist
             && self.voice == HcVoice::Middle
             && self.gender == Some(HcGender::Neuter)
-            && (stem.ends_with("ον") || stem.ends_with("ομην"))
+            && (stem.ends_with(second_aorist_active) || stem.ends_with(second_aorist_middle))
         {
             5
         } else if self.tense == HcTense::Aorist
@@ -6310,7 +6266,7 @@ enum HcPtcEndings {
     PerfectMiddleNeut,
 }
 
-static PTC_ENDINGS: &[[&str; 9]; 21] = &[
+static PTC_ENDINGS: &[[&str; 9]; 24] = &[
     [
         "ων",
         "οντος",
@@ -6541,6 +6497,39 @@ static PTC_ENDINGS: &[[&str; 9]; 21] = &[
         "μενων",
         "μενοις",
         "μενα",
+    ],
+    [
+        "ως",
+        "ωτος",
+        "ωτι",
+        "ωτα",
+        "ως",
+        "ωτες",
+        "ωτων",
+        "ωσι(ν)",
+        "ωτας",
+    ],
+    [
+        "ωσα",
+        "ωσης",
+        "ωσῃ",
+        "ωσαν",
+        "ωσα",
+        "ωσαι",
+        "ωσῶν",
+        "ωσαις",
+        "ωσᾱς",
+    ],
+    [
+        "ος",
+        "ωτος",
+        "ωτι",
+        "ος",
+        "ος",
+        "ωτα",
+        "ωτων",
+        "ωσι(ν)",
+        "ωτα",
     ],
 ];
 
