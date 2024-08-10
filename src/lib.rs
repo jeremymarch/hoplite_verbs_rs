@@ -2,10 +2,6 @@
 #![allow(clippy::if_same_then_else)] //for clarity let's leave these
 #![allow(clippy::collapsible_if)]
 
-// consonant stem infinitives
-// υι diphthong accents circumflex (perf act nom, acc sing, nom pl.)
-// fut. pass. ησ
-
 pub extern crate polytonic_greek;
 use polytonic_greek::*;
 use std::sync::Arc;
@@ -14,6 +10,7 @@ use itertools::Itertools;
 use rand::prelude::SliceRandom;
 use std::collections::HashSet;
 use tracing::error;
+use unicode_segmentation::UnicodeSegmentation;
 
 //mod latin;
 mod special_verbs;
@@ -683,14 +680,7 @@ static SEPARATOR: &str = "‐";
 static BLANK: &str = "—";
 
 pub trait HcVerbForms {
-    fn get_infinitive(
-        &self,
-        full_stem: &str,
-        new_stem1: &str,
-        e: &str,
-        decompose: bool,
-        alt_pp_idx: usize,
-    ) -> String;
+    fn get_infinitive(&self, full_stem: &str, new_stem1: &str, e: &str, decompose: bool) -> String;
     fn is_contracted_verb(&self, form: &str) -> bool;
     fn is_legal_form(&self) -> bool;
     fn is_legal_deponent(&self, pp: &str) -> bool;
@@ -4591,17 +4581,6 @@ impl HcVerbForms for HcGreekVerbForm {
             .split(" / ")
             .map(|e| e.to_string())
             .collect::<Vec<String>>();
-        // for alt_pp in alt_pps {
-        //     let y = self.strip_ending(pp_num, alt_pp.to_string());
-        //     if y.is_err() {
-        //         return Err("error stripping ending");
-        //     }
-        //     pps_without_ending.push(y.unwrap());
-        // }
-
-        // let f = pps_without_ending.join(" / ");
-        // let e = "Remove ending from Principal Part".to_string();
-        // steps.push(Step{form:f, explanation:e});
 
         let mut pps_add_augment = Vec::new();
         //add augment to imperfect or pluperfect
@@ -4625,7 +4604,7 @@ impl HcVerbForms for HcGreekVerbForm {
         let mut add_ending_collector = Vec::new();
         let mut add_accent_collector = Vec::new();
 
-        for (alt_pp_idx, full_stem) in pps_without_ending.iter().enumerate() {
+        for full_stem in pps_without_ending.iter() {
             //why not wait to strip ending in the loop?
             let endings_for_form = if self.mood == HcMood::Infinitive {
                 match self.get_infinitive_endings(full_stem) {
@@ -4717,7 +4696,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 if self.mood == HcMood::Infinitive {
                     //println!("alt pp {}, {}, {}", alt_pp_idx, self.verb.pps[2], self.verb.pps[2].split('/').collect::<Vec<_>>()[alt_pp_idx]);
                     //let mut new_stem = a.clone();
-                    let infinitive = self.get_infinitive(full_stem, &a, e, decompose, alt_pp_idx);
+                    let infinitive = self.get_infinitive(full_stem, &a, e, decompose);
 
                     let fff =
                         if !hgk_has_diacritics(&infinitive, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE)
@@ -5389,14 +5368,7 @@ impl HcVerbForms for HcGreekVerbForm {
         Some(vec![PTC_ENDINGS[idx][case_idx + num_idx]])
     }
 
-    fn get_infinitive(
-        &self,
-        full_stem: &str,
-        new_stem1: &str,
-        e: &str,
-        decompose: bool,
-        alt_pp_idx: usize,
-    ) -> String {
+    fn get_infinitive(&self, full_stem: &str, new_stem1: &str, e: &str, decompose: bool) -> String {
         let mut new_stem = new_stem1.to_owned();
 
         if self.tense == HcTense::Perfect
@@ -5498,11 +5470,7 @@ impl HcVerbForms for HcGreekVerbForm {
             }
         } else if self.tense == HcTense::Aorist
             && self.voice != HcVoice::Passive
-            && (self.verb.pps[2].split('/').collect::<Vec<_>>()[alt_pp_idx]
-                .trim()
-                .ends_with("ον")
-                || self.verb.pps[2].trim().split('/').collect::<Vec<_>>()[alt_pp_idx]
-                    .ends_with("όμην"))
+            && (full_stem.ends_with("ον") || full_stem.ends_with("ομην"))
         {
             if self.voice == HcVoice::Active {
                 "εῖν"
@@ -6051,7 +6019,6 @@ pub struct SyllableAnalysis {
     index: u8,
 }
 
-use unicode_segmentation::UnicodeSegmentation;
 static PREFIXES: &[&str; 16] = &[
     "ἐκ",
     "ἀνα",
