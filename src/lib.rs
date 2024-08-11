@@ -3303,8 +3303,11 @@ impl HcVerbForms for HcGreekVerbForm {
         ending: &str,
         decompose: bool,
     ) -> Result<String, &str> {
-        let mut local_stem = stem.to_string();
+        //println!("BBB1 stem {}", stem);
+        let mut local_stem = self.adjust_stem(full_stem, stem, decompose).unwrap();
         let mut local_ending = ending.to_string();
+
+        //println!("BBB2 stem {}, ending {}", local_stem, local_ending);
 
         //for contracted verbs remove nu movable for imperfect 3rd sing. active
         if self.tense == HcTense::Imperfect
@@ -3329,42 +3332,23 @@ impl HcVerbForms for HcGreekVerbForm {
 
         if self.verb.pps[0].ends_with("μι") || self.verb.pps[0].ends_with("αμαι") {
             if self.tense == HcTense::Present || self.tense == HcTense::Imperfect {
-                if self.number == Some(HcNumber::Plural)
-                    || self.mood != HcMood::Indicative
-                    || self.voice != HcVoice::Active
+                if self.verb.pps[0].ends_with("ῑ̔́ημι") || self.verb.pps[0].ends_with("ῑ́ημι")
                 {
-                    if self.verb.pps[0].ends_with("ωμι") {
-                        local_stem.pop();
-                        local_stem.push('ο');
-                    } else if self.verb.pps[0].ends_with("στημι") {
-                        local_stem.pop();
-                        local_stem.push('α');
-                    } else if self.verb.pps[0].ends_with("τίθημι")
-                        || self.verb.pps[0].ends_with("ῑ̔́ημι")
-                        || self.verb.pps[0].ends_with("ῑ́ημι")
+                    if self.tense == HcTense::Present
+                        && self.person == Some(HcPerson::Third)
+                        && self.number == Some(HcNumber::Plural)
+                        && self.voice == HcVoice::Active
+                        && self.mood == HcMood::Indicative
                     {
-                        local_stem.pop();
-                        local_stem.push('ε');
-
-                        if (self.verb.pps[0].ends_with("ῑ̔́ημι")
-                            || self.verb.pps[0].ends_with("ῑ́ημι"))
-                            && self.tense == HcTense::Present
-                            && self.person == Some(HcPerson::Third)
-                            && self.number == Some(HcNumber::Plural)
-                            && self.voice == HcVoice::Active
-                            && self.mood == HcMood::Indicative
-                        {
-                            if !decompose {
-                                local_stem.pop();
-                            }
-                            local_ending = if decompose {
-                                String::from("ᾱσι(ν)")
-                            } else {
-                                String::from("ᾶσι(ν)")
-                            };
+                        if !decompose {
+                            local_stem.pop();
                         }
-                    } else if self.verb.pps[0].ends_with("ῡμι") {
-                        local_stem = local_stem.replacen('ῡ', "υ", 1);
+
+                        local_ending = if decompose {
+                            String::from("ᾱσι(ν)")
+                        } else {
+                            String::from("ᾶσι(ν)")
+                        };
                     }
                 }
             }
@@ -3543,25 +3527,6 @@ impl HcVerbForms for HcGreekVerbForm {
                         || self.mood != HcMood::Indicative
                         || self.voice != HcVoice::Active)
                 {
-                    if self.verb.pps[0].ends_with("δίδωμι") {
-                        local_stem = local_stem.replacen("ωκ", "ο", 1);
-                    } else if self.verb.pps[0].ends_with("τίθημι")
-                        || self.verb.pps[0].ends_with("ῑ̔́ημι")
-                        || self.verb.pps[0].ends_with("ῑ́ημι")
-                    {
-                        if self.verb.pps[0].ends_with("ῑ́ημι")
-                            && !decompose
-                            && (self.number == Some(HcNumber::Plural)
-                                || self.voice != HcVoice::Active)
-                        {
-                            local_stem = local_stem.replacen("ηκ", "ει", 1);
-                        } else if self.verb.pps[0].ends_with("ῑ̔́ημι") && !decompose {
-                            local_stem = local_stem.replacen("ἡκ", "εἱ", 1);
-                        } else {
-                            local_stem = local_stem.replacen("ηκ", "ε", 1);
-                        }
-                    }
-
                     if self.mood == HcMood::Subjunctive
                         && !decompose
                         && self.voice != HcVoice::Passive
@@ -4727,7 +4692,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 //end handle infinitives
                 else if self.mood == HcMood::Participle {
                     let new_stem = self
-                        .adjust_stem(&full_stem, &pp_without_ending, true)
+                        .adjust_stem(&full_stem, &pp_without_ending, decompose)
                         .unwrap();
 
                     let mut e = e.to_string();
@@ -5391,7 +5356,9 @@ impl HcVerbForms for HcGreekVerbForm {
         ending: &str,
         decompose: bool,
     ) -> String {
-        let mut new_stem = self.adjust_stem(full_stem, new_stem_orig, true).unwrap();
+        let mut new_stem = self
+            .adjust_stem(full_stem, new_stem_orig, decompose)
+            .unwrap();
 
         if self.tense == HcTense::Perfect
             && self.voice != HcVoice::Active
@@ -5917,7 +5884,7 @@ impl HcVerbForms for HcGreekVerbForm {
         //e.g full_stem: δωκα, stem: δωκ
         //println!("abc{}, {}", full_stem, stem);
 
-        if self.tense == HcTense::Present
+        if (self.tense == HcTense::Present || self.tense == HcTense::Imperfect)
             && (self.mood != HcMood::Indicative
                 || self.number != Some(HcNumber::Singular)
                 || self.voice != HcVoice::Active)
@@ -5926,7 +5893,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 local_stem = local_stem.replace('ω', "ο");
             } else if full_stem.ends_with("τιθημι") {
                 local_stem = local_stem.replace('η', "ε");
-            } else if full_stem.ends_with("ἱστημι") || full_stem.ends_with("ιστημι") {
+            } else if full_stem.ends_with("στημι") || full_stem.ends_with("στημι") {
                 local_stem = local_stem.replace('η', "α");
             } else if full_stem.ends_with("ῡμι") {
                 local_stem = local_stem.replace('ῡ', "υ");
@@ -5946,20 +5913,25 @@ impl HcVerbForms for HcGreekVerbForm {
             {
                 if full_stem.ends_with("δωκα") {
                     local_stem = local_stem.replacen("ωκ", "ο", 1);
-                } else if full_stem.ends_with("θηκα")
-                    || full_stem.ends_with("ἡκα")
-                    || full_stem.ends_with("ηκα")
+                } else if full_stem.ends_with("θηκα") {
+                    local_stem = local_stem.replacen("ηκ", "ε", 1);
+                } else if full_stem.ends_with("ηκα")
+                    && (self.number == Some(HcNumber::Plural) || self.voice != HcVoice::Active)
+                    && self.mood == HcMood::Indicative
+                    && !decompose
                 {
-                    if full_stem.ends_with("ηκα")
-                        && !decompose
-                        && (self.number == Some(HcNumber::Plural) || self.voice != HcVoice::Active)
-                    {
-                        local_stem = local_stem.replacen("ηκ", "ε", 1);
-                    } else if full_stem.ends_with("ἡκα") && !decompose {
-                        local_stem = local_stem.replacen("ἡκ", "εἱ", 1);
-                    } else {
-                        local_stem = local_stem.replacen("ηκ", "ε", 1);
-                    }
+                    local_stem = local_stem.replacen("ηκ", "ει", 1);
+                } else if full_stem.ends_with("ηκα") {
+                    local_stem = local_stem.replacen("ηκ", "ε", 1);
+                } else if full_stem.ends_with("ἡκα")
+                    && (self.number == Some(HcNumber::Plural)
+                        || self.voice != HcVoice::Active
+                        || self.mood != HcMood::Indicative
+                        || decompose)
+                {
+                    local_stem = local_stem.replacen("ἡκ", "εἱ", 1);
+                } else {
+                    local_stem = local_stem.replacen("ἡκ", "ε", 1);
                 }
             } else if full_stem.ends_with("ην")
                 && self.voice == HcVoice::Active
