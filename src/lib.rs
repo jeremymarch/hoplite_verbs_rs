@@ -704,7 +704,12 @@ pub trait HcVerbForms {
         decompose: bool,
     ) -> Result<String, &str>;
     fn get_endings(&self, stem: &str) -> Option<Vec<&str>>;
-    fn adjust_stem(&self, full_stem: &str, stem: &str, decompose: bool) -> Option<String>;
+    fn adjust_stem(
+        &self,
+        full_stem: &str,
+        stem_without_ending: &str,
+        decompose: bool,
+    ) -> Option<String>;
 
     fn get_participle_endings(&self, _stem: &str) -> Option<Vec<&str>>;
     fn get_infinitive_endings(&self, _stem: &str) -> Option<Vec<&str>>;
@@ -5902,12 +5907,21 @@ impl HcVerbForms for HcGreekVerbForm {
         Some(ENDINGS[ending as usize][person_number].split(',').collect())
     }
 
-    fn adjust_stem(&self, full_stem: &str, stem: &str, decompose: bool) -> Option<String> {
-        let mut local_stem = stem.to_string();
+    fn adjust_stem(
+        &self,
+        full_stem: &str,
+        stem_without_ending: &str,
+        decompose: bool,
+    ) -> Option<String> {
+        let mut local_stem = stem_without_ending.to_string();
         //e.g full_stem: δωκα, stem: δωκ
         //println!("abc{}, {}", full_stem, stem);
 
-        if self.tense == HcTense::Present {
+        if self.tense == HcTense::Present
+            && (self.mood != HcMood::Indicative
+                || self.number != Some(HcNumber::Singular)
+                || self.voice != HcVoice::Active)
+        {
             if full_stem.ends_with("διδωμι") {
                 local_stem = local_stem.replace('ω', "ο");
             } else if full_stem.ends_with("τιθημι") {
