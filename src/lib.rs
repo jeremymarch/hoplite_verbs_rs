@@ -68,7 +68,7 @@ impl RReplacen for String {
     }
 }
 
-#[derive(Debug)]
+#[cfg_attr(test, derive(Debug, PartialEq))] //only implement for tests to reduce size
 pub struct VerbParameters {
     pub persons: Vec<HcPerson>,
     pub numbers: Vec<HcNumber>,
@@ -89,9 +89,7 @@ impl VerbParameters {
 
                 let param_vec: Vec<u32> = s
                     .split(',')
-                    .map(|s| s.trim())
-                    .filter(|s| !s.is_empty() && s.parse::<u32>().is_ok())
-                    .map(|s| s.parse().unwrap_or(0))
+                    .map(|s| s.trim().parse().unwrap_or(0))
                     .unique()
                     .collect();
 
@@ -5069,16 +5067,13 @@ impl HcVerbForms for HcGreekVerbForm {
                 add_accent_collector.push(alt);
             }
 
-            //remove duplicate and then join alternates with /
-            let f = add_accent_collector
-                .into_iter()
-                .unique()
-                .collect::<Vec<String>>()
-                .join(" / ");
-            let e = "Accent verb".to_string();
+            //remove duplicates
+            let mut unique = HashSet::new();
+            add_accent_collector.retain(|item| unique.insert(item.clone()));
+            //and then join alternates with /
             steps.push(Step {
-                form: f,
-                explanation: e,
+                form: add_accent_collector.join(" / "),
+                explanation: "Accent verb".to_string(),
             });
         }
 
@@ -6626,6 +6621,34 @@ mod tests {
     use std::io::BufReader;
     use std::io::{BufWriter, Write};
     use unicode_normalization::UnicodeNormalization;
+
+    #[test]
+    fn test_verb_parameters_from_option() {
+        let options = Some(String::from(" 1, , a , 1, 2 "));
+        let verb_params = VerbParameters::from_option(options);
+        assert_eq!(
+            verb_params,
+            VerbParameters {
+                persons: vec![HcPerson::First, HcPerson::Second],
+                numbers: vec![HcNumber::Singular, HcNumber::Plural],
+                tenses: vec![
+                    HcTense::Present,
+                    HcTense::Imperfect,
+                    HcTense::Future,
+                    HcTense::Aorist,
+                    HcTense::Perfect,
+                    HcTense::Pluperfect,
+                ],
+                voices: vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive],
+                moods: vec![
+                    HcMood::Indicative,
+                    HcMood::Subjunctive,
+                    HcMood::Optative,
+                    HcMood::Imperative,
+                ],
+            }
+        );
+    }
 
     #[test]
     fn as_test() {
