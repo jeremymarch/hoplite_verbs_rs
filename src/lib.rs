@@ -5371,7 +5371,7 @@ impl HcVerbForms for HcGreekVerbForm {
         &self,
         full_stem: &str,
         new_stem_orig: &str,
-        e: &str,
+        ending: &str,
         decompose: bool,
     ) -> String {
         let mut new_stem = self.adjust_stem(full_stem, new_stem_orig, true).unwrap();
@@ -5380,9 +5380,9 @@ impl HcVerbForms for HcGreekVerbForm {
             && self.voice != HcVoice::Active
             && self.verb.is_consonant_stem(full_stem)
         {
-            return self.contract_consonants(&new_stem, e, decompose);
+            return self.contract_consonants(&new_stem, ending, decompose);
         } else if self.tense == HcTense::Future && self.voice == HcVoice::Passive {
-            return format!("{}ησ{}", new_stem, e);
+            return format!("{}ησ{}", new_stem, ending);
         } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("ῑ̔́ημι") {
             if self.voice == HcVoice::Active {
                 return String::from("ῑ̔έναι");
@@ -5430,10 +5430,6 @@ impl HcVerbForms for HcGreekVerbForm {
         } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("όομαι") {
             new_stem.pop();
             "οῦσθαι"
-        } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("αμαι")
-        //δύναμαι
-        {
-            "σθαι"
         } else if self.tense == HcTense::Future
             && self.voice != HcVoice::Passive
             && self.verb.pps[1].ends_with('ῶ')
@@ -5477,13 +5473,6 @@ impl HcVerbForms for HcGreekVerbForm {
             } else {
                 "έσθαι"
             }
-        } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("ῑ́ημι") {
-            new_stem.pop();
-            if self.voice == HcVoice::Active {
-                "έναι"
-            } else {
-                "εσθαι"
-            }
         } else if self.tense == HcTense::Aorist
             && self.voice != HcVoice::Passive
             && self.verb.pps[0].ends_with("ῑ́ημι")
@@ -5498,7 +5487,10 @@ impl HcVerbForms for HcGreekVerbForm {
             && (self.verb.pps[0].ends_with("τίθημι")
                 || self.verb.pps[0].ends_with("δίδωμι")
                 || self.verb.pps[0].ends_with("στημι")
-                || self.verb.pps[0].ends_with("σταμαι"))
+                || self.verb.pps[0].ends_with("ῡμι")
+                || self.verb.pps[0].ends_with("υμαι")
+                || self.verb.pps[0].ends_with("αμαι")
+                || self.verb.pps[0].ends_with("ῑ́ημι"))
         {
             if self.voice == HcVoice::Active {
                 "ναι"
@@ -5531,21 +5523,12 @@ impl HcVerbForms for HcGreekVerbForm {
             "ναι"
         } else if self.tense == HcTense::Perfect
             && self.voice == HcVoice::Active
-            && (self.verb.pps[0].ends_with("στημι") || self.verb.pps[0].ends_with("σταμαι"))
+            && full_stem.ends_with("στηκα")
         {
             "άναι"
-        } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("ῡμι") {
-            new_stem.pop();
-            if self.voice == HcVoice::Active {
-                "υναι"
-            } else {
-                "υσθαι"
-            }
-        } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("υμαι") {
-            "σθαι"
         } else {
             //everything else
-            e
+            ending
         };
         format!("{}{}", new_stem, ending)
     }
