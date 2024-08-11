@@ -680,7 +680,14 @@ static SEPARATOR: &str = "‐";
 static BLANK: &str = "—";
 
 pub trait HcVerbForms {
-    fn get_infinitive(&self, full_stem: &str, new_stem1: &str, e: &str, decompose: bool) -> String;
+    fn get_infinitive(
+        &self,
+        full_stem_with_accent: &str,
+        full_stem: &str,
+        new_stem1: &str,
+        e: &str,
+        decompose: bool,
+    ) -> String;
     fn is_contracted_verb(&self, form: &str) -> bool;
     fn is_legal_form(&self) -> bool;
     fn is_legal_deponent(&self, pp: &str) -> bool;
@@ -4572,12 +4579,7 @@ impl HcVerbForms for HcGreekVerbForm {
             }
         }
 
-        //strip accent: internally (not as a step)
-        //let f = hgk_strip_diacritics_and_replace_circumflex_with_macron(f, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
-        let pp_string_without_accent =
-            hgk_strip_diacritics(principal_part, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
-
-        let pp_with_alts_without_accent = pp_string_without_accent
+        let pp_with_alts_without_accent = principal_part
             .split(" / ")
             .map(|e| e.to_string())
             .collect::<Vec<String>>();
@@ -4585,20 +4587,27 @@ impl HcVerbForms for HcGreekVerbForm {
         let mut add_ending_collector = Vec::new();
         let mut add_accent_collector = Vec::new();
 
-        for full_stem_orig in pp_with_alts_without_accent.iter() {
+        for full_stem_with_accent in pp_with_alts_without_accent.iter() {
+            //strip accent: internally (not as a step)
+            //let f = hgk_strip_diacritics_and_replace_circumflex_with_macron(f, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE);
+            let pp_string_without_accent = hgk_strip_diacritics(
+                full_stem_with_accent,
+                HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE,
+            );
+
             // full_stem has augment added or removed as required
             let full_stem = if self.tense == HcTense::Imperfect || self.tense == HcTense::Pluperfect
             {
-                self.add_augment(full_stem_orig, decompose)
+                self.add_augment(&pp_string_without_accent, decompose)
             } else if (self.tense == HcTense::Aorist
                 && self.mood == HcMood::Indicative
                 && decompose)
                 || (self.tense == HcTense::Aorist && self.mood != HcMood::Indicative)
                 || (self.tense == HcTense::Future && self.voice == HcVoice::Passive)
             {
-                self.deaugment(full_stem_orig, decompose)
+                self.deaugment(&pp_string_without_accent, decompose)
             } else {
-                full_stem_orig.to_owned()
+                pp_string_without_accent
             };
 
             let endings_for_form = if self.mood == HcMood::Infinitive {
@@ -4692,8 +4701,13 @@ impl HcVerbForms for HcGreekVerbForm {
                 };
 
                 if self.mood == HcMood::Infinitive {
-                    let infinitive =
-                        self.get_infinitive(&full_stem, &pp_without_ending, e, decompose);
+                    let infinitive = self.get_infinitive(
+                        full_stem_with_accent,
+                        &full_stem,
+                        &pp_without_ending,
+                        e,
+                        decompose,
+                    );
 
                     let fff =
                         if !hgk_has_diacritics(&infinitive, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE)
@@ -5369,6 +5383,7 @@ impl HcVerbForms for HcGreekVerbForm {
 
     fn get_infinitive(
         &self,
+        full_stem_with_accent: &str,
         full_stem: &str,
         new_stem_orig: &str,
         ending: &str,
@@ -5432,34 +5447,16 @@ impl HcVerbForms for HcGreekVerbForm {
             "οῦσθαι"
         } else if self.tense == HcTense::Future
             && self.voice != HcVoice::Passive
-            && self.verb.pps[1].ends_with('ῶ')
+            && (full_stem_with_accent.ends_with('ῶ') || full_stem_with_accent.ends_with("οῦμαι"))
         {
-            if self.verb.pps[1].ends_with("ἐλῶ") {
-                new_stem.pop();
+            new_stem.pop();
+            if full_stem_with_accent == "ἐλῶ" {
                 if self.voice == HcVoice::Active {
                     "ᾶν"
                 } else {
                     "ᾶσθαι"
                 }
             } else if self.voice == HcVoice::Active {
-                new_stem.pop();
-                "εῖν"
-            } else {
-                new_stem.pop();
-                "εῖσθαι"
-            }
-        } else if self.tense == HcTense::Future
-            && self.voice != HcVoice::Passive
-            && self.verb.pps[1].ends_with("οῦμαι")
-        {
-            new_stem.pop();
-            "εῖσθαι"
-        } else if self.tense == HcTense::Future
-            && self.verb.pps[1].starts_with("ἐρῶ")
-            && new_stem.starts_with("ἐρ")
-        {
-            new_stem.pop();
-            if self.voice == HcVoice::Active {
                 "εῖν"
             } else {
                 "εῖσθαι"
