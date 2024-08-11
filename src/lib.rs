@@ -688,7 +688,7 @@ pub trait HcVerbForms {
         e: &str,
         decompose: bool,
     ) -> String;
-    fn is_contracted_verb(&self, form: &str) -> bool;
+    fn is_contracted_verb(&self, accented_full_stem: &str) -> bool;
     fn is_legal_form(&self) -> bool;
     fn is_legal_deponent(&self, pp: &str) -> bool;
     fn get_description(&self, prev: &HcGreekVerbForm, start: &str, end: &str) -> String;
@@ -990,7 +990,7 @@ impl HcGreekVerbForm {
         stem.to_string()
     }
 
-    fn accent_participle(&self, word: &str, stem: &str) -> String {
+    fn accent_participle(&self, full_stem_with_accent: &str, word: &str, stem: &str) -> String {
         let mut syllables = analyze_syllable_quantities(
             word,
             self.person,
@@ -1977,7 +1977,7 @@ impl HcGreekVerbForm {
             accent = HGK_ACUTE;
         }
 
-        if self.is_contracted_verb(word) && self.voice == HcVoice::Active {
+        if self.is_contracted_verb(full_stem_with_accent) && self.voice == HcVoice::Active {
             if self.gender == Some(HcGender::Masculine) || self.gender == Some(HcGender::Neuter) {
                 if (self.case == Some(HcCase::Nominative)
                     && self.number == Some(HcNumber::Singular))
@@ -4835,14 +4835,14 @@ impl HcVerbForms for HcGreekVerbForm {
                         String::from("")
                     };
 
-                    if self.is_contracted_verb(&ptc) {
+                    if self.is_contracted_verb(full_stem_with_accent) {
                         ptc = self.contract_verb(&ptc, &e);
                     }
                     if ptc.starts_with("-ἑι") {
                         ptc = ptc.replace("-ἑι", "-εἱ"); //fix breathing position on certain ihmi aorist active ptcs
                     }
                     let fff = if !hgk_has_diacritics(&ptc, HGK_ACUTE | HGK_CIRCUMFLEX | HGK_GRAVE) {
-                        self.accent_participle(ptc.as_str(), &full_stem)
+                        self.accent_participle(full_stem_with_accent, ptc.as_str(), &full_stem)
                     } else {
                         ptc
                     };
@@ -4889,7 +4889,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     /* contracted future and present */
                     if self.mood != HcMood::Infinitive
                         && self.mood != HcMood::Participle
-                        && self.is_contracted_verb(&accented_form)
+                        && self.is_contracted_verb(full_stem_with_accent)
                     {
                         add_accent_collector.push(self.contract_verb(&accented_form, e));
                     } else if self.mood != HcMood::Infinitive && self.mood != HcMood::Participle {
@@ -5130,20 +5130,17 @@ impl HcVerbForms for HcGreekVerbForm {
     }
 
     //this needs to be refactored
-    fn is_contracted_verb(&self, form: &str) -> bool {
+    fn is_contracted_verb(&self, accented_full_stem: &str) -> bool {
         (self.tense == HcTense::Imperfect || self.tense == HcTense::Present)
-            && (self.verb.pps[0].ends_with("άω")
-                || self.verb.pps[0].ends_with("έω")
-                || self.verb.pps[0].ends_with("όω")
-                || self.verb.pps[0].ends_with("άομαι")
-                || self.verb.pps[0].ends_with("έομαι")
-                || self.verb.pps[0].ends_with("όομαι"))
-            || (self.mood != HcMood::Infinitive
-                && self.tense == HcTense::Future
+            && (accented_full_stem.ends_with("άω")
+                || accented_full_stem.ends_with("έω")
+                || accented_full_stem.ends_with("όω")
+                || accented_full_stem.ends_with("άομαι")
+                || accented_full_stem.ends_with("έομαι")
+                || accented_full_stem.ends_with("όομαι"))
+            || (self.tense == HcTense::Future
                 && self.voice != HcVoice::Passive
-                && (self.verb.pps[1].ends_with('ῶ')
-                    || (form.starts_with("ἐρ") && self.verb.pps[1].starts_with("ἐρῶ"))
-                    || self.verb.pps[1].ends_with("οῦμαι")))
+                && (accented_full_stem.ends_with('ῶ') || accented_full_stem.ends_with("οῦμαι")))
     }
 
     fn get_pp_num(&self) -> HcGreekPrincipalParts {
