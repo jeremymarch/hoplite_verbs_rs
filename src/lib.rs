@@ -5,11 +5,10 @@
 pub extern crate polytonic_greek;
 use polytonic_greek::*;
 use std::sync::Arc;
-
+//use tracing::error;
 use itertools::Itertools;
 use rand::prelude::SliceRandom;
 use std::collections::HashSet;
-use tracing::error;
 use unicode_segmentation::UnicodeSegmentation;
 
 //mod latin;
@@ -688,6 +687,7 @@ pub trait HcVerbForms {
         e: &str,
         decompose: bool,
     ) -> String;
+    fn is_root_aorist(&self, form: &str) -> bool;
     fn is_contracted_verb(&self, accented_full_stem: &str) -> bool;
     fn is_legal_form(&self) -> bool;
     fn is_legal_deponent(&self, pp: &str) -> bool;
@@ -698,12 +698,13 @@ pub trait HcVerbForms {
     fn strip_ending(&self, pp_num: usize, form: String) -> Result<String, &str>;
     fn add_ending(
         &self,
+        full_stem_with_accent: &str,
         full_stem: &str,
         stem: &str,
         ending: &str,
         decompose: bool,
     ) -> Result<String, &str>;
-    fn get_endings(&self, stem: &str) -> Option<Vec<&str>>;
+    fn get_endings(&self, full_stem_with_accent: &str, stem: &str) -> Option<Vec<&str>>;
     fn adjust_stem(
         &self,
         full_stem: &str,
@@ -3298,6 +3299,7 @@ impl HcVerbForms for HcGreekVerbForm {
 
     fn add_ending(
         &self,
+        full_stem_with_accent: &str,
         full_stem: &str,
         stem: &str,
         ending: &str,
@@ -3311,9 +3313,7 @@ impl HcVerbForms for HcGreekVerbForm {
 
         //for contracted verbs remove nu movable for imperfect 3rd sing. active
         if self.tense == HcTense::Imperfect
-            && (self.verb.pps[0].ends_with("άω")
-                || self.verb.pps[0].ends_with("έω")
-                || self.verb.pps[0].ends_with("όω"))
+            && self.is_contracted_verb(full_stem_with_accent)
             && self.person == Some(HcPerson::Third)
             && self.number == Some(HcNumber::Singular)
             && self.voice == HcVoice::Active
@@ -4032,7 +4032,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 //         222
                 //     }
                 // );
-                error!("random form 2000 cycles");
+                //error!("random form 2000 cycles");
                 ignore_filter = true;
             } else if num_skipped > 4000 {
                 // println!(
@@ -4043,7 +4043,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 //         222
                 //     }
                 // );
-                error!("random form 4000 cycles");
+                //error!("random form 4000 cycles");
                 break;
             }
             num_skipped += 1;
@@ -4591,7 +4591,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
             } else {
-                match self.get_endings(&full_stem) {
+                match self.get_endings(full_stem_with_accent, &full_stem) {
                     Some(e) => e,
                     None => return Err(HcFormError::InternalError), //("Illegal form ending");,
                 }
@@ -4632,13 +4632,7 @@ impl HcVerbForms for HcGreekVerbForm {
                 }
 
                 // root aorist: skip middle voice
-                if (full_stem.ends_with("στην")
-                    || full_stem.ends_with("φθην")
-                    || full_stem.ends_with("βην")
-                    || full_stem.ends_with("γνων"))
-                    && self.tense == HcTense::Aorist
-                    && self.voice == HcVoice::Middle
-                {
+                if self.is_root_aorist(&full_stem) && self.voice == HcVoice::Middle {
                     if pp_with_alts_without_accent.len() > 1 {
                         continue; //if non-root alternate
                     } else {
@@ -4829,7 +4823,8 @@ impl HcVerbForms for HcGreekVerbForm {
                 } else {
                     pp_without_ending.to_owned()
                 };
-                let y = self.add_ending(&full_stem, &stem, &ending, decompose);
+                let y =
+                    self.add_ending(full_stem_with_accent, &full_stem, &stem, &ending, decompose);
 
                 let y = match y {
                     Ok(y) => y,
@@ -5384,34 +5379,36 @@ impl HcVerbForms for HcGreekVerbForm {
             }
         }
 
-        let ending: &str = if self.tense == HcTense::Present && self.verb.pps[0].ends_with("άω") {
+        let ending: &str = if self.tense == HcTense::Present
+            && full_stem_with_accent.ends_with("άω")
+        {
             new_stem.pop();
             if self.voice == HcVoice::Active {
                 "ᾶν"
             } else {
                 "ᾶσθαι"
             }
-        } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("έω") {
+        } else if self.tense == HcTense::Present && full_stem_with_accent.ends_with("έω") {
             new_stem.pop();
             if self.voice == HcVoice::Active {
                 "εῖν"
             } else {
                 "εῖσθαι"
             }
-        } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("όω") {
+        } else if self.tense == HcTense::Present && full_stem_with_accent.ends_with("όω") {
             new_stem.pop();
             if self.voice == HcVoice::Active {
                 "οῦν"
             } else {
                 "οῦσθαι"
             }
-        } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("άομαι") {
+        } else if self.tense == HcTense::Present && full_stem_with_accent.ends_with("άομαι") {
             new_stem.pop();
             "ᾶσθαι"
-        } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("έομαι") {
+        } else if self.tense == HcTense::Present && full_stem_with_accent.ends_with("έομαι") {
             new_stem.pop();
             "εῖσθαι"
-        } else if self.tense == HcTense::Present && self.verb.pps[0].ends_with("όομαι") {
+        } else if self.tense == HcTense::Present && full_stem_with_accent.ends_with("όομαι") {
             new_stem.pop();
             "οῦσθαι"
         } else if self.tense == HcTense::Future
@@ -5500,25 +5497,26 @@ impl HcVerbForms for HcGreekVerbForm {
     }
 
     fn get_infinitive_endings(&self, _stem: &str) -> Option<Vec<&str>> {
-        match self.tense {
+        let idx = match self.tense {
             HcTense::Present | HcTense::Future => match self.voice {
-                HcVoice::Active => Some(vec!["ειν"]),
-                _ => Some(vec!["εσθαι"]),
+                HcVoice::Active => 0,
+                _ => 1,
             },
             HcTense::Aorist => match self.voice {
-                HcVoice::Active => Some(vec!["αι"]),
-                HcVoice::Middle => Some(vec!["ασθαι"]),
-                _ => Some(vec!["ηναι"]),
+                HcVoice::Active => 2,
+                HcVoice::Middle => 3,
+                _ => 4,
             },
             HcTense::Perfect => match self.voice {
-                HcVoice::Active => Some(vec!["εναι"]),
-                _ => Some(vec!["σθαι"]),
+                HcVoice::Active => 5,
+                _ => 6,
             },
-            _ => None,
-        }
+            _ => return None,
+        };
+        Some(vec![INFINITIVE_ENDINGS[idx]])
     }
 
-    fn get_endings(&self, stem: &str) -> Option<Vec<&str>> {
+    fn get_endings(&self, full_stem_with_accent: &str, stem: &str) -> Option<Vec<&str>> {
         let ending = match self.tense {
             HcTense::Present => match self.voice {
                 HcVoice::Active => match self.mood {
@@ -5548,9 +5546,8 @@ impl HcVerbForms for HcGreekVerbForm {
                         if self.verb.pps[0].ends_with("μι") && !self.verb.pps[0].ends_with("ῡμι")
                         {
                             HcEndings::PresentActiveOptMi
-                        } else if self.verb.pps[0].ends_with("άω")
-                            || self.verb.pps[0].ends_with("έω")
-                            || self.verb.pps[0].ends_with("όω")
+                        } else if self.is_contracted_verb(full_stem_with_accent)
+                            && self.voice == HcVoice::Active
                         {
                             HcEndings::PresentActiveOptEContracted
                         } else {
@@ -5646,10 +5643,7 @@ impl HcVerbForms for HcGreekVerbForm {
                             HcMood::Optative => {
                                 if
                                 /* contracted future */
-                                self.verb.pps[1].ends_with('ῶ')
-                                    || (stem.starts_with("ἐρ")
-                                        && self.verb.pps[1].starts_with("ἐρῶ"))
-                                {
+                                full_stem_with_accent.ends_with('ῶ') {
                                     HcEndings::PresentActiveOptEContracted
                                 } else {
                                     HcEndings::PresentActiveOpt
@@ -5690,11 +5684,7 @@ impl HcVerbForms for HcGreekVerbForm {
                     } else {
                         match self.mood {
                             HcMood::Indicative => {
-                                if stem.ends_with("στην")
-                                    || stem.ends_with("φθην")
-                                    || stem.ends_with("βην")
-                                    || stem.ends_with("γνων")
-                                {
+                                if self.is_root_aorist(stem) {
                                     HcEndings::AoristActiveIndicativeMiRoot
                                 } else if self.verb.pps[0].ends_with("μι")
                                     && self.verb.pps[2].ends_with("κα")
@@ -5705,22 +5695,14 @@ impl HcVerbForms for HcGreekVerbForm {
                                 }
                             }
                             HcMood::Subjunctive => {
-                                if stem.ends_with("στην")
-                                    || stem.ends_with("φθην")
-                                    || stem.ends_with("βην")
-                                    || stem.ends_with("γνων")
-                                {
+                                if self.is_root_aorist(stem) {
                                     HcEndings::AoristPassiveSubj
                                 } else {
                                     HcEndings::PresentActiveSubj
                                 }
                             }
                             HcMood::Optative => {
-                                if stem.ends_with("στην")
-                                    || stem.ends_with("φθην")
-                                    || stem.ends_with("βην")
-                                    || stem.ends_with("γνων")
-                                {
+                                if self.is_root_aorist(stem) {
                                     HcEndings::PresentActiveOptMi
                                 } else if self.verb.pps[0].ends_with("μι")
                                     && self.verb.pps[2].ends_with("κα")
@@ -5731,11 +5713,7 @@ impl HcVerbForms for HcGreekVerbForm {
                                 }
                             }
                             HcMood::Imperative => {
-                                if stem.ends_with("στην")
-                                    || stem.ends_with("φθην")
-                                    || stem.ends_with("βην")
-                                    || stem.ends_with("γνων")
-                                {
+                                if self.is_root_aorist(stem) {
                                     HcEndings::AoristActiveImperativesMiRoot
                                 } else if self.verb.pps[0].ends_with("μι")
                                     && self.verb.pps[2].ends_with("κα")
@@ -5872,6 +5850,16 @@ impl HcVerbForms for HcGreekVerbForm {
         };
 
         Some(ENDINGS[ending as usize][person_number].split(',').collect())
+    }
+
+    //don't test for voice here so we use this to tell whether
+    //an alt form is root or not in line 4635
+    fn is_root_aorist(&self, form: &str) -> bool {
+        self.tense == HcTense::Aorist
+            && (form.ends_with("στην")
+                || form.ends_with("φθην")
+                || form.ends_with("βην")
+                || form.ends_with("γνων"))
     }
 
     fn adjust_stem(
@@ -6175,6 +6163,8 @@ enum HcPtcEndings {
     PerfectMiddleFem,
     PerfectMiddleNeut,
 }
+
+static INFINITIVE_ENDINGS: &[&str; 7] = &["ειν", "εσθαι", "αι", "ασθαι", "ηναι", "εναι", "σθαι"];
 
 static PTC_ENDINGS: &[[&str; 9]; 24] = &[
     [
@@ -8537,7 +8527,7 @@ mod tests {
             case: None,
         };
         assert_eq!(b.get_form(false).unwrap()[2].form, "βλαπτω");
-        assert_eq!(b.get_endings("").unwrap()[0], "ω");
+        assert_eq!(b.get_endings("", "").unwrap()[0], "ω");
 
         let b = HcGreekVerbForm {
             verb: a.clone(),
@@ -8560,8 +8550,8 @@ mod tests {
             gender: None,
             case: None,
         };
-        assert_eq!(b.get_endings("").unwrap()[0], "ει");
-        assert_eq!(b.get_endings("").unwrap()[1], "ῃ");
+        assert_eq!(b.get_endings("", "").unwrap()[0], "ει");
+        assert_eq!(b.get_endings("", "").unwrap()[1], "ῃ");
         assert_eq!(b.get_form(false).unwrap()[3].form, "βλάπτει / βλάπτῃ");
         let b = HcGreekVerbForm {
             verb: a.clone(),
