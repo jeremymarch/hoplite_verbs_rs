@@ -8,15 +8,11 @@ edition = "2021"
 
 [dependencies]
 # polytonic-greek = { path = "../polytonic-greek" }
-polytonic-greek = { git = "https://github.com/jeremymarch/polytonic-greek", version = "0.5.1" }
-unicode-normalization = { version = "0.1.22", default-features = false }
-unicode-segmentation = "1.11.0"
-
-itertools = "0.13.0"
-rand = "0.8.5"
-
+# default-features = false means don't include unicode-normalization crate
+polytonic-greek = { git = "https://github.com/jeremymarch/polytonic-greek", default-features = false, version = "0.5.1" }
 
 [dev-dependencies]
+unicode-normalization = { version = "0.1.22", default-features = false }
 criterion = "0.5.1"
 quick-xml = "0.31.0"
 
