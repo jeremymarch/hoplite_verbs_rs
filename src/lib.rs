@@ -3720,10 +3720,7 @@ impl HcVerbForms for HcGreekVerbForm {
 
         // root aorist
         if (self.tense == HcTense::Aorist && self.voice == HcVoice::Active)
-            && local_stem.ends_with("στη")
-            || local_stem.ends_with("φθη")
-            || local_stem.ends_with("βη")
-            || local_stem.ends_with("γνω")
+            && self.is_root_aorist(full_stem)
         {
             if self.mood == HcMood::Subjunctive {
                 if decompose {
