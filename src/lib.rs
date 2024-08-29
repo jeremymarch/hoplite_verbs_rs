@@ -3844,7 +3844,7 @@ impl HcVerbForms for HcGreekVerbForm {
             desc.push_str(end);
         }
 
-        desc.push_str(" ");
+        desc.push(' ');
 
         if p.number != self.number {
             desc.push_str(start);
@@ -3861,7 +3861,7 @@ impl HcVerbForms for HcGreekVerbForm {
             desc.push_str(end);
         }
 
-        desc.push_str(" ");
+        desc.push(' ');
 
         if p.tense != self.tense {
             desc.push_str(start);
@@ -3880,7 +3880,7 @@ impl HcVerbForms for HcGreekVerbForm {
             desc.push_str(end);
         }
 
-        desc.push_str(" ");
+        desc.push(' ');
 
         if p.mood != self.mood {
             desc.push_str(start);
@@ -3899,7 +3899,7 @@ impl HcVerbForms for HcGreekVerbForm {
             desc.push_str(end);
         }
 
-        desc.push_str(" ");
+        desc.push(' ');
 
         if p.voice != self.voice {
             desc.push_str(start);
