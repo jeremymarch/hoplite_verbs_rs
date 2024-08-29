@@ -3828,34 +3828,91 @@ impl HcVerbForms for HcGreekVerbForm {
         let mut desc = String::new();
         //let start = "<span foreground=\"red\"><b>";
         //let end = "</b></span>";
+
         if p.person != self.person {
-            desc = format!("{} {}{:?}{}", desc, start, self.person, end);
-        } else {
-            desc = format!("{} {:?}", desc, self.person);
+            desc.push_str(start);
+        }
+
+        match self.person {
+            Some(HcPerson::First) => desc.push_str("First"),
+            Some(HcPerson::Second) => desc.push_str("Second"),
+            Some(HcPerson::Third) => desc.push_str("Third"),
+            None => desc.push_str("None"),
+        }
+
+        if p.person != self.person {
+            desc.push_str(end);
+        }
+
+        desc.push_str(" ");
+
+        if p.number != self.number {
+            desc.push_str(start);
+        }
+
+        match self.number {
+            Some(HcNumber::Singular) => desc.push_str("Singular"),
+            Some(HcNumber::Dual) => desc.push_str("Dual"),
+            Some(HcNumber::Plural) => desc.push_str("Plural"),
+            None => desc.push_str("None"),
         }
 
         if p.number != self.number {
-            desc = format!("{} {}{:?}{}", desc, start, self.number, end);
-        } else {
-            desc = format!("{} {:?}", desc, self.number);
+            desc.push_str(end);
+        }
+
+        desc.push_str(" ");
+
+        if p.tense != self.tense {
+            desc.push_str(start);
+        }
+
+        match self.tense {
+            HcTense::Present => desc.push_str("Present"),
+            HcTense::Imperfect => desc.push_str("Imperfect"),
+            HcTense::Future => desc.push_str("Future"),
+            HcTense::Aorist => desc.push_str("Aorist"),
+            HcTense::Perfect => desc.push_str("Perfect"),
+            HcTense::Pluperfect => desc.push_str("Pluperfect"),
         }
 
         if p.tense != self.tense {
-            desc = format!("{} {}{:?}{}", desc, start, self.tense, end);
-        } else {
-            desc = format!("{} {:?}", desc, self.tense);
+            desc.push_str(end);
+        }
+
+        desc.push_str(" ");
+
+        if p.mood != self.mood {
+            desc.push_str(start);
+        }
+
+        match self.mood {
+            HcMood::Indicative => desc.push_str("Indicative"),
+            HcMood::Subjunctive => desc.push_str("Subjunctive"),
+            HcMood::Optative => desc.push_str("Optative"),
+            HcMood::Imperative => desc.push_str("Imperative"),
+            HcMood::Infinitive => desc.push_str("Infinitive"),
+            HcMood::Participle => desc.push_str("Participle"),
         }
 
         if p.mood != self.mood {
-            desc = format!("{} {}{:?}{}", desc, start, self.mood, end);
-        } else {
-            desc = format!("{} {:?}", desc, self.mood);
+            desc.push_str(end);
+        }
+
+        desc.push_str(" ");
+
+        if p.voice != self.voice {
+            desc.push_str(start);
+        }
+
+        match self.voice {
+            HcVoice::Active => desc.push_str("Active"),
+            HcVoice::Middle => desc.push_str("Middle"),
+            HcVoice::Passive => desc.push_str("Passive"),
         }
 
         if p.voice != self.voice {
-            desc = format!("{} {}{:?}{}", desc, start, self.voice, end);
-        } else {
-            desc = format!("{} {:?}", desc, self.voice);
+            desc.push_str(end);
         }
 
         desc
@@ -6234,6 +6291,36 @@ mod tests {
     use std::io::BufReader;
     use std::io::{BufWriter, Write};
     use unicode_normalization::UnicodeNormalization;
+
+    #[test]
+    fn test_form_description() {
+        let luw_correct = "δίδωμι, δώσω, ἔδωκα, δέδωκα, δέδομαι, ἐδόθην";
+        let verb = Arc::new(HcGreekVerb::from_string(1, luw_correct, 0x0000, 0).unwrap());
+        let a = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::Second),
+            number: Some(HcNumber::Singular),
+            tense: HcTense::Aorist,
+            voice: HcVoice::Active,
+            mood: HcMood::Indicative,
+            gender: None,
+            case: None,
+        };
+        let b = HcGreekVerbForm {
+            verb: verb.clone(),
+            person: Some(HcPerson::Second),
+            number: Some(HcNumber::Plural),
+            tense: HcTense::Aorist,
+            voice: HcVoice::Active,
+            mood: HcMood::Optative,
+            gender: None,
+            case: None,
+        };
+
+        let str = a.get_description(&b, "<span foreground=\"red\"><b>", "</b></span>");
+
+        assert_eq!(str, "Second <span foreground=\"red\"><b>Singular</b></span> Aorist <span foreground=\"red\"><b>Indicative</b></span> Active");
+    }
 
     #[test]
     fn test_verb_parameters_from_option() {
