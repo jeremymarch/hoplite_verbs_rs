@@ -696,6 +696,7 @@ pub trait HcVerbForms {
     fn is_legal_form(&self) -> bool;
     fn is_legal_deponent(&self, pp: &str) -> bool;
     fn get_description(&self, prev: &HcGreekVerbForm, start: &str, end: &str) -> String;
+    fn get_description_abbrev(&self, prev: &HcGreekVerbForm, start: &str, end: &str) -> String;
     fn get_form(&self, decompose: bool) -> Result<Vec<Step>, HcFormError>;
     fn get_pp_num(&self) -> HcGreekPrincipalParts;
     fn get_pp(&self) -> Option<String>;
@@ -3825,7 +3826,7 @@ impl HcVerbForms for HcGreekVerbForm {
     }
 
     fn get_description(&self, p: &HcGreekVerbForm, start: &str, end: &str) -> String {
-        let mut desc = String::new();
+        let mut desc = String::with_capacity(512);
         //let start = "<span foreground=\"red\"><b>";
         //let end = "</b></span>";
 
@@ -3909,6 +3910,100 @@ impl HcVerbForms for HcGreekVerbForm {
             HcVoice::Active => desc.push_str("Active"),
             HcVoice::Middle => desc.push_str("Middle"),
             HcVoice::Passive => desc.push_str("Passive"),
+        }
+
+        if p.voice != self.voice {
+            desc.push_str(end);
+        }
+
+        desc
+    }
+
+    fn get_description_abbrev(&self, p: &HcGreekVerbForm, start: &str, end: &str) -> String {
+        let mut desc = String::with_capacity(512);
+        //let start = "<span foreground=\"red\"><b>";
+        //let end = "</b></span>";
+
+        if p.person != self.person {
+            desc.push_str(start);
+        }
+
+        match self.person {
+            Some(HcPerson::First) => desc.push_str("1st"),
+            Some(HcPerson::Second) => desc.push_str("2nd"),
+            Some(HcPerson::Third) => desc.push_str("3rd"),
+            None => desc.push_str("None"),
+        }
+
+        if p.person != self.person {
+            desc.push_str(end);
+        }
+
+        desc.push(' ');
+
+        if p.number != self.number {
+            desc.push_str(start);
+        }
+
+        match self.number {
+            Some(HcNumber::Singular) => desc.push_str("Sing."),
+            Some(HcNumber::Dual) => desc.push_str("Dl."),
+            Some(HcNumber::Plural) => desc.push_str("Pl."),
+            None => desc.push_str("None"),
+        }
+
+        if p.number != self.number {
+            desc.push_str(end);
+        }
+
+        desc.push(' ');
+
+        if p.tense != self.tense {
+            desc.push_str(start);
+        }
+
+        match self.tense {
+            HcTense::Present => desc.push_str("Pres."),
+            HcTense::Imperfect => desc.push_str("Imperf."),
+            HcTense::Future => desc.push_str("Fut."),
+            HcTense::Aorist => desc.push_str("Aor."),
+            HcTense::Perfect => desc.push_str("Perf."),
+            HcTense::Pluperfect => desc.push_str("Plup."),
+        }
+
+        if p.tense != self.tense {
+            desc.push_str(end);
+        }
+
+        desc.push(' ');
+
+        if p.mood != self.mood {
+            desc.push_str(start);
+        }
+
+        match self.mood {
+            HcMood::Indicative => desc.push_str("Indic."),
+            HcMood::Subjunctive => desc.push_str("Subj."),
+            HcMood::Optative => desc.push_str("Opt."),
+            HcMood::Imperative => desc.push_str("Imper."),
+            HcMood::Infinitive => desc.push_str("Infin."),
+            HcMood::Participle => desc.push_str("Ptc."),
+        }
+
+        if p.mood != self.mood {
+            desc.push_str(end);
+        }
+
+        desc.push(' ');
+
+        if p.voice != self.voice {
+            desc.push_str(start);
+        }
+
+        match self.voice {
+            HcVoice::Active => desc.push_str("Act."),
+            HcVoice::Middle => desc.push_str("Mid."),
+            HcVoice::Passive => desc.push_str("Pass."),
         }
 
         if p.voice != self.voice {
