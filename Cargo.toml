@@ -14,7 +14,7 @@ polytonic-greek = { git = "https://github.com/jeremymarch/polytonic-greek", defa
 [dev-dependencies]
 unicode-normalization = { version = "0.1.22", default-features = false }
 criterion = "0.5.1"
-quick-xml = "0.31.0"
+quick-xml = "0.36.1"
 
 [[bench]]
 name = "benchmarks"

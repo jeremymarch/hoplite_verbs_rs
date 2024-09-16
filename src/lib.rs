@@ -9,6 +9,7 @@ use std::sync::Arc;
 //mod latin;
 mod special_verbs;
 
+//or use gkletters from polytonic_greek?
 trait CountGreekGraphemeExt {
     fn count_graphemes(&self) -> usize;
 }
