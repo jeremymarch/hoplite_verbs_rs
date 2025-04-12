@@ -552,7 +552,7 @@ pub const CONTRACTED_FUTURE_ALPHA: u32 = 0x0800;
 pub const CONSONANT_STEM_PERFECT_NU: u32 = 0x1000;
 pub const MI_VERB: u32 = 0x2000;
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 pub struct HcGreekVerb {
     pub id: u32,
     pub pps: Vec<String>,
