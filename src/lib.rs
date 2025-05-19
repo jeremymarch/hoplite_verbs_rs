@@ -684,6 +684,7 @@ static SEPARATOR: &str = "‐";
 static BLANK: &str = "—";
 
 pub trait HcVerbForms {
+    fn get_lemma_form(&mut self);
     fn get_infinitive(
         &self,
         full_stem_with_accent: &str,
@@ -3173,6 +3174,23 @@ impl HcVerbForms for HcGreekVerbForm {
     fn new() -> HcGreekVerbForm {
 
     }*/
+
+    fn get_lemma_form(&mut self) {
+        self.person = Some(HcPerson::First);
+        self.number = Some(HcNumber::Singular);
+        self.mood = HcMood::Indicative;
+        match self.verb.deponent_type() {
+            HcDeponentType::MiddleDeponent => self.voice = HcVoice::Middle,
+            HcDeponentType::PassiveDeponent => self.voice = HcVoice::Middle,
+            _ => self.voice = HcVoice::Active,
+        }
+
+        if self.verb.pps[0] == *"—" {
+            self.tense = HcTense::Future;
+        } else {
+            self.tense = HcTense::Present;
+        }
+    }
 
     fn get_label(&self) -> String {
         "".to_string()
